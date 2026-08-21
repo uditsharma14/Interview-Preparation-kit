@@ -9,8 +9,8 @@ Current interview loops for **Full Stack**, **Forward Deployed**, and **Staff** 
 | Role | What their loop usually leans on | Covered here | Still a gap |
 |---|---|---|---|
 | **Full Stack Engineer** | Frontend fundamentals (React/TS, browser/perf), backend API design, databases, light system design, testing | [Frameworks](Frameworks/), [System Design](System%20Design/) (esp. [REST API Design](System%20Design/REST_API_Design_Interview_Prep.md)), [Language](Language/) | [Frontend & Full-Stack](Frontend%20%26%20Full-Stack/) *(reserved)* |
-| **Forward Deployed Engineer** | Rapid prototyping across the stack, scripting/data wrangling, working with ambiguous client requirements and messy environments, stakeholder communication, increasingly LLM/agent integration on top of client data | [System Design](System%20Design/) (esp. [Cross-Stack Scenarios](System%20Design/Cross_Stack_Design_Scenarios_Interview_Prep.md)), [Tech Leadership](Tech%20Leadership/) (ambiguity, influence, communication) | [Forward-Deployed & Customer-Facing Engineering](Forward-Deployed%20%26%20Customer-Facing%20Engineering/) *(reserved)*, [AI Engineering](AI%20Engineering/) *(reserved)* |
-| **Staff Engineer** | Deep fundamentals across the stack, system design and trade-offs, architecture/design judgment, organizational leverage and leadership | Nearly everything — [Language](Language/), [Frameworks](Frameworks/), [System Design](System%20Design/), [Tech Leadership](Tech%20Leadership/) | [Microservices & Architecture Patterns](Microservices%20%26%20Architecture%20Patterns/) *(reserved)*, [Design Patterns](Design%20Patterns/) *(reserved)* |
+| **Forward Deployed Engineer** | Rapid prototyping across the stack, scripting/data wrangling, working with ambiguous client requirements and messy environments, stakeholder communication, deploying into a customer's own (often locked-down) infrastructure, increasingly LLM/agent integration on top of client data | [System Design](System%20Design/) (esp. [Cross-Stack Scenarios](System%20Design/Cross_Stack_Design_Scenarios_Interview_Prep.md)), [Tech Leadership](Tech%20Leadership/) (ambiguity, influence, communication), [AI Engineering](AI%20Engineering/), [Kubernetes, Docker & Cloud](Kubernetes%2C%20Docker%20%26%20Cloud/) *(reserved)* | [Forward-Deployed & Customer-Facing Engineering](Forward-Deployed%20%26%20Customer-Facing%20Engineering/) *(reserved)* |
+| **Staff Engineer** | Deep fundamentals across the stack, system design and trade-offs, architecture/design judgment, organizational leverage and leadership | Nearly everything — [Language](Language/), [Frameworks](Frameworks/), [System Design](System%20Design/), [Tech Leadership](Tech%20Leadership/), [Microservices & Architecture Patterns](Microservices%20%26%20Architecture%20Patterns/) | [Design Patterns](Design%20Patterns/) *(reserved)*, [Kubernetes, Docker & Cloud](Kubernetes%2C%20Docker%20%26%20Cloud/) *(reserved)* |
 
 AI/LLM-application questions have become common across all three loops in the last year or two — even a straightforward backend or full-stack interview now often includes "how would you design a RAG pipeline" or "how do you evaluate an LLM feature" — which is why **AI Engineering** is reserved as its own section rather than folded into System Design.
 
@@ -61,6 +61,10 @@ Lead/Staff-level judgment, influence, and organizational impact — not technolo
 ## Design Patterns
 
 *(reserved — classic GoF patterns and modern applications of them in real codebases)*
+
+## Kubernetes, Docker & Cloud
+
+*(reserved — containerization fundamentals, Kubernetes objects/scheduling/networking, cloud infrastructure trade-offs (AWS/GCP/Azure), CI/CD, and the deployment/operations concerns Forward Deployed and Staff loops both lean on heavily)*
 
 ## Frontend & Full-Stack
 
