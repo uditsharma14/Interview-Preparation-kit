@@ -11,11 +11,13 @@ Content is organized into three broad folders rather than one-per-topic subfolde
 - **[Java JVM & GC Interview Prep](Programming%20Language/Java_JVM_GC_Interview_Prep.md)** — Memory areas, JIT/escape analysis, reference types, G1/ZGC/Shenandoah, container OOM-kills, and native memory.
 - **[Spring Boot Internals Interview Prep](Programming%20Language/Spring_Boot_Internals_Interview_Prep.md)** — `SpringApplication.run()` internals, bean lifecycle, auto-configuration, AOP proxies and self-invocation, graceful shutdown, and execution models.
 - **[Spring Security & OAuth2 Interview Prep](Programming%20Language/Spring_Security_OAuth2_Interview_Prep.md)** — Filter chain architecture, CSRF/CORS, OAuth2 flows and PKCE, JWT validation and key rotation, token storage, BOLA, and multi-tenant authorization.
+- **[JPA & Hibernate Interview Prep](Programming%20Language/JPA_Hibernate_Interview_Prep.md)** — Entity lifecycle, dirty checking and flushing, N+1 diagnosis and fixes, fetch strategies, optimistic/pessimistic locking, ID generation and batching, and DTO boundaries.
 
 ## System Design
 
 - **[Kafka Deep-Dive Interview Prep](System%20Design/Kafka_Interview_Prep.md)** — Topics, partitions, offsets, ordering guarantees, message keys, and consumer group rebalancing.
 - **[REST API Design Interview Prep](System%20Design/REST_API_Design_Interview_Prep.md)** — Resource modeling, idempotency and retries, pagination strategies, versioning and backward compatibility, error formats, async workflows, and rate limiting.
+- **[Transactions Interview Prep](System%20Design/Transactions_Interview_Prep.md)** — ACID and isolation levels, MVCC, Spring propagation types, deadlocks, the transactional outbox pattern, sagas vs. two-phase commit, and zero-downtime schema migration.
 
 ## Engineering Leadership
 
