@@ -52,7 +52,7 @@ Lead/Staff-level judgment, influence, and organizational impact — not technolo
 
 ## AI Engineering
 
-*(reserved — LLM/agent application design, prompting, RAG, evaluation, and production AI-system concerns)*
+- **[AI Engineering Interview Prep](AI%20Engineering/AI_Engineering_Interview_Prep.md)** — Hosted vs. self-hosted models, prompting vs. fine-tuning vs. RAG, chunking and hybrid search, agent/tool-calling design and guardrails, LLM-as-judge, hallucination mitigation, prompt injection, and cost/latency management in production.
 
 ## Microservices & Architecture Patterns
 
