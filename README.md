@@ -18,6 +18,7 @@ Content is organized into three broad folders rather than one-per-topic subfolde
 - **[Kafka Deep-Dive Interview Prep](System%20Design/Kafka_Interview_Prep.md)** — Topics, partitions, offsets, ordering guarantees, message keys, and consumer group rebalancing.
 - **[REST API Design Interview Prep](System%20Design/REST_API_Design_Interview_Prep.md)** — Resource modeling, idempotency and retries, pagination strategies, versioning and backward compatibility, error formats, async workflows, and rate limiting.
 - **[Transactions Interview Prep](System%20Design/Transactions_Interview_Prep.md)** — ACID and isolation levels, MVCC, Spring propagation types, deadlocks, the transactional outbox pattern, sagas vs. two-phase commit, and zero-downtime schema migration.
+- **[Redis & Caching Interview Prep](System%20Design/Redis_Caching_Interview_Prep.md)** — Caching strategies, stampedes/penetration/pollution, eviction policies, hot keys, replication/Sentinel/Cluster, distributed locks and fencing tokens, rate limiting, and cache-deployment versioning.
 
 ## Engineering Leadership
 
