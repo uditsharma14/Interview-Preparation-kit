@@ -2,10 +2,22 @@
 
 A collection of deep-dive, mid-to-staff-level interview prep notes for technical interviews. Each topic is written as a set of Q&A entries with the answer phrased the way it would actually be said out loud in an interview, backed by code snippets and pointers to where staff-level follow-up questions tend to go.
 
-## Contents
+Content is organized into three broad folders rather than one-per-topic subfolders:
 
-- **[Kafka Deep-Dive Interview Prep](Kafka/Kafka_Interview_Prep.md)** — Topics, partitions, offsets, ordering guarantees, message keys, consumer group rebalancing, and other core Kafka concepts.
-- **[Java Collections Interview Prep](Java%20/Java_Collections_Interview_Prep_Expanded.md)** — Internals of core Java collection types (e.g. `HashMap` internals, collisions, resizing, treeification) with code examples and JDK source references.
+## Programming Language
+
+- **[Java Collections Interview Prep](Programming%20Language/Java_Collections_Interview_Prep.md)** — `HashMap`/`TreeMap`/`LinkedHashMap` internals, concurrent collections, boxed-collection costs, and production leak diagnosis.
+- **[Java Concurrency Interview Prep](Programming%20Language/Java_Concurrency_Interview_Prep.md)** — Visibility/atomicity/ordering, locks, virtual threads, executors, `ForkJoinPool`, the ABA problem, and structured concurrency.
+- **[Java JVM & GC Interview Prep](Programming%20Language/Java_JVM_GC_Interview_Prep.md)** — Memory areas, JIT/escape analysis, reference types, G1/ZGC/Shenandoah, container OOM-kills, and native memory.
+- **[Spring Boot Internals Interview Prep](Programming%20Language/Spring_Boot_Internals_Interview_Prep.md)** — `SpringApplication.run()` internals, bean lifecycle, auto-configuration, AOP proxies and self-invocation, graceful shutdown, and execution models.
+
+## System Design
+
+- **[Kafka Deep-Dive Interview Prep](System%20Design/Kafka_Interview_Prep.md)** — Topics, partitions, offsets, ordering guarantees, message keys, and consumer group rebalancing.
+
+## Engineering Leadership
+
+*(reserved for Lead/Staff engineering and technical leadership content)*
 
 ## How to use this
 
