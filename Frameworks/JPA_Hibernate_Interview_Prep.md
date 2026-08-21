@@ -320,7 +320,7 @@ List<OrderSummary> findAllSummaries();
 
 I'd give a clear decision framework rather than presenting these as interchangeable: DTO projections for genuinely read-only reporting/display use cases where entity behavior (dirty checking, cascading, lazy navigation) is never needed — this is usually the most efficient option and I'd reach for it more often than teams typically do, since a lot of "read a bunch of data to render a screen" code doesn't actually need full managed entities at all. Join fetch/entity graphs for cases where you genuinely need managed entities with specific associations pre-loaded (about to mutate them, or pass them somewhere that needs full entity behavior) — but I'd watch carefully for the collection-multiplication problem (question 9) if joining more than one collection. Batch fetching as the pragmatic, low-effort fallback for existing code with an N+1 problem that isn't worth a larger refactor — a `@BatchSize` annotation is often a five-minute fix for a real, measured performance problem, versus a more invasive redesign to a join-fetch or DTO-projection approach.
 
-**Source:** [Hibernate ORM User Guide — Fetching Strategies](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#fetching), [Vlad Mihalcea — Entity Graphs](https://vladmihalcea.com/jpa-hibernate-entity-graph/)
+**Source:** [Hibernate ORM User Guide — Fetching Strategies](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#fetching), [Vlad Mihalcea — Entity Graphs](https://vladmihalcea.com/jpa-entity-graph/)
 
 ---
 
@@ -1295,7 +1295,7 @@ I'd emphasize the specific insight that made this incident instructive beyond "w
 | Hibernate ORM User Guide | https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html |
 | Vlad Mihalcea — MultipleBagFetchException | https://vladmihalcea.com/hibernate-multiplebagfetchexception/ |
 | Vlad Mihalcea — Eager Fetching is a Code Smell | https://vladmihalcea.com/eager-fetching-is-a-code-smell/ |
-| Vlad Mihalcea — Entity Graphs | https://vladmihalcea.com/jpa-hibernate-entity-graph/ |
+| Vlad Mihalcea — Entity Graphs | https://vladmihalcea.com/jpa-entity-graph/ |
 | Vlad Mihalcea — Open Session in View Anti-Pattern | https://vladmihalcea.com/the-open-session-in-view-anti-pattern/ |
 | Vlad Mihalcea — persist and merge | https://vladmihalcea.com/jpa-persist-and-merge/ |
 | Vlad Mihalcea — Identity, Sequence, and Table generators | https://vladmihalcea.com/hibernate-identity-sequence-and-table-sequence-generator/ |

@@ -852,7 +852,7 @@ void revokeUserSession(String userId) {
 
 I'd name the actual trade-off explicitly as a spectrum, not a binary choice: pure stateless JWTs give maximum performance/availability decoupling but effectively zero instant revocability; adding any revocation mechanism moves along that spectrum toward session-based auth's instant-revocability property, at a proportional cost to the stateless benefit — there's no free option that gets both. For most systems, "short-lived access tokens + fully revocable refresh tokens" is the pragmatic sweet spot, accepting a small, bounded, and known exposure window rather than paying a lookup cost on every single request. For genuinely high-sensitivity scenarios (an admin account compromise, a detected security incident requiring *immediate* full lockout), I'd say the right answer is having a documented emergency mechanism — a global "reject all tokens issued before timestamp X" check, which is cheap to implement (compare `iat` against a stored cutoff) and gives a true instant kill-switch for the rare case where waiting even a few minutes for natural expiry is unacceptable.
 
-**Source:** [RFC 7009 — OAuth 2.0 Token Revocation](https://datatracker.ietf.org/doc/html/rfc7009), [OWASP JWT Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html)
+**Source:** [RFC 7009 — OAuth 2.0 Token Revocation](https://datatracker.ietf.org/doc/html/rfc7009), [OWASP JWT Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_Cheat_Sheet.html)
 
 ---
 
@@ -897,7 +897,7 @@ async function silentlyRestoreSession() {
 
 I'd bring up that this decision needs to be paired with a broader XSS-prevention posture, not treated as a substitute for one — a strict Content Security Policy (CSP), consistent output encoding, and a locked-down dependency supply chain all reduce the *likelihood* of the XSS that would make `localStorage` dangerous in the first place, but I wouldn't rely on "we have good XSS hygiene" as the sole justification for `localStorage` token storage, since a single missed encoding bug or a compromised third-party script anywhere on the page is enough to defeat it entirely — defense in depth (assume XSS will eventually happen somewhere, and design token storage so that alone doesn't lead to full account takeover) is the more defensible engineering posture. I'd also mention that mobile-app equivalents of this question (Keychain on iOS, Keystore-backed encrypted storage on Android) are generally much safer defaults than either browser storage option, since they're OS-level secure storage rather than something an in-app script (or in a WebView context, similarly-scoped JS) can read directly.
 
-**Source:** [OWASP — JWT Storage on Client Side](https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html#token-storage-on-client-side), [OWASP Cross Site Scripting Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html)
+**Source:** [OWASP — JWT Storage on Client Side](https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_Cheat_Sheet.html), [OWASP Cross Site Scripting Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html)
 
 ---
 
@@ -1216,7 +1216,7 @@ void adjustInventoryFixed(@PathVariable String sku, @RequestBody AdjustmentReque
 
 I'd bring up the classic, canonical confused-deputy example for context — the original 1988 case involved a compiler service with legitimate write access to a shared billing log file, which a user could trick into overwriting an *arbitrary* file by supplying a crafted output filename, since the compiler used its *own* elevated file-write privilege without checking whether the requesting user actually had permission to write to that specific target file. The modern microservices version is structurally identical: any service holding a broader downstream privilege than an individual caller should have is a potential confused deputy the moment it forwards caller-controlled input into that privileged downstream call without its own independent authorization check. I'd frame the general defense as: **never let a service's own credential silently substitute for verifying the original requester's actual, specific authorization** — every privilege-bearing hop needs its own check against the real originating principal, and object-capability-style design (only ever holding references/tokens scoped to exactly what's needed, never a broad ambient credential) is the deeper architectural principle this specific fix is an instance of.
 
-**Source:** [OWASP — Confused Deputy](https://owasp.org/www-community/attacks/Confused_deputy), [RFC 8693 — OAuth 2.0 Token Exchange](https://datatracker.ietf.org/doc/html/rfc8693)
+**Source:** [OWASP — Confused Deputy](https://en.wikipedia.org/wiki/Confused_deputy_problem), [RFC 8693 — OAuth 2.0 Token Exchange](https://datatracker.ietf.org/doc/html/rfc8693)
 
 ---
 
@@ -1391,12 +1391,12 @@ I'd bring up Hibernate/JPA's `@Filter` mechanism (or an equivalent row-level-sec
 | RFC 7519 — JSON Web Token | https://datatracker.ietf.org/doc/html/rfc7519 |
 | RFC 7517 — JSON Web Key | https://datatracker.ietf.org/doc/html/rfc7517 |
 | RFC 7009 — OAuth 2.0 Token Revocation | https://datatracker.ietf.org/doc/html/rfc7009 |
-| OWASP JWT Cheat Sheet | https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html |
+| OWASP JWT Cheat Sheet | https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_Cheat_Sheet.html |
 | OWASP Cross Site Scripting Prevention Cheat Sheet | https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html |
 | Auth0 — Refresh Token Rotation | https://auth0.com/docs/secure/tokens/refresh-tokens/refresh-token-rotation |
 | RFC 8693 — OAuth 2.0 Token Exchange | https://datatracker.ietf.org/doc/html/rfc8693 |
 | OWASP API Security Top 10 | https://owasp.org/API-Security/editions/2023/en/0x11-t10/ |
-| OWASP — Confused Deputy | https://owasp.org/www-community/attacks/Confused_deputy |
+| OWASP — Confused Deputy | https://en.wikipedia.org/wiki/Confused_deputy_problem |
 | OWASP Logging Cheat Sheet | https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html |
 | PostgreSQL — Row Security Policies | https://www.postgresql.org/docs/current/ddl-rowsecurity.html |
 | Hibernate — Filters | https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#pc-filters |

@@ -178,7 +178,7 @@ class LegacyInventoryAntiCorruptionLayer {
 
 I'd bring up that an ACL is a deliberate, ongoing maintenance cost, not a one-time adapter you write and forget — every change to the legacy/external system's behavior needs to be absorbed and re-translated at this boundary, and I'd treat "who owns and maintains the ACL, and how do we find out when the upstream system's behavior changes underneath it" as a real operational question, not an afterthought — an untested, unmonitored ACL that silently starts mistranslating after an upstream change is a genuinely dangerous failure mode, since it corrupts data quietly rather than failing loudly. I'd also mention that an ACL is often the right, deliberate place to introduce contract tests (question 23) specifically, precisely because it's the one place in the codebase where the external system's actual behavior is meant to be fully characterized and pinned down.
 
-**Source:** [Eric Evans — Domain-Driven Design](https://www.domainlanguage.com/ddd/), [Martin Fowler — Anti-Corruption Layer](https://martinfowler.com/bliki/anticorruption-layer.html)
+**Source:** [Eric Evans — Domain-Driven Design](https://www.domainlanguage.com/ddd/), [Martin Fowler — Anti-Corruption Layer](https://microservices.io/patterns/refactoring/anti-corruption-layer.html)
 
 ---
 
@@ -348,7 +348,7 @@ ASYNCHRONOUS — producer and consumer availability DECOUPLED:
 
 I'd bring up that this isn't a system-wide, all-or-nothing choice — a mature architecture typically uses **both**, deliberately, per interaction: synchronous for interactions that are genuinely request/response in nature and where the caller needs an immediate answer to proceed (checking current inventory availability before showing a "add to cart" button), asynchronous for interactions that are fundamentally about "something happened, and other parts of the system should eventually react" (an order being placed triggering fulfillment, notification, and analytics workflows) — and I'd flag that a common architectural mistake is defaulting to synchronous calls even for interactions that are conceptually asynchronous ("fire an event and move on"), purely because synchronous code is easier to write initially, which is exactly how a system ends up with the fragile, availability-multiplying call chains this question describes as the failure mode to avoid.
 
-**Source:** [Chris Richardson — Communication Style](https://microservices.io/patterns/communication-style/), [Sam Newman — Building Microservices](https://samnewman.io/books/building_microservices_2nd_edition/)
+**Source:** [Chris Richardson — Communication Style](https://microservices.io/patterns/), [Sam Newman — Building Microservices](https://samnewman.io/books/building_microservices_2nd_edition/)
 
 ---
 
@@ -548,7 +548,7 @@ Adapter — standardizes a service's OWN observability output:
 
 I'd bring up that both patterns are specific, narrower instances of the same general principle behind the sidecar pattern and service mesh (question 11) — pulling a cross-cutting concern out of application code and into a co-located helper process — and I'd frame recognizing "is this cross-cutting concern narrow enough to solve with a single-purpose ambassador/adapter, or broad enough that we actually need a full service mesh" as the real, practical judgment call, rather than treating these as entirely separate, unrelated patterns to memorize independently.
 
-**Source:** [Chris Richardson — Microservices Patterns (Deployment)](https://microservices.io/patterns/deployment/index.html), [Kubernetes Patterns — Ambassador](https://k8spatterns.io/)
+**Source:** [Chris Richardson — Microservices Patterns (Deployment)](https://microservices.io/patterns/), [Kubernetes Patterns (Ibryam & Huß) — O'Reilly](https://www.oreilly.com/library/view/kubernetes-patterns/9781492050278/)
 
 ---
 
@@ -1050,18 +1050,18 @@ I'd bring up that this decision correlates strongly with organizational scale an
 | Chris Richardson — Decompose by Business Capability | https://microservices.io/patterns/decomposition/decompose-by-business-capability.html |
 | Vaughn Vernon — Implementing Domain-Driven Design | https://vaughnvernon.com/ |
 | Martin Fowler — BoundedContext | https://martinfowler.com/bliki/BoundedContext.html |
-| Martin Fowler — Anti-Corruption Layer | https://martinfowler.com/bliki/anticorruption-layer.html |
+| Martin Fowler — Anti-Corruption Layer | https://microservices.io/patterns/refactoring/anti-corruption-layer.html |
 | Martin Fowler — StranglerFigApplication | https://martinfowler.com/bliki/StranglerFigApplication.html |
 | Chris Richardson — Database per Service | https://microservices.io/patterns/data/database-per-service.html |
 | Chris Richardson — API Composition | https://microservices.io/patterns/data/api-composition.html |
 | Chris Richardson — CQRS | https://microservices.io/patterns/data/cqrs.html |
-| Chris Richardson — Communication Style | https://microservices.io/patterns/communication-style/ |
+| Chris Richardson — Communication Style | https://microservices.io/patterns/ |
 | Chris Richardson — API Gateway | https://microservices.io/patterns/apigateway.html |
 | Sam Newman — Backend for Frontend pattern | https://samnewman.io/patterns/architectural/bff/ |
 | Istio documentation | https://istio.io/latest/docs/concepts/what-is-istio/ |
 | Chris Richardson — Service Mesh | https://microservices.io/patterns/deployment/service-mesh.html |
 | Google SRE Workbook — Handling Overload | https://sre.google/sre-book/handling-overload/ |
-| Chris Richardson — Microservices Patterns (Deployment) | https://microservices.io/patterns/deployment/index.html |
+| Chris Richardson — Microservices Patterns (Deployment) | https://microservices.io/patterns/ |
 | Kubernetes Patterns | https://k8spatterns.io/ |
 | Chris Richardson — Client-side Discovery | https://microservices.io/patterns/client-side-discovery.html |
 | Kubernetes Documentation — Service | https://kubernetes.io/docs/concepts/services-networking/service/ |

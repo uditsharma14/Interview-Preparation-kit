@@ -32,7 +32,7 @@ Once the real disagreement is identified, I'd push for **evidence over authority
 
 I'd bring up that the worst version of this — the one that actually damages a team — isn't disagreeing loudly, it's a decision getting made and then quietly re-litigated or under-executed by whoever lost the argument. I'd talk about explicitly asking for "disagree and commit" once a decision is made (Amazon's well-known leadership principle) as a genuine, spoken commitment, not an assumption, and I'd frame part of my own job as checking back in with whoever disagreed to make sure they're actually bought in, or surfacing early that they're not, rather than discovering silent non-commitment months later when the decision quietly fails to actually get built the way it was agreed.
 
-**Source:** [Jeff Bezos — 1997 Shareholder Letter (one-way vs. two-way doors)](https://www.sec.gov/Archives/edgar/data/1018724/000119312513151836/d511111dex991.htm), [Amazon Leadership Principles — Disagree and Commit](https://www.amazon.jobs/en/principles)
+**Source:** [Jeff Bezos — 1997 Shareholder Letter, reproduced by Amazon IR (one-way vs. two-way doors)](https://s2.q4cdn.com/299287126/files/doc_financials/2021/ar/Amazon-2020-Shareholder-Letter-and-1997-Shareholder-Letter.pdf), [Amazon Leadership Principles — Disagree and Commit](https://www.amazon.jobs/en/principles)
 
 ---
 
@@ -119,7 +119,7 @@ Classification questions I'd actually ask about a specific decision:
 
 I'd bring up that a decision's classification can genuinely **change over time**, and part of the job is recognizing that shift — a decision that was a cheap two-way door when it was made (a new internal service, easy to retire if it didn't pan out) can become an effectively one-way door later, once a dozen other teams have built dependencies on top of it, even though nothing about the original decision itself changed. I'd frame the practical implication as: revisit classification periodically for consequential decisions, rather than assuming the "this was easy to reverse" assessment from the day it was made still holds a year later — a decision quietly graduating from two-way to one-way, unnoticed, is exactly how a system accumulates architecture that's much more expensive to change than anyone realizes until they actually try.
 
-**Source:** [Jeff Bezos — 1997 Shareholder Letter](https://www.sec.gov/Archives/edgar/data/1018724/000119312513151836/d511111dex991.htm)
+**Source:** [Jeff Bezos — 1997 Shareholder Letter, reproduced by Amazon IR](https://s2.q4cdn.com/299287126/files/doc_financials/2021/ar/Amazon-2020-Shareholder-Letter-and-1997-Shareholder-Letter.pdf)
 
 ---
 
@@ -900,7 +900,7 @@ I'd bring up that the most common miscalibration candidates make when answering 
 | Will Larson — An Elegant Puzzle | https://lethain.com/elegant-puzzle/ |
 | Camille Fournier — The Manager's Path | https://www.oreilly.com/library/view/the-managers-path/9781491973882/ |
 | Team Topologies — Matthew Skelton & Manuel Pais | https://teamtopologies.com/book |
-| Jeff Bezos — 1997 Shareholder Letter (one-way vs. two-way doors) | https://www.sec.gov/Archives/edgar/data/1018724/000119312513151836/d511111dex991.htm |
+| Jeff Bezos — 1997 Shareholder Letter, reproduced by Amazon IR | https://s2.q4cdn.com/299287126/files/doc_financials/2021/ar/Amazon-2020-Shareholder-Letter-and-1997-Shareholder-Letter.pdf |
 | Amazon Leadership Principles | https://www.amazon.jobs/en/principles |
 | Michael Nygard — Documenting Architecture Decisions | https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions |
 | ADR GitHub organization — templates | https://adr.github.io/ |

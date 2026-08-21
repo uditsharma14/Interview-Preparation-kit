@@ -834,7 +834,7 @@ class TokenBucket {
 
 I'd give a practical recommendation: token bucket is generally my default choice for rate-limiting real client traffic, specifically because real traffic patterns are naturally bursty (a user opening several tabs at once, a batch of retries), and a token bucket accommodates that burstiness gracefully while still enforcing a meaningful long-run average, whereas a strict fixed-window limit can feel unnecessarily punishing for legitimate, momentarily-bursty usage that never actually exceeds a reasonable *average* rate. I'd reserve fixed-window for cases where implementation simplicity genuinely matters more than precision (a low-stakes, coarse-grained limit) and where the boundary-burst gap's consequence is acceptable, and I'd reach for a true sliding-window-log approach specifically when precise, gap-free rate enforcement is a hard requirement (a security-sensitive limit, like login-attempt throttling, where the boundary-burst gap could be meaningfully exploited).
 
-**Source:** [Cloudflare — Counting Things: Rate Limiting](https://blog.cloudflare.com/counting-things-a-set-of-minds/), [Redis Documentation — Rate Limiting Patterns](https://redis.io/docs/latest/develop/use/patterns/rate-limiting/)
+**Source:** [Cloudflare — Counting Things: Rate Limiting](https://blog.cloudflare.com/counting-things-a-lot-of-different-things/), [Redis Documentation — Rate Limiting Patterns](https://redis.io/docs/latest/develop/use-cases/rate-limiter/)
 
 ---
 
@@ -879,7 +879,7 @@ boolean isAllowed(String userId) {
 
 I'd bring up that Lua scripting's atomicity guarantee is genuinely the same underlying mechanism (single-threaded command execution) that makes plain individual Redis commands atomic in the first place — a Lua script is just a way of composing multiple operations into one larger atomic unit, rather than a fundamentally different mechanism, which is a useful mental model for recognizing when Lua is (and isn't) the right tool: any time a Redis-based operation needs multiple logically-related steps to happen as one atomic unit (a check-and-increment, a read-modify-write across multiple keys), Lua is the natural fit, whereas a single, already-atomic Redis command (a plain `INCR`, a single `SET NX`) doesn't need it at all. I'd also mention the operational trade-off worth being aware of: because a Lua script blocks Redis's single-threaded execution for its entire duration, a genuinely slow or unbounded Lua script (one that loops over a huge dataset, say) has exactly the same "blocks the whole node for everyone" risk as the large-key problem from question 14 — Lua scripts used for rate limiting or similar small, bounded operations are fine, but Lua isn't a place to put unbounded or heavy computation.
 
-**Source:** [Redis Documentation — Scripting with Lua](https://redis.io/docs/latest/develop/interact/programmability/eval-intro/), [Redis Documentation — Rate Limiting Patterns](https://redis.io/docs/latest/develop/use/patterns/rate-limiting/)
+**Source:** [Redis Documentation — Scripting with Lua](https://redis.io/docs/latest/develop/interact/programmability/eval-intro/), [Redis Documentation — Rate Limiting Patterns](https://redis.io/docs/latest/develop/use-cases/rate-limiter/)
 
 ---
 
@@ -1141,7 +1141,7 @@ redis-cli SLOWLOG GET 10    # the 10 most recent slow commands, with their
 
 I'd bring up that hit-rate monitoring specifically needs to be **segmented per key-pattern/cache-use-case**, not tracked as one single aggregate number across the entire Redis instance — an aggregate hit rate can look perfectly healthy overall while one specific, important cache use case has silently degraded (a regression in one feature's caching logic), simply because it's averaged out by many other, unrelated, still-healthy cache usages sharing the same instance. I'd advocate for per-prefix or per-feature hit-rate dashboards (tagging metrics by cache key namespace, not just a single instance-wide number) specifically so a regression in one specific caching use case is visible and alertable on its own, rather than hidden inside an instance-wide average that happens to still look fine.
 
-**Source:** [Redis Documentation — INFO command](https://redis.io/docs/latest/commands/info/), [Redis Documentation — Slow Log](https://redis.io/docs/latest/develop/reference/optimization/slowlog/)
+**Source:** [Redis Documentation — INFO command](https://redis.io/docs/latest/commands/info/), [Redis Documentation — Slow Log](https://redis.io/docs/latest/commands/slowlog/)
 
 ---
 
@@ -1221,8 +1221,8 @@ I'd emphasize the specific, generalizable insight this incident illustrates: a c
 | Redis Documentation — WAIT command | https://redis.io/docs/latest/commands/wait/ |
 | Martin Kleppmann — How to do distributed locking | https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html |
 | Redis Documentation — Distributed Locks with Redis | https://redis.io/docs/latest/develop/use/patterns/distributed-locks/ |
-| Cloudflare — Counting Things: Rate Limiting | https://blog.cloudflare.com/counting-things-a-set-of-minds/ |
-| Redis Documentation — Rate Limiting Patterns | https://redis.io/docs/latest/develop/use/patterns/rate-limiting/ |
+| Cloudflare — Counting Things: Rate Limiting | https://blog.cloudflare.com/counting-things-a-lot-of-different-things/ |
+| Redis Documentation — Rate Limiting Patterns | https://redis.io/docs/latest/develop/use-cases/rate-limiter/ |
 | Redis Documentation — Scripting with Lua | https://redis.io/docs/latest/develop/interact/programmability/eval-intro/ |
 | Redis Documentation — Transactions | https://redis.io/docs/latest/develop/interact/transactions/ |
 | Redis Documentation — Pipelining | https://redis.io/docs/latest/develop/use/pipelining/ |
@@ -1231,5 +1231,5 @@ I'd emphasize the specific, generalizable insight this incident illustrates: a c
 | Google SRE Workbook — Handling Overload | https://sre.google/sre-book/handling-overload/ |
 | Resilience4j — Circuit Breaker | https://resilience4j.readme.io/docs/circuitbreaker |
 | Redis Documentation — INFO command | https://redis.io/docs/latest/commands/info/ |
-| Redis Documentation — Slow Log | https://redis.io/docs/latest/develop/reference/optimization/slowlog/ |
+| Redis Documentation — Slow Log | https://redis.io/docs/latest/commands/slowlog/ |
 | Google SRE Book — Postmortem Culture | https://sre.google/sre-book/postmortem-culture/ |

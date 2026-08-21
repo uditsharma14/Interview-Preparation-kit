@@ -150,7 +150,7 @@ Sequencing across a single deployment, ALL FOUR layers additive-first:
 
 I'd emphasize that the actual hard part isn't designing each layer's expand/contract sequence in isolation — it's correctly **sequencing across layers**, since a mistake in ordering (e.g., publishing an event with a new required field before every consumer's schema-registry-enforced compatibility check has been updated to accept it) can break things even if each individual layer's own migration was internally correct. I'd advocate for a written, reviewed rollout plan explicitly listing the order of operations across all four layers for any deployment non-trivial enough to touch more than one of them simultaneously, treating this sequencing as a genuine design artifact worth reviewing before executing, not something improvised during the deployment itself.
 
-**Source:** [Vlad Mihalcea — Zero Downtime Database Migration](https://vladmihalcea.com/zero-downtime-database-migration/), [Confluent — Schema Evolution and Compatibility](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html)
+**Source:** [Martin Fowler & Pramod Sadalage — Evolutionary Database Design](https://martinfowler.com/articles/evodb.html), [Confluent — Schema Evolution and Compatibility](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html)
 
 ---
 
@@ -219,7 +219,7 @@ Hypothesis-testing checklist, in order:
 
 I'd bring up that "low CPU, low DB usage, growing lag" is almost a textbook signature for a blocked-on-I/O consumer thread specifically, and a thread dump taken *during* the lag window (not after the fact) is the single highest-value diagnostic step — it directly shows whether the processing thread is stuck waiting on something, and what, rather than requiring me to guess from aggregate metrics alone. I'd also connect this to the concurrency file's ForkJoinPool-blocking discussion as a reminder that "low CPU" specifically rules out compute-bound causes but says nothing about I/O-bound blocking, which is exactly the category this symptom shape points toward.
 
-**Source:** [Kafka Documentation — Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs), [Confluent — Consumer Lag](https://www.confluent.io/blog/kafka-consumer-lag-offset-explained/)
+**Source:** [Kafka Documentation — Consumer Configs](https://kafka.apache.org/documentation/#consumerconfigs), [Confluent Documentation — Monitor Consumer Lag](https://docs.confluent.io/platform/current/monitor/monitor-consumer-lag.html)
 
 ---
 
@@ -523,7 +523,7 @@ After split — MUST become an explicit saga, not a "hope it's still atomic":
 
 I'd bring up that the actual staff-level judgment here is recognizing which former single-transaction operations are **cheap and natural** to convert to a saga (genuinely independent steps with clear compensations) versus which ones reveal that the proposed service boundary itself cuts across a **cohesive unit that shouldn't have been split apart in the first place** — if an operation's invariants are so tightly coupled that no reasonable saga design feels natural, that's often a signal to reconsider the boundary (merge those two "services" back into one, at least for now) rather than force an awkward, fragile distributed-transaction workaround onto a boundary that doesn't reflect the domain's actual seams.
 
-**Source:** [Chris Richardson — Microservices Patterns (decomposition strategies)](https://microservices.io/patterns/decomposition/index.html), [Chris Richardson — Saga Pattern](https://microservices.io/patterns/data/saga.html)
+**Source:** [Chris Richardson — Microservices Patterns (decomposition strategies)](https://microservices.io/patterns/), [Chris Richardson — Saga Pattern](https://microservices.io/patterns/data/saga.html)
 
 ---
 
@@ -596,7 +596,7 @@ For a genuinely BREAKING change:
 
 I'd bring up that "unknown consumers" is itself a problem worth fixing at the platform level, not just worked around — requiring every consumer group to register itself (even informally, via a lightweight internal catalog/registry of "which team owns which consumer group, reading which topics") turns "we don't know who's still consuming this" into an answerable question, and I'd advocate for that kind of consumer-registry discipline as a genuine platform investment specifically because "we have no idea who might break" is a much worse position to operate a shared event contract from than having an explicit, even if imperfect, map of known consumers to check against before any breaking change is even considered.
 
-**Source:** [Confluent — Schema Evolution and Compatibility](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html), [Confluent — Consumer Lag](https://www.confluent.io/blog/kafka-consumer-lag-offset-explained/)
+**Source:** [Confluent — Schema Evolution and Compatibility](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html), [Confluent Documentation — Monitor Consumer Lag](https://docs.confluent.io/platform/current/monitor/monitor-consumer-lag.html)
 
 ---
 
@@ -759,7 +759,7 @@ Migration runbook structure:
 
 I'd bring up that the single most valuable, and most commonly skipped, step is actually **executing** the rollback in a realistic environment before the real migration — teams very often write a rollback script, review it, and consider it "tested" purely by reading it, without ever actually running it end-to-end against realistic data volume; the failure mode this misses is exactly the kind of thing that only surfaces under real execution (a rollback script with a subtle bug, a step that takes far longer against real data volume than anyone estimated, an assumption about intermediate state that doesn't actually hold) — and I'd treat "have we ever actually run this rollback, for real, and confirmed the system came back correctly" as a hard gate before approving any non-trivial production migration, not a nice-to-have.
 
-**Source:** [Vlad Mihalcea — Zero Downtime Database Migration](https://vladmihalcea.com/zero-downtime-database-migration/), [Google SRE Book — Managing Incidents](https://sre.google/sre-book/managing-incidents/)
+**Source:** [Martin Fowler & Pramod Sadalage — Evolutionary Database Design](https://martinfowler.com/articles/evodb.html), [Google SRE Book — Managing Incidents](https://sre.google/sre-book/managing-incidents/)
 
 ---
 
@@ -770,14 +770,14 @@ I'd bring up that the single most valuable, and most commonly skipped, step is a
 | Chris Richardson — Saga Pattern | https://microservices.io/patterns/data/saga.html |
 | Chris Richardson — Transactional Outbox Pattern | https://microservices.io/patterns/data/transactional-outbox.html |
 | Chris Richardson — Idempotent Consumer | https://microservices.io/patterns/communication-style/idempotent-consumer.html |
-| Chris Richardson — Microservices Patterns (Decomposition) | https://microservices.io/patterns/decomposition/index.html |
+| Chris Richardson — Microservices Patterns (Decomposition) | https://microservices.io/patterns/ |
 | Martin Fowler — MonolithFirst | https://martinfowler.com/bliki/MonolithFirst.html |
 | Stripe API — Idempotent Requests | https://stripe.com/docs/api/idempotent_requests |
 | Martin Kleppmann — Designing Data-Intensive Applications | https://dataintensive.net/ |
 | AWS — Multi-Region Application Architecture | https://aws.amazon.com/blogs/architecture/tag/multi-region/ |
-| Vlad Mihalcea — Zero Downtime Database Migration | https://vladmihalcea.com/zero-downtime-database-migration/ |
+| Martin Fowler & Pramod Sadalage — Evolutionary Database Design | https://martinfowler.com/articles/evodb.html |
 | Confluent — Schema Evolution and Compatibility | https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html |
-| Confluent — Consumer Lag | https://www.confluent.io/blog/kafka-consumer-lag-offset-explained/ |
+| Confluent Documentation — Monitor Consumer Lag | https://docs.confluent.io/platform/current/monitor/monitor-consumer-lag.html |
 | Kafka Documentation — Consumer Configs | https://kafka.apache.org/documentation/#consumerconfigs |
 | Google SRE Workbook — Handling Overload | https://sre.google/sre-book/handling-overload/ |
 | Resilience4j — Circuit Breaker | https://resilience4j.readme.io/docs/circuitbreaker |

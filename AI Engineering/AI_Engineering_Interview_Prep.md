@@ -439,7 +439,7 @@ Diagnostic sequence, isolating RETRIEVAL from GENERATION:
 
 I'd bring up that this retrieval-vs-generation isolation is the single highest-leverage diagnostic step for any RAG quality complaint, and skipping it (jumping straight to prompt-tuning when the actual problem is retrieval, or vice versa) wastes significant iteration time chasing the wrong half of the pipeline — I'd insist on building this small labeled eval set as one of the very first things done for any RAG system going to production, not as an afterthought reached for only once quality problems are already being reported, since it's exactly the tool that turns "the answers seem worse lately" into a specific, actionable diagnosis.
 
-**Source:** [Pinecone — RAG Evaluation](https://www.pinecone.io/learn/rag-evaluation/), [Ragas — RAG Evaluation Framework](https://docs.ragas.io/)
+**Source:** [Pinecone — RAG Evaluation](https://www.pinecone.io/learn/series/vector-databases-in-production-for-busy-engineers/rag-evaluation/), [Ragas — RAG Evaluation Framework](https://docs.ragas.io/)
 
 ---
 
@@ -671,7 +671,7 @@ GOOD tool design — narrow, validated, idempotent:
 
 I'd bring up that tool descriptions are themselves a genuine engineering artifact worth iterating on with real evaluation data (question 19) — a model choosing the wrong tool, or misusing a tool's parameters, is very often fixable by improving the tool's *description* (making its scope and usage conditions more explicit and unambiguous) rather than assuming the model is simply "not capable enough," and I'd treat measured tool-selection accuracy against a labeled eval set as the concrete signal for whether a tool's description needs improvement, the same way REST API design treats endpoint documentation clarity as directly affecting correct client usage.
 
-**Source:** [Anthropic — Building Effective Agents](https://www.anthropic.com/research/building-effective-agents), [OWASP — LLM Top 10 (Excessive Agency)](https://genai.owasp.org/llmrisk/llm08-excessive-agency/)
+**Source:** [Anthropic — Building Effective Agents](https://www.anthropic.com/research/building-effective-agents), [OWASP — LLM Top 10 (Excessive Agency)](https://genai.owasp.org/llm-top-10/)
 
 ---
 
@@ -724,7 +724,7 @@ def run_agent_loop(task, max_steps=10, max_cost_usd=1.00):
 
 I'd bring up that these bounds need to be treated as genuine, tested production safeguards, not theoretical limits assumed to never actually trigger — I'd want to see, in a real system, actual monitoring on how often agents hit the step/cost ceiling or get flagged as stuck-in-a-loop, since a high rate of hitting these limits is itself a signal that the agent's tools, prompt, or task scoping need improvement, not just that the safety net is working as designed. I'd also flag that the irreversible-action approval gate is directly analogous to the Transactions file's "compensation is impossible" design principle — for actions that genuinely can't be undone, the right architectural response is preventing the mistake before it happens, not planning to compensate for it afterward.
 
-**Source:** [Anthropic — Building Effective Agents](https://www.anthropic.com/research/building-effective-agents), [OWASP — LLM Top 10 (Excessive Agency)](https://genai.owasp.org/llmrisk/llm08-excessive-agency/)
+**Source:** [Anthropic — Building Effective Agents](https://www.anthropic.com/research/building-effective-agents), [OWASP — LLM Top 10 (Excessive Agency)](https://genai.owasp.org/llm-top-10/)
 
 ---
 
@@ -1047,7 +1047,7 @@ Mitigations:
 
 I'd bring up that prompt injection, unlike classic SQL injection, currently has **no fully reliable technical fix** — unlike a parameterized SQL query, which structurally eliminates SQL injection by construction, there's no equivalent guarantee that separates "instructions" from "data" with full reliability inside an LLM's own processing, since the model processes everything as text and its behavior is fundamentally probabilistic rather than governed by a strict, provable grammar. Given that, I'd frame the actual defense posture as **defense in depth and blast-radius limitation** (least-privilege tools, human approval gates for consequential actions per question 16, monitoring for anomalies) rather than any single mitigation being a complete, provable solution — an honest, important distinction from how the rest of this kit's security content (Spring Security file) can point to genuinely complete, structural fixes for classic web-application injection classes.
 
-**Source:** [OWASP — LLM Top 10 (Prompt Injection)](https://genai.owasp.org/llmrisk/llm01-prompt-injection/), [Simon Willison — Prompt Injection](https://simonwillison.net/series/prompt-injection/)
+**Source:** [OWASP — LLM Top 10 (Prompt Injection)](https://genai.owasp.org/llm-top-10/), [Simon Willison — Prompt Injection](https://simonwillison.net/series/prompt-injection/)
 
 ---
 
@@ -1238,7 +1238,7 @@ Postmortem structure I'd actually use for this:
 
 I'd bring up that this incident's real lesson generalizes directly from the Redis file's own postmortem question — a pipeline component (here, a RAG re-indexing job; there, a cache) can silently stop doing its job effectively while every *customer-facing* health signal continues looking perfectly normal, since the customer-facing feature was still responding, just with degraded underlying data — and I'd frame the durable, systemic fix as extending observability explicitly to every *upstream* component a production feature depends on (index freshness, embedding-pipeline health, tool-call success rates), not just the feature's own directly-observable uptime and latency, which is exactly the kind of gap that's invisible until an incident like this one forces it into view.
 
-**Source:** [Google SRE Book — Postmortem Culture](https://sre.google/sre-book/postmortem-culture/), [Pinecone — RAG Evaluation](https://www.pinecone.io/learn/rag-evaluation/)
+**Source:** [Google SRE Book — Postmortem Culture](https://sre.google/sre-book/postmortem-culture/), [Pinecone — RAG Evaluation](https://www.pinecone.io/learn/series/vector-databases-in-production-for-busy-engineers/rag-evaluation/)
 
 ---
 
@@ -1264,7 +1264,7 @@ I'd bring up that this incident's real lesson generalizes directly from the Redi
 | LangChain — Text Splitters | https://python.langchain.com/docs/how_to/#text-splitters |
 | Elastic — Hybrid Search | https://www.elastic.co/what-is/hybrid-search |
 | Pinecone — Hybrid Search | https://www.pinecone.io/learn/hybrid-search-intro/ |
-| Pinecone — RAG Evaluation | https://www.pinecone.io/learn/rag-evaluation/ |
+| Pinecone — RAG Evaluation | https://www.pinecone.io/learn/series/vector-databases-in-production-for-busy-engineers/rag-evaluation/ |
 | Ragas — RAG Evaluation Framework | https://docs.ragas.io/ |
 | Cohere — Rerank | https://docs.cohere.com/docs/rerank-overview |
 | LangChain — Indexing API | https://python.langchain.com/docs/how_to/indexing/ |
@@ -1272,7 +1272,7 @@ I'd bring up that this incident's real lesson generalizes directly from the Redi
 | Anthropic — Multi-Agent Research System | https://www.anthropic.com/engineering/built-multi-agent-research-system |
 | LangChain — Agents | https://python.langchain.com/docs/concepts/agents/ |
 | Yao et al. — ReAct | https://arxiv.org/abs/2210.03629 |
-| OWASP — LLM Top 10 | https://genai.owasp.org/llmrisk/ |
+| OWASP — LLM Top 10 | https://genai.owasp.org/llm-top-10/ |
 | Simon Willison — Prompt Injection | https://simonwillison.net/series/prompt-injection/ |
 | OpenAI Evals | https://github.com/openai/evals |
 | Anthropic — Test and Evaluate | https://docs.anthropic.com/en/docs/test-and-evaluate/develop-tests |

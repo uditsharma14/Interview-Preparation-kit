@@ -28,7 +28,7 @@ COMMIT;
 
 I'd bring up that "consistency" in ACID is a genuinely different, narrower notion than "consistency" in the CAP theorem sense — a common point of confusion in interviews and in casual conversation alike. ACID consistency means "the database's own declared constraints are never violated by a committed transaction" (a foreign key always points at a row that exists, a unique constraint is never doubly satisfied); CAP consistency means "every read sees the most recent write, across a distributed set of replicas/nodes." A system can be perfectly ACID-consistent on a single node while being eventually (not CAP-)consistent across replicas — these are separate axes, and conflating them in a distributed-systems discussion is a real, common mistake worth explicitly avoiding.
 
-**Source:** [Jim Gray — The Transaction Concept](https://www.cs.utexas.edu/~lorenzo/corsi/cs380d/papers/gray81.pdf), [PostgreSQL Documentation — Transaction Isolation](https://www.postgresql.org/docs/current/transaction-iso.html)
+**Source:** [Jim Gray — The Transaction Concept](https://jimgray.azurewebsites.net/papers/thetransactionconcept.pdf), [PostgreSQL Documentation — Transaction Isolation](https://www.postgresql.org/docs/current/transaction-iso.html)
 
 ---
 
@@ -449,7 +449,7 @@ public void placeOrderFixed(Order order) {
 
 I'd bring up that this is precisely why the "reserve inventory, then charge payment, then confirm" flow needs to be modeled as a saga (question 19/20) rather than one long-held database transaction spanning multiple external calls — the whole architectural point of a saga is to break a multi-step, multi-system operation into a sequence of independently-committing local transactions with compensating actions for failure, specifically *because* holding one database transaction open across multiple network calls (to a payment gateway, in this example) is both a severe reliability/scalability risk and, in a genuinely distributed system, often impossible in the first place (the payment gateway isn't part of your database and can't participate in the same ACID transaction anyway). I'd frame this as the direct, concrete motivation for why sagas exist as a pattern, not an abstract distributed-systems theory — this exact anti-pattern is the thing they're designed to replace.
 
-**Source:** [Vlad Mihalcea — Why you should avoid transactions spanning multiple requests/calls](https://vladmihalcea.com/spring-transaction-propagation/), [Chris Richardson — Saga Pattern](https://microservices.io/patterns/data/saga.html)
+**Source:** [Vlad Mihalcea — Why you should avoid transactions spanning multiple requests/calls](https://vladmihalcea.com/spring-transaction-best-practices/), [Chris Richardson — Saga Pattern](https://microservices.io/patterns/data/saga.html)
 
 ---
 
@@ -826,7 +826,7 @@ void handleOrderPlaced(OrderPlacedEvent event) {
 
 I'd bring up that this is exactly the concrete instance of Kafka's broader "why must consumers remain idempotent even when Kafka transactions are used" principle from the Kafka/Messaging category — the outbox pattern's relay-side duplicate risk is just one specific *source* of duplicate delivery among several (producer retries, consumer rebalances re-processing uncommitted offsets), and the fix is the same regardless of the specific source: idempotent consumers, not trying to eliminate every possible duplicate-delivery cause at the producing/relaying side, since that's an unbounded and ultimately unwinnable game across a genuinely distributed system. I'd also mention that "mark as published, then delete/flag the outbox row" itself needs to happen as its own transaction distinct from the original business-write transaction (it happens later, in the relay process, not atomically with the original save) — and getting the ordering right here (publish first, then mark-as-published, accepting the crash-after-publish-before-mark gap as the acceptable at-least-once risk, rather than mark-as-published-first-then-publish, which would risk the opposite, worse failure of marking something published that never actually made it to Kafka at all) is a subtle but important implementation detail.
 
-**Source:** [Chris Richardson — Transactional Outbox Pattern](https://microservices.io/patterns/data/transactional-outbox.html), [Confluent — Idempotent Consumer Pattern](https://www.confluent.io/blog/exactly-once-semantics-are-possible-here-is-how-apache-kafka-does-it/)
+**Source:** [Chris Richardson — Transactional Outbox Pattern](https://microservices.io/patterns/data/transactional-outbox.html), [Confluent — Idempotent Consumer Pattern](https://www.confluent.io/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/)
 
 ---
 
@@ -861,7 +861,7 @@ void handleOrderPlaced(OrderPlacedEvent event) { // it has NO relationship to,
 
 I'd bring up that genuinely atomic "Kafka offset commit + external database write" coordination *is* theoretically achievable via distributed transactions (XA/2PC, question 22) spanning both systems, but this is rarely done in practice — it requires both the database and the Kafka client to support and correctly implement the two-phase commit protocol together, adds significant latency and availability cost (2PC's coordinator becomes a single point of blocking failure for both systems), and is exactly the kind of heavyweight distributed-transaction machinery that sagas and idempotent-consumer patterns exist specifically to avoid needing. I'd frame the practical, almost-universally-adopted industry answer as: don't try to make the database write and the Kafka offset commit atomic with each other at all — instead, make the database write **idempotent** (track processed event IDs, as in question 20), and accept that a message might be redelivered and reprocessed after a crash, relying on idempotency rather than cross-system atomicity to achieve the correct end result.
 
-**Source:** [Confluent — Exactly-Once Semantics in Apache Kafka](https://www.confluent.io/blog/exactly-once-semantics-are-possible-here-is-how-apache-kafka-does-it/), [Kafka Documentation — Transactions](https://kafka.apache.org/documentation/#semantics)
+**Source:** [Confluent — Exactly-Once Semantics in Apache Kafka](https://www.confluent.io/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/), [Kafka Documentation — Transactions](https://kafka.apache.org/documentation/#semantics)
 
 ---
 
@@ -1028,7 +1028,7 @@ void handlePaymentRequest(PaymentRequestEvent event) { // business effect, atomi
 
 I'd bring up that the message ID used for this check has to be genuinely stable and unique across redeliveries specifically — if the message ID is generated fresh by the producer on every send (rather than once, at the point the underlying business event was first created, as in the outbox pattern's approach from question 20), a producer-side retry that resends the "same" logical message with a *new* ID would defeat the whole idempotency mechanism, since the consumer would see it as a genuinely new, never-before-seen message. I'd also mention that for very high-throughput consumers, the processed-message-tracking table itself needs its own retention/cleanup strategy (old entries can eventually be purged once they're old enough that no realistic redelivery window could still produce a duplicate for them) — an unbounded, ever-growing "processed messages" table is a real, if slow-building, operational cost worth planning for from the start rather than discovering as a table-bloat problem months into production.
 
-**Source:** [Confluent — Idempotent Consumer Pattern](https://www.confluent.io/blog/exactly-once-semantics-are-possible-here-is-how-apache-kafka-does-it/), [Chris Richardson — Idempotent Consumer](https://microservices.io/patterns/communication-style/idempotent-consumer.html)
+**Source:** [Confluent — Idempotent Consumer Pattern](https://www.confluent.io/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/), [Chris Richardson — Idempotent Consumer](https://microservices.io/patterns/communication-style/idempotent-consumer.html)
 
 ---
 
@@ -1202,7 +1202,7 @@ void saveOrder(Order order) {
 
 I'd bring up that the "migrate" phase's verification step — confirming every consumer has genuinely stopped relying on the old structure before contracting — deserves the exact same rigor as the REST API Design file's endpoint-deprecation discussion: measure actual usage (query logs, application metrics on which code path/column is being read) rather than assuming a deploy completed successfully means every instance is running the new code, since a stuck deployment, a long-lived batch job on an old version, or an unexpected rollback mid-migration could all mean the old structure is still genuinely load-bearing longer than expected. I'd also mention that for genuinely large tables, even the "expand" phase's `ALTER TABLE ADD COLUMN` needs care — modern PostgreSQL versions handle a nullable column addition without a full table rewrite (fast, metadata-only), but adding a column with a non-null default, or certain other schema changes, can still trigger a full table rewrite that locks the table for the operation's duration on some database versions — this is exactly the kind of database-version-specific detail worth verifying explicitly (via `EXPLAIN`/documentation for the specific database version in use) rather than assuming based on general schema-migration folklore, before running it against a large, heavily-used production table.
 
-**Source:** [Vlad Mihalcea — Zero Downtime Database Migration](https://vladmihalcea.com/zero-downtime-database-migration/), [PostgreSQL Documentation — ALTER TABLE](https://www.postgresql.org/docs/current/sql-altertable.html)
+**Source:** [Martin Fowler & Pramod Sadalage — Evolutionary Database Design](https://martinfowler.com/articles/evodb.html), [PostgreSQL Documentation — ALTER TABLE](https://www.postgresql.org/docs/current/sql-altertable.html)
 
 ---
 
@@ -1247,7 +1247,7 @@ I'd bring up that this reality — some workflows genuinely have a true point of
 
 | Topic | Link |
 |---|---|
-| Jim Gray — The Transaction Concept | https://www.cs.utexas.edu/~lorenzo/corsi/cs380d/papers/gray81.pdf |
+| Jim Gray — The Transaction Concept | https://jimgray.azurewebsites.net/papers/thetransactionconcept.pdf |
 | PostgreSQL Documentation — Transaction Isolation | https://www.postgresql.org/docs/current/transaction-iso.html |
 | Berenson et al. — A Critique of ANSI SQL Isolation Levels | https://www.microsoft.com/en-us/research/publication/a-critique-of-ansi-sql-isolation-levels/ |
 | PostgreSQL Documentation — MVCC | https://www.postgresql.org/docs/current/mvcc-intro.html |
@@ -1256,7 +1256,7 @@ I'd bring up that this reality — some workflows genuinely have a true point of
 | HikariCP — Pool Sizing | https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing |
 | Spring Framework Reference — Understanding AOP Proxies | https://docs.spring.io/spring-framework/reference/core/aop/proxying.html |
 | Spring Framework Reference — Rollback Rules | https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html |
-| Vlad Mihalcea — Spring Transaction Propagation | https://vladmihalcea.com/spring-transaction-propagation/ |
+| Vlad Mihalcea — Spring Transaction Propagation | https://vladmihalcea.com/spring-transaction-best-practices/ |
 | Spring Framework Reference — Transactional Events | https://docs.spring.io/spring-framework/reference/data-access/transaction/event.html |
 | PostgreSQL Documentation — Explicit Locking / Deadlocks | https://www.postgresql.org/docs/current/explicit-locking.html |
 | Spring Retry documentation | https://github.com/spring-projects/spring-retry |
@@ -1264,7 +1264,7 @@ I'd bring up that this reality — some workflows genuinely have a true point of
 | PostgreSQL Documentation — Constraints | https://www.postgresql.org/docs/current/ddl-constraints.html |
 | Chris Richardson — Transactional Outbox Pattern | https://microservices.io/patterns/data/transactional-outbox.html |
 | Debezium documentation | https://debezium.io/documentation/reference/stable/index.html |
-| Confluent — Exactly-Once Semantics in Apache Kafka | https://www.confluent.io/blog/exactly-once-semantics-are-possible-here-is-how-apache-kafka-does-it/ |
+| Confluent — Exactly-Once Semantics in Apache Kafka | https://www.confluent.io/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/ |
 | Kafka Documentation — Transactions | https://kafka.apache.org/documentation/#semantics |
 | Pat Helland — Life Beyond Distributed Transactions | https://cidrdb.org/cidr2007/papers/cidr07p15.pdf |
 | Chris Richardson — Saga Pattern | https://microservices.io/patterns/data/saga.html |
@@ -1274,5 +1274,5 @@ I'd bring up that this reality — some workflows genuinely have a true point of
 | AWS Architecture Blog — Exponential Backoff and Jitter | https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/ |
 | Stripe API — Idempotent Requests | https://stripe.com/docs/api/idempotent_requests |
 | PostgreSQL Documentation — pg_stat_activity | https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-ACTIVITY-VIEW |
-| Vlad Mihalcea — Zero Downtime Database Migration | https://vladmihalcea.com/zero-downtime-database-migration/ |
+| Martin Fowler & Pramod Sadalage — Evolutionary Database Design | https://martinfowler.com/articles/evodb.html |
 | PostgreSQL Documentation — ALTER TABLE | https://www.postgresql.org/docs/current/sql-altertable.html |
