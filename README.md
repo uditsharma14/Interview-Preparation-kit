@@ -23,12 +23,12 @@ Content is organized into three broad folders rather than one-per-topic subfolde
 
 ## Engineering Leadership
 
-*(reserved for Lead/Staff engineering and technical leadership content)*
+- **[Lead/Staff Engineering & Technical Leadership Interview Prep](Engineering%20Leadership/Engineering_Leadership_Interview_Prep.md)** — Architectural decision-making, influence without authority, platform standards, incident leadership, technical strategy, and what Staff-level impact looks like beyond code.
 
 ## How to use this
 
 Each question follows the same structure:
 
 1. **How I'd say it** — a conversational, interview-ready explanation.
-2. **Code** — a snippet to sketch on a whiteboard or IDE to back up the explanation.
+2. **Code / Framework** — a snippet or a decision framework/template to sketch on a whiteboard to back up the explanation.
 3. **Where staff-level interviews push further** — the deeper follow-up that separates a mid-level answer from a staff-level one.
