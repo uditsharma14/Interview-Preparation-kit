@@ -425,6 +425,214 @@ I'd push past "how do you diagnose it once it's already a problem" into "how do 
 
 ---
 
+## 11. How Would You Build an LRU Cache Using `LinkedHashMap`?
+
+**How I'd say it:**
+
+"`LinkedHashMap` is a `HashMap` that also threads every entry through a doubly-linked list, so iteration order is predictable instead of the hash-bucket chaos you get from plain `HashMap`. By default that order is insertion order, but there's a constructor flag — `accessOrder = true` — that switches it to *access* order instead: every `get()` (and every `put()` on an existing key) moves that entry to the end of the list as 'most recently used.'
+
+Once you have access-order tracking, an LRU cache is almost free: the least-recently-used entry is always sitting right at the front of the iteration order, which is exactly what `removeEldestEntry()` is a hook for. Override it to return `true` once the map exceeds your capacity, and `LinkedHashMap` evicts the oldest entry for you on the very next `put()` — no manual bookkeeping, no separate linked list to maintain yourself."
+
+**Code:**
+
+```java
+class LRUCache<K, V> extends LinkedHashMap<K, V> {
+    private final int capacity;
+
+    LRUCache(int capacity) {
+        // initialCapacity, loadFactor, accessOrder=true — the last flag is the whole trick
+        super(16, 0.75f, true);
+        this.capacity = capacity;
+    }
+
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+        return size() > capacity; // called automatically after every put()
+    }
+}
+
+LRUCache<Integer, String> cache = new LRUCache<>(3);
+cache.put(1, "a");
+cache.put(2, "b");
+cache.put(3, "c");
+cache.get(1);           // touching 1 marks it most-recently-used
+cache.put(4, "d");       // capacity exceeded — evicts 2, the true LRU entry, not 1
+System.out.println(cache.keySet()); // [3, 1, 4]
+```
+
+**Where staff-level interviews push further:**
+
+I'd flag that this is a fine single-threaded or low-contention LRU implementation, but it is not thread-safe out of the box — every `get()` mutates the internal linked list (even reads are writes here, structurally), so concurrent access needs external synchronization, e.g. wrapping the whole thing and synchronizing `get`/`put` together, which reintroduces the single-lock bottleneck from question 3. For a genuinely concurrent LRU at scale, I'd point at `Caffeine` (or Guava's `CacheBuilder` before it) — it implements approximate LRU/LFU eviction (via a Window TinyLFU policy in Caffeine's case) with striped, low-contention internals rather than one global lock, which is what production caching layers actually reach for instead of hand-rolling `LinkedHashMap`.
+
+**Source:** [`LinkedHashMap` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/LinkedHashMap.html) — see `removeEldestEntry` and the access-order constructor.
+
+---
+
+## 12. `TreeMap`/`TreeSet` — How Does Ordering Work, and What Breaks If `compareTo` Is Inconsistent With `equals`?
+
+**How I'd say it:**
+
+"`TreeMap` and `TreeSet` keep their entries sorted at all times, backed by a red-black tree — so `get`, `put`, `contains`, and `remove` are all O(log n), not O(1) like a hash-based map, in exchange for always-sorted iteration and range operations like `headMap`, `tailMap`, `ceilingKey`, and `floorKey` that a `HashMap` simply can't offer.
+
+The critical thing is that a `TreeMap` never calls `equals()` or `hashCode()` at all — it determines whether two keys are 'the same' purely through `compareTo()` (or a supplied `Comparator`) returning zero. Most of the time that lines up with `equals()` returning `true` for the same pair, but if you write a `compareTo()` that isn't consistent with `equals()`, the map silently violates the general `Map` contract: you can end up with two keys that `equals()` says are different objects, yet the tree treats them as the same slot and only one of them is ever retrievable. Nothing throws — it just silently behaves differently than a `HashMap` would for the exact same objects."
+
+**Code:**
+
+```java
+class Employee implements Comparable<Employee> {
+    String name;
+    double salary;
+    Employee(String name, double salary) { this.name = name; this.salary = salary; }
+
+    // Sorted by salary only — but equals() (inherited from Object) is identity-based
+    @Override
+    public int compareTo(Employee other) {
+        return Double.compare(this.salary, other.salary);
+    }
+}
+
+Set<Employee> byName = new TreeSet<>(); // ordering, not equals(), decides membership
+byName.add(new Employee("Alice", 90_000));
+byName.add(new Employee("Bob", 90_000)); // same salary as Alice — compareTo() returns 0
+
+System.out.println(byName.size()); // 1 — Bob was silently treated as a duplicate of Alice,
+                                     // even though .equals() would say they're different people
+
+// The fix: make compareTo() a genuine total order that agrees with equals(),
+// e.g. break ties on a unique field:
+@Override
+public int compareTo(Employee other) {
+    int bySalary = Double.compare(this.salary, other.salary);
+    return bySalary != 0 ? bySalary : this.name.compareTo(other.name);
+}
+```
+
+**Where staff-level interviews push further:**
+
+I'd cite the Javadoc directly here, because this is exactly the kind of subtlety that's spelled out explicitly rather than left to intuition: *"the ordering maintained by a sorted set (or map) must be consistent with equals if it is to correctly implement the Set (or Map) interface"* — and the Javadoc goes further to say a sorted set can technically be used *without* that consistency, but every operation that relies on `equals()` elsewhere (like passing the set to another collection's `addAll`) will misbehave. I'd also mention `NavigableMap`/`NavigableSet` (the interfaces `TreeMap`/`TreeSet` implement) as the thing that unlocks the real reason to reach for a tree structure at all — `floorEntry`, `ceilingEntry`, `subMap` — which come up constantly in scheduling, range-query, and interval-overlap problems where a hash-based structure genuinely can't help.
+
+**Source:** [`TreeMap` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/TreeMap.html), [`Comparable` Javadoc — consistency with equals](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Comparable.html)
+
+---
+
+## 13. What Is `WeakHashMap`, and When Would You Actually Reach for It?
+
+**How I'd say it:**
+
+"A normal `HashMap` holds a strong reference to every key, which means a key can never be garbage collected as long as it's sitting in the map — even if nothing else in the program references it anymore. `WeakHashMap` holds its keys through `WeakReference`s instead, so once a key becomes otherwise unreachable, the garbage collector is free to reclaim it, and `WeakHashMap` will lazily clear out that now-dead entry itself, typically the next time you touch the map.
+
+The practical use case is a cache keyed by an object's *identity/lifecycle*, where you want the cache entry to disappear automatically the moment nothing else cares about that key anymore — metadata tied to a class, listener bookkeeping tied to some external object, that kind of thing — without you having to explicitly remove entries yourself and risk the same kind of leak we talked about in question 10."
+
+**Code:**
+
+```java
+Map<Object, String> cache = new WeakHashMap<>();
+
+Object key = new Object();
+cache.put(key, "metadata for this object");
+System.out.println(cache.size()); // 1
+
+key = null;         // no other strong reference to the original key exists anymore
+System.gc();        // in real code you'd never force this — for demonstration only
+
+// After a GC cycle, the entry may already be gone — not guaranteed to be immediate,
+// but the point is: nobody had to call cache.remove() for it to happen.
+System.out.println(cache.size()); // likely 0, though timing depends on the GC
+```
+
+**Where staff-level interviews push further:**
+
+I'd flag the two things that trip people up in practice. First: it's only the *keys* that are weakly referenced — the values are held strongly, so if a value indirectly holds a strong reference back to its own key (a common accident with inner classes or listener objects capturing an outer `this`), the key never actually becomes unreachable and you get no cleanup at all, silently defeating the whole point. Second: entry removal happens lazily, tied to GC activity and to when you next interact with the map — it is explicitly not deterministic or immediate, so `WeakHashMap` is the wrong tool if you need predictable eviction timing (that's a job for size- or time-based eviction in something like Caffeine, not automatic GC-driven cleanup). I'd contrast it with `WeakReference`/`SoftReference` directly used in a manual cache, and with `ThreadLocal`'s own internal use of weak references for its keys, which is the same underlying idea applied to a different leak.
+
+**Source:** [`WeakHashMap` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/WeakHashMap.html), [`java.lang.ref.WeakReference` Javadoc](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ref/WeakReference.html)
+
+---
+
+## 14. `Arrays.asList()`, `List.of()`, and `Collections.unmodifiableList()` — What Are the Actual Mutability Differences?
+
+**How I'd say it:**
+
+"These three get lumped together as 'ways to make a list' but they have genuinely different mutability semantics, and mixing them up is a real production bug source, not just trivia.
+
+`Arrays.asList()` returns a fixed-size list backed *directly* by the array you passed in — `set()` works and writes through to the underlying array, but `add()` and `remove()` throw `UnsupportedOperationException` because the list can't resize an array. The 'backed by the array' part is the sharp edge: mutating the list through `set()` mutates the original array too, and vice versa, which surprises people who think they've made an independent copy.
+
+`List.of()` (Java 9+) is genuinely, fully immutable — `set()`, `add()`, and `remove()` all throw. It also rejects `null` elements outright at construction time, which `Arrays.asList()` does not.
+
+`Collections.unmodifiableList()` wraps an existing list in a read-only *view* — you can't mutate through the wrapper, but if you keep a reference to the original underlying list and mutate that directly, the 'immutable' view changes right along with it, because it's not a copy, just a facade."
+
+**Code:**
+
+```java
+// Arrays.asList: fixed-size, but writes through to the backing array
+Integer[] arr = {1, 2, 3};
+List<Integer> backed = Arrays.asList(arr);
+backed.set(0, 99);
+System.out.println(arr[0]); // 99 — the "list" and the array are the same memory
+backed.add(4); // throws UnsupportedOperationException — can't resize an array
+
+// List.of: truly immutable, and rejects null up front
+List<Integer> immutable = List.of(1, 2, 3);
+immutable.set(0, 99); // throws UnsupportedOperationException
+// List.of(1, null, 3); // throws NullPointerException immediately at creation
+
+// Collections.unmodifiableList: a view, not a copy — the underlying list can still change
+List<Integer> mutable = new ArrayList<>(List.of(1, 2, 3));
+List<Integer> view = Collections.unmodifiableList(mutable);
+mutable.add(4);
+System.out.println(view); // [1, 2, 3, 4] — the "unmodifiable" view just showed a new element
+```
+
+**Where staff-level interviews push further:**
+
+I'd frame this as an API-design lesson worth internalizing: if you're handing a collection out of a method as something the caller shouldn't mutate, `Collections.unmodifiableList()` around a mutable list you still hold onto is a leaky abstraction — the caller can't mutate it directly, but you can still change it out from under them, which is confusing for anyone reading only the caller's code. `List.of()` (or `List.copyOf()` if you need to defensively snapshot an incoming list) gives a much stronger, harder-to-misuse guarantee. I'd also mention `List.copyOf()` specifically as the right tool when you're handed a mutable list from a caller and want a genuinely independent, immutable snapshot rather than another view over their list.
+
+**Source:** [`Arrays#asList` Javadoc](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Arrays.html#asList(T...)), [`List#of` Javadoc](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html#of()), [`Collections#unmodifiableList` Javadoc](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collections.html#unmodifiableList(java.util.List))
+
+---
+
+## 15. How Does `PriorityQueue` Work Internally, and What Are Its Complexity Trade-Offs?
+
+**How I'd say it:**
+
+"`PriorityQueue` is a binary heap stored in a plain array — not a linked structure, no per-node object overhead. It maintains the heap property: every parent is less-than-or-equal to (for a min-heap, the default) both its children, according to natural ordering or a supplied `Comparator`. That property guarantees the smallest element is always at index 0, so `peek()` is O(1).
+
+`offer()`/`add()` puts the new element at the end of the array and 'sifts it up' — swapping with its parent repeatedly while it's smaller than that parent — which is O(log n). `poll()` removes the root, moves the *last* element into its place, and 'sifts it down' into the correct position, also O(log n). What it's explicitly not good for: it only guarantees the *root* is the minimum — the rest of the array is not fully sorted, so if you need the full ordering, you drain it with repeated `poll()` calls (which gives you sorted output, that's literally how heapsort works) rather than iterating the backing array directly, which returns elements in unspecified order."
+
+**Code:**
+
+```java
+// Min-heap by default — smallest offered is always polled first
+PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+minHeap.offer(5);
+minHeap.offer(1);
+minHeap.offer(3);
+System.out.println(minHeap.poll()); // 1
+System.out.println(minHeap.poll()); // 3
+
+// Max-heap: supply a reversed comparator — there's no separate "MaxPriorityQueue" type
+PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Comparator.reverseOrder());
+maxHeap.offer(5);
+maxHeap.offer(1);
+maxHeap.offer(3);
+System.out.println(maxHeap.poll()); // 5
+
+// The classic gotcha: iteration order is NOT sorted order
+PriorityQueue<Integer> pq = new PriorityQueue<>(List.of(5, 1, 3, 2, 4));
+System.out.println(pq); // some heap-internal array order, NOT [1, 2, 3, 4, 5]
+// To get sorted output, you must drain it:
+List<Integer> sorted = new ArrayList<>();
+while (!pq.isEmpty()) sorted.add(pq.poll());
+System.out.println(sorted); // [1, 2, 3, 4, 5] — correct, via repeated poll()
+```
+
+**Where staff-level interviews push further:**
+
+I'd bring up that `PriorityQueue` is unbounded and grows dynamically like `ArrayList`, but it's explicitly *not* thread-safe — for a concurrent producer/consumer priority queue, the answer is `PriorityBlockingQueue`, which wraps the same heap logic with locking and blocking semantics for `take()`/`put()`. I'd also flag `remove(Object)` as a trap: removing an arbitrary (non-root) element is O(n), not O(log n), because the heap has no efficient way to locate an arbitrary value — only the root is known in O(1). That asymmetry matters for problems like 'top-K streaming' or Dijkstra's algorithm with decrease-key semantics, where naive implementations that repeatedly remove-and-reinsert arbitrary entries can quietly degrade a solution from O(n log n) to O(n²) without the interviewee noticing.
+
+**Source:** [`PriorityQueue` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html), [`PriorityBlockingQueue` Javadoc](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/PriorityBlockingQueue.html)
+
+---
+
 ## Sources & Further Reading — Consolidated
 
 | Topic | Link |
@@ -439,5 +647,15 @@ I'd push past "how do you diagnose it once it's already a problem" into "how do 
 | JLS §5.1.7 — Boxing Conversion (Integer cache rule) | https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html |
 | `jcmd` diagnostic tool | https://docs.oracle.com/en/java/javase/21/docs/specs/man/jcmd.html |
 | `java` launcher options (incl. `HeapDumpOnOutOfMemoryError`) | https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html |
+| `LinkedHashMap` (JDK 21 Javadoc, incl. `removeEldestEntry`) | https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/LinkedHashMap.html |
+| `TreeMap` (JDK 21 Javadoc) | https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/TreeMap.html |
+| `Comparable` Javadoc (consistency with equals) | https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Comparable.html |
+| `WeakHashMap` (JDK 21 Javadoc) | https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/WeakHashMap.html |
+| `java.lang.ref.WeakReference` Javadoc | https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ref/WeakReference.html |
+| `Arrays#asList` Javadoc | https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Arrays.html#asList(T...) |
+| `List#of` Javadoc | https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html#of() |
+| `Collections#unmodifiableList` Javadoc | https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collections.html#unmodifiableList(java.util.List) |
+| `PriorityQueue` (JDK 21 Javadoc) | https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html |
+| `PriorityBlockingQueue` (JDK 21 Javadoc) | https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/PriorityBlockingQueue.html |
 
 **One assumption I made:** I read "mid to staff level" as each answer working as a complete, solid mid-level response on its own, with a clearly separated "staff-level" layer you can add if the interviewer probes further — rather than two entirely separate documents. If you'd rather have a shorter mid-level-only version split out from a deeper staff-only one, let me know and I'll restructure it that way.
