@@ -334,7 +334,7 @@ First, the negative-result marker needs to be **unambiguous** — distinguishabl
 **Code:**
 
 ```java
-private static final String NOT_FOUND_MARKER = " NOT_FOUND "; // unambiguous
+private static final String NOT_FOUND_MARKER = "__NOT_FOUND__"; // unambiguous
 // sentinel — cannot collide with any legitimate serialized product value
 
 Optional<Product> getProduct(String id) {
