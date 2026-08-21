@@ -1,5 +1,4 @@
-# Kafka Deep-Dive Interview Prep (Expanded)
-
+# Kafka Deep-Dive Interview Prep
 ---
 
 ## PART 1: CONCEPTUAL FOUNDATIONS
