@@ -712,7 +712,7 @@ Snapshot optimization — avoid replaying the ENTIRE history every time:
 
 I'd bring up that event sourcing is a genuinely significant architectural commitment, not a lightweight technique to sprinkle in — schema evolution for events themselves needs the same rigor as the Kafka file's schema-compatibility discussion (an old event format needs to remain replayable forever, since the entire history must stay reconstructable), and I'd advocate reserving it specifically for domains where the audit trail and point-in-time-reconstruction capabilities are genuinely, directly valuable to the business (financial ledgers, regulated industries with real audit requirements) rather than adopting it broadly across a whole system "because it's a good pattern" — for most ordinary business entities, a traditional CRUD model plus a separate, deliberate audit-log table gets most of the practical benefit at a fraction of the architectural complexity and team-learning-curve cost.
 
-**Source:** [Martin Fowler — Event Sourcing](https://martinfowler.com/eaaDev/EventSourcing.html), [Greg Young — CQRS and Event Sourcing](https://cqrs.files.wordpress.com/2010/11/cqrs_documents.pdf)
+**Source:** [Martin Fowler — Event Sourcing](https://martinfowler.com/eaaDev/EventSourcing.html), [Greg Young — CQRS and Event Sourcing](https://cqrs.wordpress.com/wp-content/uploads/2010/11/cqrs_documents.pdf)
 
 ---
 
@@ -749,7 +749,7 @@ FOUR genuinely independent combinations, not one single "pattern":
 
 I'd bring up that explicitly separating these two decisions in a design conversation is itself a useful discipline — I'd want to hear a team justify "why event sourcing" and "why CQRS" as two distinct cost-benefit arguments, not one bundled "let's do the event-sourcing-CQRS thing" decision, since I've seen teams adopt both together, by default, having only really needed one (usually just a CQRS read model, without the much bigger commitment of making events the actual system of record).
 
-**Source:** [Greg Young — CQRS and Event Sourcing](https://cqrs.files.wordpress.com/2010/11/cqrs_documents.pdf), [Martin Fowler — CQRS](https://martinfowler.com/bliki/CQRS.html)
+**Source:** [Greg Young — CQRS and Event Sourcing](https://cqrs.wordpress.com/wp-content/uploads/2010/11/cqrs_documents.pdf), [Martin Fowler — CQRS](https://martinfowler.com/bliki/CQRS.html)
 
 ---
 
@@ -1036,7 +1036,7 @@ Polyrepo — independent ownership/tooling, harder cross-service coordination:
 
 I'd bring up that this decision correlates strongly with organizational scale and team autonomy needs (tying to the Tech Leadership file's shared-platform discussion) — very large organizations with genuinely independent teams (Google, and famously a monorepo at truly enormous scale, being a notable counter-example that only works because of massive, dedicated investment in custom tooling) often lean polyrepo specifically for team autonomy, while other equally large organizations successfully run monorepos specifically because they value atomic cross-cutting changes enough to invest heavily in the tooling that makes a monorepo scale. I'd frame the honest answer as: there's no universally correct choice, and I'd want to know the organization's actual priorities (autonomy vs. cross-service coordination ease) and its willingness to invest in the tooling either choice requires at scale, before recommending one over the other.
 
-**Source:** [Google — Why Google Stores Billions of Lines of Code in a Single Repository](https://cacm.acm.org/magazines/2016/7/204032-why-google-stores-billions-of-lines-of-code-in-a-single-repository/), [Sam Newman — Building Microservices](https://samnewman.io/books/building_microservices_2nd_edition/)
+**Source:** [Google — Why Google Stores Billions of Lines of Code in a Single Repository](https://cacm.acm.org/research/why-google-stores-billions-of-lines-of-code-in-a-single-repository/), [Sam Newman — Building Microservices](https://samnewman.io/books/building_microservices_2nd_edition/)
 
 ---
 
@@ -1062,13 +1062,13 @@ I'd bring up that this decision correlates strongly with organizational scale an
 | Chris Richardson — Service Mesh | https://microservices.io/patterns/deployment/service-mesh.html |
 | Google SRE Workbook — Handling Overload | https://sre.google/sre-book/handling-overload/ |
 | Chris Richardson — Microservices Patterns (Deployment) | https://microservices.io/patterns/ |
-| Kubernetes Patterns | https://k8spatterns.io/ |
+| Kubernetes Patterns | https://www.oreilly.com/library/view/kubernetes-patterns/9781492050278/ |
 | Chris Richardson — Client-side Discovery | https://microservices.io/patterns/client-side-discovery.html |
 | Kubernetes Documentation — Service | https://kubernetes.io/docs/concepts/services-networking/service/ |
 | Resilience4j documentation | https://resilience4j.readme.io/docs/getting-started |
 | Michael Nygard — Release It! | https://pragprog.com/titles/mnee2/release-it-second-edition/ |
 | Martin Fowler — CQRS | https://martinfowler.com/bliki/CQRS.html |
-| Greg Young — CQRS and Event Sourcing | https://cqrs.files.wordpress.com/2010/11/cqrs_documents.pdf |
+| Greg Young — CQRS and Event Sourcing | https://cqrs.wordpress.com/wp-content/uploads/2010/11/cqrs_documents.pdf |
 | Martin Fowler — Event Sourcing | https://martinfowler.com/eaaDev/EventSourcing.html |
 | Eric Brewer — CAP Twelve Years Later | https://www.infoq.com/articles/cap-twelve-years-later-how-the-rules-have-changed/ |
 | Daniel Abadi — PACELC | https://www.cs.umd.edu/~abadi/papers/abadi-pacelc.pdf |
@@ -1078,4 +1078,4 @@ I'd bring up that this decision correlates strongly with organizational scale an
 | Gregor Hohpe — Enterprise Integration Patterns | https://www.enterpriseintegrationpatterns.com/ |
 | Pact — Contract Testing | https://docs.pact.io/ |
 | Martin Fowler — Consumer-Driven Contracts | https://martinfowler.com/articles/consumerDrivenContracts.html |
-| Google — Why Google Stores Billions of Lines of Code in a Single Repository | https://cacm.acm.org/magazines/2016/7/204032-why-google-stores-billions-of-lines-of-code-in-a-single-repository/ |
+| Google — Why Google Stores Billions of Lines of Code in a Single Repository | https://cacm.acm.org/research/why-google-stores-billions-of-lines-of-code-in-a-single-repository/ |

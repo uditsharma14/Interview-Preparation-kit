@@ -1181,7 +1181,7 @@ Account resolveAccount(Order order) {
 
 I'd bring up that this exact expand/migrate/contract discipline needs to be paired with explicit second-level cache region management, since it's the JPA-specific detail that's easy to overlook amid the general schema-migration playbook — a mid-migration deploy that changes an entity's mapping shape while stale, pre-migration entries for that same entity type are still sitting in a shared second-level cache can produce genuinely confusing bugs that don't correlate cleanly with the actual code deploy timeline, since the cache's staleness window is independent of and can outlast the deployment itself. I'd also mention that for relationship changes affecting a very heavily-queried entity, I'd want the query-plan/index verification from question 27 run explicitly against both the old and new relationship shapes before, during, and after the migration — a relationship change can silently invalidate an existing index's usefulness or require a new one, and discovering that gap only after the contract phase has already removed the old, previously-indexed path is a much more painful place to find it.
 
-**Source:** [Vlad Mihalcea — How to Perform a Zero Downtime Schema Migration](https://vladmihalcea.com/zero-downtime-database-migration/), [Hibernate ORM User Guide — Caching](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#caching)
+**Source:** [Martin Fowler & Pramod Sadalage — Evolutionary Database Design](https://martinfowler.com/articles/evodb.html), [Hibernate ORM User Guide — Caching](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#caching)
 
 ---
 
@@ -1301,7 +1301,7 @@ I'd emphasize the specific insight that made this incident instructive beyond "w
 | Vlad Mihalcea — Identity, Sequence, and Table generators | https://vladmihalcea.com/hibernate-identity-sequence-and-table-sequence-generator/ |
 | Vlad Mihalcea — How to Batch INSERT and UPDATE statements | https://vladmihalcea.com/how-to-batch-insert-and-update-statements-with-hibernate/ |
 | Vlad Mihalcea — equals and hashCode with JPA | https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/ |
-| Vlad Mihalcea — Zero Downtime Schema Migration | https://vladmihalcea.com/zero-downtime-database-migration/ |
+| Martin Fowler & Pramod Sadalage — Evolutionary Database Design | https://martinfowler.com/articles/evodb.html |
 | Spring Boot Reference — Open EntityManager in View | https://docs.spring.io/spring-boot/reference/data/sql.html#data.sql.jpa-and-spring-data |
 | Spring Data JPA Reference | https://docs.spring.io/spring-data/jpa/reference/ |
 | Spring Batch Reference Documentation | https://docs.spring.io/spring-batch/reference/index.html |
