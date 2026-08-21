@@ -1,4 +1,4 @@
-# Kafka Deep-Dive Interview Prep (Expanded)
+# Kafka Deep-Dive Interview Prep
 
 ---
 
