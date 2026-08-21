@@ -78,6 +78,6 @@ Lead/Staff-level judgment, influence, and organizational impact — not technolo
 
 Each question follows the same structure:
 
-1. **How I'd say it** — a conversational, interview-ready explanation.
+1. **Answer** — a conversational, interview-ready explanation.
 2. **Code / Framework** — a snippet or a decision framework/template to sketch on a whiteboard to back up the explanation.
 3. **Where staff-level interviews push further** — the deeper follow-up that separates a mid-level answer from a staff-level one.

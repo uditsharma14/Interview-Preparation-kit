@@ -6,7 +6,7 @@ How to use this: each question has **the answer the way I'd actually say it out 
 
 ## 1. Design an Order-Processing Platform Using Spring Boot, PostgreSQL, Redis, and Kafka
 
-**How I'd say it:**
+**Answer:**
 
 "I'd start from the business operation, not the technology list: 'place an order' needs to (1) validate and record the order durably, (2) reserve inventory, (3) charge payment, (4) notify downstream systems (shipping, analytics, notifications) — and I'd map each of those onto the right tool rather than assuming every piece of infrastructure listed needs to be involved in every step.
 
@@ -45,7 +45,7 @@ I'd walk through the failure modes deliberately, since that's what actually dist
 
 ## 2. How Would You Guarantee That an Accepted REST Request Eventually Produces Exactly One Business Outcome?
 
-**How I'd say it:**
+**Answer:**
 
 "'Exactly one business outcome' is a stronger, more precise framing than 'exactly-once delivery' — it's really about idempotency at every layer the request's effect passes through, not about achieving some impossible distributed-systems guarantee of literal single delivery everywhere.
 
@@ -80,7 +80,7 @@ I'd bring up that this is exactly the "idempotency all the way down" principle, 
 
 ## 3. Design a Multi-Region Service and State the Consistency Trade-Offs Explicitly
 
-**How I'd say it:**
+**Answer:**
 
 "I'd start by rejecting the premise that there's one universally-correct multi-region architecture — the right design depends entirely on the actual consistency requirements of the *specific data* involved, which usually varies within the same system, so I'd design per-data-type rather than picking one global strategy.
 
@@ -117,7 +117,7 @@ I'd bring up that this decision genuinely needs to be made **per data type**, no
 
 ## 4. Design a Zero-Downtime Deployment Involving Database, Cache, API, and Event-Schema Changes
 
-**How I'd say it:**
+**Answer:**
 
 "I'd apply the expand/contract pattern independently at each of the four layers, sequenced so that at every point during the rollout, old and new application versions can coexist and both function correctly against whatever state each layer is currently in — since a rolling deployment inherently means both versions run simultaneously for some window.
 
@@ -156,7 +156,7 @@ I'd emphasize that the actual hard part isn't designing each layer's expand/cont
 
 ## 5. A Deployment Doubles Database Traffic Without Changing Request Volume. How Do You Investigate?
 
-**How I'd say it:**
+**Answer:**
 
 "Since request volume is unchanged but database traffic doubled, the cause is almost certainly something in the deployed code generating more queries **per request** than before, or a cache-effectiveness regression pushing traffic that used to be absorbed elsewhere onto the database — not a capacity/scaling issue. I'd start by diffing the deployment: what actually changed in this specific release, and does the change touch anything data-access-related (a new JPA entity relationship, a fetch-strategy change, a modified query, a cache-key or TTL change).
 
@@ -191,7 +191,7 @@ I'd bring up that the fastest way to actually distinguish "N+1 regression" from 
 
 ## 6. Kafka Lag Grows While CPU and Database Usage Remain Low. What Hypotheses Would You Test?
 
-**How I'd say it:**
+**Answer:**
 
 "Growing lag with low CPU and low database load is a strong signal that the consumer isn't *compute-bound* or *database-bound* — it's most likely **blocked/waiting** on something, or structurally under-provisioned in a way that has nothing to do with raw processing capacity. I'd test hypotheses in order of likelihood.
 
@@ -225,7 +225,7 @@ I'd bring up that "low CPU, low DB usage, growing lag" is almost a textbook sign
 
 ## 7. Redis Fails During Peak Traffic. How Do You Prevent a Database Collapse?
 
-**How I'd say it:**
+**Answer:**
 
 "This is precisely the failure mode from the Redis file's question 30 incident, and the prevention has to be designed and tested **before** it happens, not improvised during the outage. The core risk: if every request that would normally hit the cache instead falls through to the database simultaneously (the graceful-degradation fallback from Redis file question 28, applied at full traffic volume), the database can be hit with far more load than it was ever sized or tested for, since it had been architecturally relying on the cache absorbing the bulk of read traffic.
 
@@ -266,7 +266,7 @@ I'd bring up that the single most valuable thing a team can do here isn't a spec
 
 ## 8. A Service Sometimes Publishes Events Without Committing Its Database Update. Fix the Architecture.
 
-**How I'd say it:**
+**Answer:**
 
 "This is the exact anomaly the transactional outbox pattern exists to eliminate structurally (Transactions category, questions 18-19), and 'sometimes' publishes without committing tells me the current implementation is almost certainly doing a direct Kafka publish either before the database commit, or immediately after it but outside any atomicity guarantee with it — both of the broken patterns described in that category's question 18.
 
@@ -305,7 +305,7 @@ I'd bring up that fixing this requires more than just moving the publish call �
 
 ## 9. Green Application Instances Must Serve HTTP Traffic but Cannot Consume Kafka Messages. Design the Deployment.
 
-**How I'd say it:**
+**Answer:**
 
 "This is a genuine, common requirement during a blue/green cutover — you want to verify green can correctly *serve* traffic before letting it also start *consuming and processing* messages, since a bug in green's consumer logic processing real production messages (potentially with side effects, like charging payments or sending notifications) is much harder to safely undo than a bug in green's HTTP response handling, which is comparatively low-risk to verify and roll back.
 
@@ -345,7 +345,7 @@ I'd bring up that this deliberately splits one cutover into **two independent, s
 
 ## 10. A JWT Signing Key Is Rotated and Some Services Begin Rejecting Valid Requests. Diagnose and Redesign.
 
-**How I'd say it:**
+**Answer:**
 
 "This is exactly the key-rotation sequencing failure described in the Spring Security file (question 17) — the most likely root cause is that the old signing key was removed from the published JWKS document (or a resource server's JWKS cache hadn't yet refreshed to pick up the new key) before every token signed with the old key had actually expired, so tokens that were still validly within their lifetime suddenly fail signature verification once the resource server can no longer find the key that signed them.
 
@@ -381,7 +381,7 @@ I'd bring up that this incident is a good candidate for an automated safeguard b
 
 ## 11. A Customer Retries a Timed-Out Payment Request. How Do You Prevent Double Charging?
 
-**How I'd say it:**
+**Answer:**
 
 "This is the canonical idempotency-key scenario (REST API Design file, question 5) — the client generates a unique idempotency key once, per logical payment attempt (not regenerated on each retry), and sends it on every retry of the same logical request. The server, atomically (via a unique database constraint on the key, not a check-then-act race), determines whether this key has already been processed: if yes, it returns the **original** stored result without charging again; if no, it processes the payment and durably records the key alongside the result, in the same transaction as the actual charge, so a crash between 'charge processed' and 'key recorded' is structurally impossible.
 
@@ -424,7 +424,7 @@ I'd bring up the client-side half of this contract explicitly, since it's the pa
 
 ## 12. A JPA Query Causes Production Memory Spikes but Works Correctly in Testing. How Do You Investigate?
 
-**How I'd say it:**
+**Answer:**
 
 "'Correct in testing, memory spike in production' almost always points at a **data-volume difference** between the two environments, not a logic bug — the query is functionally correct, but something about its result-set size or fetch strategy scales badly with production's actual data volume in a way test data (typically much smaller) never exercises.
 
@@ -457,7 +457,7 @@ I'd bring up that the actual, durable fix here is rarely "optimize this one quer
 
 ## 13. A Low-Latency Service Has Periodic 10-Second Pauses. Describe Your Diagnostic Process.
 
-**How I'd say it:**
+**Answer:**
 
 "A periodic, roughly-regular pause pattern is a strong initial signal pointing toward something cyclical — GC, a scheduled job, or a database-side periodic event — rather than a request-pattern-driven cause, so I'd start there rather than assuming it's application-request-load-related.
 
@@ -490,7 +490,7 @@ I'd emphasize that the very first, cheapest diagnostic step is simply plotting t
 
 ## 14. How Would You Split a Large Spring Boot Monolith While Preserving Transaction Correctness?
 
-**How I'd say it:**
+**Answer:**
 
 "The core risk in splitting a monolith is that existing code very likely relies on a single, shared ACID database transaction to enforce cross-entity invariants that span what will become **different services** after the split — once those entities live in different services with different databases, that single-transaction guarantee is gone, and the invariant needs a new mechanism.
 
@@ -529,7 +529,7 @@ I'd bring up that the actual staff-level judgment here is recognizing which form
 
 ## 15. How Would You Determine Whether a Proposed Microservice Boundary Is Appropriate?
 
-**How I'd say it:**
+**Answer:**
 
 "I'd evaluate a proposed boundary against a few concrete tests, rather than relying on intuition about 'this feels like a separate concern.' First, the **transactional-coupling test** from the previous question — does splitting along this boundary force nearly every common operation into a saga with real compensation logic? If so, that's evidence the boundary cuts across something that's actually one cohesive transactional unit in the business domain, not two independent ones.
 
@@ -567,7 +567,7 @@ I'd bring up that the change-coupling test specifically is underused and genuine
 
 ## 16. How Do You Evolve an Event Contract Used by Dozens of Unknown Consumers?
 
-**How I'd say it:**
+**Answer:**
 
 "This is the Kafka-category version of the REST API Design file's endpoint-deprecation discipline (question 25 there), applied to an event schema instead of an HTTP endpoint — with the added wrinkle that Kafka consumers are often genuinely harder to enumerate than HTTP API callers (no equivalent of an API-key-per-caller convention necessarily existing for every consumer group), so 'unknown consumers' is a more common, more serious constraint here.
 
@@ -602,7 +602,7 @@ I'd bring up that "unknown consumers" is itself a problem worth fixing at the pl
 
 ## 17. How Would You Design Tenant Isolation Across API, Database, Cache, and Kafka?
 
-**How I'd say it:**
+**Answer:**
 
 "I'd apply a consistent principle at every layer: the tenant identifier is established once, at authentication, from a source the tenant/caller cannot forge or override, and every subsequent layer scopes its behavior by that same trusted identifier — never re-deriving or re-trusting a tenant ID from anything client-suppliable at a lower layer.
 
@@ -632,7 +632,7 @@ I'd bring up that the database-level row-level-security backstop is the single h
 
 ## 18. How Do You Introduce Backpressure Across Synchronous and Asynchronous Boundaries?
 
-**How I'd say it:**
+**Answer:**
 
 "Backpressure means a slow or overwhelmed downstream consumer can signal 'slow down' back to whatever is producing work for it, rather than the producer blindly continuing to push work faster than the consumer can handle — and the mechanism for expressing that signal is fundamentally different depending on whether the boundary is synchronous or asynchronous.
 
@@ -685,7 +685,7 @@ I'd bring up that the most common mistake at exactly this synchronous-to-asynchr
 
 ## 19. How Do You Define and Measure an End-to-End Reliability SLO?
 
-**How I'd say it:**
+**Answer:**
 
 "An SLO needs to be defined in terms of what actually matters to the **user/business outcome**, not an internal component's own health — 'the database is up 99.99% of the time' is an internal metric, not an SLO; 'a customer can successfully place an order within 2 seconds, 99.9% of the time' is an SLO, because it's stated in terms of the actual end-to-end user-facing outcome, and it can be violated even when every individual internal component reports itself as healthy (exactly the business-health-versus-infrastructure-health distinction from the REST API Design file, question 23).
 
@@ -722,7 +722,7 @@ I'd bring up that the error-budget framing's real value is turning "how reliable
 
 ## 20. How Would You Run a Production Migration With a Tested Rollback and Recovery Plan?
 
-**How I'd say it:**
+**Answer:**
 
 "I'd treat 'tested rollback plan' literally — a rollback plan that's never actually been executed in a realistic environment isn't a real plan, it's a hope, and I've seen migrations where the forward path was carefully tested but the rollback path, assumed to be 'just run the reverse migration script,' had never actually been exercised and turned out to have its own bugs precisely when it was needed under real incident pressure.
 

@@ -6,7 +6,7 @@ How to use this: each question has **the answer the way I'd actually say it out 
 
 ## 1. How Do You Choose Between a Hosted LLM API and a Self-Hosted/Open-Weight Model?
 
-**How I'd say it:**
+**Answer:**
 
 "I'd frame this as a trade-off across a few concrete axes, not a single 'which is better' question. **Capability ceiling**: the strongest hosted frontier models (Claude, GPT-class) generally still lead open-weight models on the hardest reasoning/coding/agentic tasks, though the gap has narrowed significantly and keeps narrowing — so for a task near the frontier of what's possible, a hosted API is often the only realistic option today. **Data residency/compliance**: a self-hosted model keeps data entirely within your own infrastructure, which matters concretely for regulated industries or contractual data-handling requirements a third-party API can't satisfy regardless of their own security posture. **Cost at scale**: hosted APIs charge per token with no fixed infrastructure cost, which is cheaper at low-to-moderate volume but can become more expensive than self-hosting (amortizing GPU infrastructure cost) once volume is high and sustained enough — this crossover point is workload-specific and worth actually modeling, not assumed. **Latency and control**: self-hosting removes network round-trip to a third party and gives full control over batching/quantization trade-offs, at the cost of needing real ML-infrastructure operational expertise (GPU fleet management, model serving, quantization correctness) that a hosted API abstracts away entirely.
 
@@ -45,7 +45,7 @@ I'd bring up that this decision doesn't have to be all-or-nothing across an enti
 
 ## 2. How Do Context Window Size and Tokenization Actually Affect Architecture Decisions?
 
-**How I'd say it:**
+**Answer:**
 
 "Tokens, not characters or words, are the actual unit an LLM processes and is billed on — a token is roughly 3-4 characters of English text on average, but this varies significantly by language and content type (code, non-English text, and structured data like JSON often tokenize less efficiently than plain English prose). This matters architecturally in a few concrete ways: **cost** scales directly with total tokens processed (input plus output), so a design that stuffs unnecessarily large context into every request pays for it linearly, not for free just because 'the context window is big enough.' **Latency** also scales with token count — both input processing and, more significantly, output generation, since output tokens are generated sequentially, one at a time, making long-output tasks inherently slower regardless of the model's raw capability.
 
@@ -80,7 +80,7 @@ I'd bring up the "lost in the middle" phenomenon explicitly as a concrete, testa
 
 ## 3. Compare Prompting, Fine-Tuning, and RAG — When Is Each the Right Tool?
 
-**How I'd say it:**
+**Answer:**
 
 "These solve genuinely different problems, and I'd pick based on what's actually missing, not reach for the most sophisticated-sounding option by default.
 
@@ -123,7 +123,7 @@ I'd bring up that fine-tuning is reached for prematurely far more often than it'
 
 ## 4. What Are the Actual Reliable Prompt-Engineering Techniques Versus Folklore?
 
-**How I'd say it:**
+**Answer:**
 
 "I'd separate techniques with genuine, measured evidence behind them from folklore that circulates without real backing, since prompt engineering attracts a lot of the latter.
 
@@ -162,7 +162,7 @@ I'd bring up that the actual Staff-level discipline here is treating every promp
 
 ## 5. How Do You Get Reliable Structured Output (JSON) From an LLM in Production?
 
-**How I'd say it:**
+**Answer:**
 
 "The naive approach — asking the model to 'respond in JSON' in the prompt and then parsing whatever text comes back — is fragile in production: the model can wrap the JSON in explanatory prose, produce almost-valid JSON with a trailing comma or unescaped quote, or occasionally deviate from the requested schema entirely, and a parse failure on any of these needs explicit, designed handling, not an assumption that it 'usually works.'
 
@@ -218,7 +218,7 @@ I'd bring up that even with native structured-output constraints, the schema its
 
 ## 6. How Do You Design a System Prompt for a Production Application?
 
-**How I'd say it:**
+**Answer:**
 
 "I'd treat a production system prompt as a genuine engineering artifact — versioned, tested, and reviewed like any other piece of production logic — rather than a one-off string tuned informally until it 'feels right.' Structurally, I'd organize it into clear sections: the model's **role and scope** (what it is, and just as important, what it explicitly is *not* meant to do — narrowing scope reduces both hallucination risk and misuse surface); **behavioral constraints** (tone, format, what it should refuse and how); **available tools/capabilities**, if any, described precisely enough that the model reliably knows when and how to use each one (question 16); and **grounding instructions** for RAG-based systems specifically (explicit instruction to answer only from provided context and to say so explicitly when the context doesn't contain an answer, rather than filling the gap with a plausible-sounding but ungrounded guess — directly addressing hallucination, question 21).
 
@@ -263,7 +263,7 @@ I'd bring up that system prompts should be **version-controlled and tested exact
 
 ## 7. Explain How a RAG Pipeline Works End-to-End
 
-**How I'd say it:**
+**Answer:**
 
 "Retrieval-Augmented Generation solves the problem of an LLM needing access to specific, current, or proprietary information it wasn't trained on (question 3), by retrieving relevant information at request time and including it directly in the prompt, rather than relying on the model's training-time knowledge alone.
 
@@ -321,7 +321,7 @@ I'd bring up that RAG's actual failure modes are almost always in the **retrieva
 
 ## 8. How Do You Choose a Chunking Strategy for RAG?
 
-**How I'd say it:**
+**Answer:**
 
 "Chunking is genuinely one of the highest-leverage, most under-invested-in decisions in a RAG pipeline, and I'd treat it with real deliberation rather than defaulting to an arbitrary fixed size. The core tension: chunks that are **too large** dilute a chunk's embedding (a chunk covering several distinct topics produces a 'blended,' less-precise embedding vector that doesn't strongly match any single specific query well) and waste context-window budget with irrelevant surrounding text once retrieved; chunks that are **too small** risk losing necessary surrounding context (a chunk containing just one sentence of a multi-sentence explanation, retrieved in isolation, may be genuinely incomplete or misleading without its neighbors).
 
@@ -365,7 +365,7 @@ I'd bring up that chunking strategy should genuinely be evaluated with real retr
 
 ## 9. Compare Embedding-Based Retrieval With Keyword/BM25 Search, and Explain Hybrid Search
 
-**How I'd say it:**
+**Answer:**
 
 "**Embedding-based (dense) retrieval** captures semantic similarity — it can match a query to relevant content even when they share few or no exact words in common ('how do I get my money back' matching a document about 'refund policy,' despite no shared vocabulary), because both are embedded into a similar region of vector space based on meaning. Its weakness: it can struggle with precise, exact-match needs — a specific product SKU, an error code, an exact proper noun — where semantic similarity isn't actually what matters; the embedding model may not represent these precisely, or a specific short/unusual token may not embed distinctively enough to retrieve reliably by pure vector similarity.
 
@@ -405,7 +405,7 @@ I'd bring up that the actual merging step in hybrid search is non-trivial — de
 
 ## 10. What Causes RAG Retrieval Quality to Degrade, and How Do You Diagnose It?
 
-**How I'd say it:**
+**Answer:**
 
 "Building on question 7's point that retrieval failures are usually the actual root cause of RAG quality problems, I'd walk through the concrete causes in the order I'd actually investigate them. **Chunking mismatch** (question 8) — the way source documents were split doesn't align well with how users actually phrase queries about that content, producing chunks that are semantically 'blended' or that split necessary context apart. **Embedding model mismatch** — using a general-purpose embedding model on highly domain-specific content (dense legal or medical terminology, for instance) where the model's training data didn't give it a strong enough representation of that domain's specific semantic distinctions. **Stale index** (question 13) — source data has changed, but the vector index hasn't been rebuilt to reflect it, so retrieval is confidently returning chunks that no longer represent current, correct information. **Insufficient top-K or missing hybrid search** (question 9) — the right chunk exists in the index but isn't being retrieved because too few candidates are considered, or because the query needed exact-match precision that pure dense retrieval alone doesn't provide.
 
@@ -445,7 +445,7 @@ I'd bring up that this retrieval-vs-generation isolation is the single highest-l
 
 ## 11. What Is Re-Ranking, and When Do You Need It in a RAG Pipeline?
 
-**How I'd say it:**
+**Answer:**
 
 "Initial retrieval (dense, BM25, or hybrid — question 9) is optimized for speed across a large corpus, typically using a relatively cheap similarity computation to quickly narrow a huge candidate set down to a top-K (say, top 50-100). **Re-ranking** applies a more expensive, more accurate relevance model — typically a cross-encoder, which jointly processes the query and each candidate chunk together (rather than embedding them independently and comparing vectors, as the initial fast retrieval step does) — to that smaller candidate set, reordering it by a more precise relevance judgment, and only the final, smaller top-N (say, top 5) after re-ranking actually gets sent to the LLM.
 
@@ -486,7 +486,7 @@ I'd bring up that re-ranking adds real latency (an additional model call, even a
 
 ## 12. How Do You Handle RAG Over Data That Updates Frequently?
 
-**How I'd say it:**
+**Answer:**
 
 "The core tension is exactly the Redis file's cache-consistency discussion, applied to a vector index instead of a generic cache: a vector index has to be explicitly rebuilt/updated whenever source data changes, and if that update lags behind the actual data, RAG will confidently retrieve and ground its answer in stale information — often worse than an LLM saying nothing, since a confidently-stated stale answer looks just as authoritative as a correct one.
 
@@ -529,7 +529,7 @@ I'd bring up that this decision — "does this piece of information belong in th
 
 ## 13. What Is an "Agent" in the LLM Sense, and How Does It Differ From a Single Prompt-Response Call?
 
-**How I'd say it:**
+**Answer:**
 
 "A single prompt-response call is a one-shot interaction: send a prompt, get back one response, done — the model has no ability to take actions in the world, gather new information mid-task, or iterate based on intermediate results. An **agent** wraps an LLM in a loop that lets it take multiple steps toward a goal, typically by giving it access to **tools** (question 16) it can choose to invoke, observing each tool's result, and deciding — based on that result — what to do next, repeating until the task is complete or it determines it can't proceed further.
 
@@ -569,7 +569,7 @@ I'd bring up that "agent" is used loosely across the industry to describe a wide
 
 ## 14. How Does Function/Tool Calling Work Under the Hood?
 
-**How I'd say it:**
+**Answer:**
 
 "Tool calling gives the LLM a structured description of available functions — a name, a description of what it does and when to use it, and a schema for its parameters — included as part of the request (not as free text in the prompt, but as a distinct, structured part of the API call most modern providers support natively). The model, having been trained specifically to recognize when a tool would help answer the current request, can respond not with plain text but with a structured 'I want to call this tool, with these specific arguments' output — the same underlying mechanism as question 5's structured-output generation, just framed as an action request rather than a final answer.
 
@@ -621,7 +621,7 @@ I'd bring up that the "model requests, your code executes" separation is the sin
 
 ## 15. How Do You Design Tools for an LLM Agent to Minimize Misuse and Failure?
 
-**How I'd say it:**
+**Answer:**
 
 "I'd apply the same API-design discipline from the REST API Design file, but with an additional layer of care specific to the fact that the 'caller' deciding when and how to invoke a tool is a probabilistic model, not deterministic code — meaning tool design has to account for the model occasionally choosing the wrong tool, providing malformed or hallucinated arguments, or calling a tool at an inappropriate time, in ways a typical human-written API caller wouldn't.
 
@@ -677,7 +677,7 @@ I'd bring up that tool descriptions are themselves a genuine engineering artifac
 
 ## 16. How Do You Prevent an Agent From Looping Indefinitely or Taking Destructive Actions?
 
-**How I'd say it:**
+**Answer:**
 
 "I'd apply concrete, hard bounds rather than trusting the model's own judgment about when to stop — since an agent loop is fundamentally driven by a probabilistic model that can, in a genuine minority of cases, fail to recognize task completion or get stuck in an unproductive cycle (repeatedly calling the same tool with slightly varied arguments, hoping for a different result).
 
@@ -730,7 +730,7 @@ I'd bring up that these bounds need to be treated as genuine, tested production 
 
 ## 17. What Is the ReAct Pattern, and How Does It Relate to Modern Agent Frameworks?
 
-**How I'd say it:**
+**Answer:**
 
 "ReAct (Reasoning + Acting) is a prompting pattern that interleaves explicit reasoning steps with actions — rather than the model jumping straight to an action, it's prompted to first articulate its reasoning ('the user wants to know current stock; I should check inventory') as an explicit 'Thought,' then take an 'Action' (a tool call), observe the 'Observation' (the tool's result), and repeat this Thought-Action-Observation cycle until it can produce a final answer.
 
@@ -776,7 +776,7 @@ I'd bring up that the explicit reasoning trace ReAct produces is directly valuab
 
 ## 18. When Is Multi-Agent Orchestration Actually Worth the Added Complexity?
 
-**How I'd say it:**
+**Answer:**
 
 "I'd push back on multi-agent architectures as a default, the same way I'd push back on premature microservices splitting (the Microservices & Architecture Patterns file's question 1) — a single, well-designed agent with good tools and a clear task scope handles a large fraction of real use cases perfectly well, and splitting into multiple specialized agents adds genuine coordination complexity (agents need to communicate, hand off partial work, and their combined failure modes are harder to reason about than one agent's) that should be justified by a concrete need, not adopted because it sounds more sophisticated.
 
@@ -817,7 +817,7 @@ I'd bring up that multi-agent systems inherit and compound every single-agent fa
 
 ## 19. How Do You Evaluate an LLM-Powered Feature Before and After Shipping?
 
-**How I'd say it:**
+**Answer:**
 
 "I'd treat evaluation as a genuine, required engineering artifact — an actual test suite — rather than informal 'it looks good when I try a few examples,' which is the LLM-application equivalent of shipping code with zero automated tests and just clicking around manually before a release.
 
@@ -863,7 +863,7 @@ I'd bring up that the single most common mistake teams make here is treating eva
 
 ## 20. What Is "LLM-as-Judge," and What Are Its Pitfalls?
 
-**How I'd say it:**
+**Answer:**
 
 "LLM-as-judge uses a (often more capable, or differently-prompted) LLM to evaluate the quality of another LLM's output against a rubric — genuinely useful for open-ended generation tasks (summarization quality, helpfulness, tone) where a simple exact-match or rule-based check can't capture what actually matters, and where having a human rate every single output at scale is impractical or too slow for a fast development iteration loop.
 
@@ -909,7 +909,7 @@ I'd bring up that LLM-as-judge should be treated as a genuinely fallible measure
 
 ## 21. How Do You Detect and Mitigate Hallucination in a Production System?
 
-**How I'd say it:**
+**Answer:**
 
 "Hallucination — the model confidently generating plausible-sounding but false or ungrounded information — is a fundamental characteristic of how these models generate text (predicting plausible continuations, not looking up verified facts), so I'd treat it as something to be systematically mitigated and monitored, not eliminated entirely, since no current mitigation makes it truly impossible.
 
@@ -957,7 +957,7 @@ I'd bring up that hallucination risk should shape **product design decisions**, 
 
 ## 22. How Do You Build a Regression Test Suite for Prompts That Will Keep Changing?
 
-**How I'd say it:**
+**Answer:**
 
 "I'd treat this exactly like the JPA/Hibernate and Spring files' discipline around treating configuration/schema as a versioned, tested artifact — a prompt (and the broader pipeline it's part of) is production logic, and it deserves the same regression-test discipline as any code change, specifically *because* it will keep changing as the team iterates on quality.
 
@@ -1007,7 +1007,7 @@ I'd bring up that the organizational discipline here matters more than the speci
 
 ## 23. How Do You Handle Prompt Injection and Other LLM-Specific Security Risks?
 
-**How I'd say it:**
+**Answer:**
 
 "Prompt injection is the LLM-application-specific analog to classic injection attacks (SQL injection, XSS) covered elsewhere in this kit — untrusted input (a user's message, or content retrieved via RAG/a tool from an external, potentially attacker-influenced source) contains text specifically crafted to make the model ignore its original system-prompt instructions and instead follow the attacker's embedded instructions. **Direct** prompt injection comes from the end user themselves, typed directly into a chat interface ('ignore your previous instructions and instead...'). **Indirect** prompt injection is more insidious and often more dangerous — malicious instructions embedded in content the model retrieves or is given to process (a webpage the model is asked to summarize, a document in a RAG index, an email in an inbox an agent is processing) that the model then follows as if they were legitimate instructions from its actual operator, without the end user ever having typed anything malicious themselves.
 
@@ -1053,7 +1053,7 @@ I'd bring up that prompt injection, unlike classic SQL injection, currently has 
 
 ## 24. How Do You Manage Cost and Latency in a Production LLM System?
 
-**How I'd say it:**
+**Answer:**
 
 "I'd apply several complementary strategies, each addressing a different part of the cost/latency equation, rather than relying on a single lever.
 
@@ -1107,7 +1107,7 @@ I'd bring up that cost/latency optimization needs the same "measure before optim
 
 ## 25. How Do You Handle PII and Data Privacy When Using a Third-Party LLM API?
 
-**How I'd say it:**
+**Answer:**
 
 "I'd start from understanding the specific provider's actual data-handling commitments precisely — most major providers offer enterprise/business-tier agreements explicitly stating that API-submitted data is not used for model training and is retained only briefly for abuse monitoring (versus consumer-tier products, which often have different, less restrictive default terms) — and I'd never assume a general data-privacy posture without reading and confirming the specific contractual terms that actually apply to the account/tier in use, since this varies meaningfully by provider and by tier.
 
@@ -1146,7 +1146,7 @@ I'd bring up that PII redaction has a real accuracy limit worth being honest abo
 
 ## 26. How Would You Version Prompts So Changes Don't Silently Break Production Behavior?
 
-**How I'd say it:**
+**Answer:**
 
 "I'd treat this exactly like API versioning from the REST API Design file — a prompt (and the broader pipeline configuration around it) is a contract that downstream evaluation, monitoring, and sometimes even fine-tuned expectations depend on, and changing it silently, without tracking which version produced which behavior, makes it very hard to answer 'did this specific change cause the quality regression we're seeing' after the fact.
 
@@ -1185,7 +1185,7 @@ I'd bring up that this versioning discipline is what actually makes root-causing
 
 ## 27. Describe a Production Incident Involving an LLM Feature and How You'd Diagnose It
 
-**How I'd say it:**
+**Answer:**
 
 "I'd walk through a representative shape rather than claim one specific universal story, mirroring the same honest framing the rest of this kit uses for postmortem-style questions: a customer-facing RAG-based support assistant's answer quality degraded gradually over a couple of weeks — not a sudden step-change, which itself was an early diagnostic clue pointing away from 'a recent deploy broke something' and toward a slower-moving cause. Users started reporting the assistant confidently citing outdated policy information.
 

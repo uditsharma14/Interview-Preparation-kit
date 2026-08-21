@@ -6,7 +6,7 @@ How to use this: each question has **the answer the way I'd actually say it out 
 
 ## 1. Explain ACID in Practical Terms
 
-**How I'd say it:**
+**Answer:**
 
 "**Atomicity** — a transaction's operations happen as one indivisible unit: either every write in it takes effect, or none do. If step 3 of 5 fails, steps 1 and 2 get rolled back too, not left half-applied. **Consistency** — a transaction takes the database from one valid state to another, respecting every constraint (foreign keys, unique constraints, check constraints, and application-level invariants a transaction is designed to preserve) — this is really the *outcome* the other three properties combine to guarantee, not an independent mechanism of its own. **Isolation** — concurrent transactions behave, from each transaction's own point of view, as if they ran one at a time, sequentially, even though the database may actually be interleaving their execution for performance — the exact strength of this guarantee is tunable (question 2), and weaker isolation levels intentionally allow specific anomalies in exchange for more concurrency. **Durability** — once a transaction commits, its effects survive any subsequent crash, power loss, or restart — typically achieved via a write-ahead log flushed to durable storage before the commit is acknowledged to the caller.
 
@@ -34,7 +34,7 @@ I'd bring up that "consistency" in ACID is a genuinely different, narrower notio
 
 ## 2. What Anomalies Are Possible at Each Isolation Level?
 
-**How I'd say it:**
+**Answer:**
 
 "The SQL standard defines four isolation levels, each permitting fewer anomalies than the one before it, at the cost of more locking/contention or more complex concurrency-control machinery underneath.
 
@@ -67,7 +67,7 @@ I'd emphasize the point that matters most in practice: **the SQL standard descri
 
 ## 3. Compare Dirty Reads, Non-Repeatable Reads, Phantom Reads, and Lost Updates
 
-**How I'd say it:**
+**Answer:**
 
 "**Dirty read**: reading data that another, still-in-progress (uncommitted) transaction has written — if that other transaction subsequently rolls back, you've based a decision on data that, from the database's perspective, never actually happened at all.
 
@@ -103,7 +103,7 @@ I'd point out that lost updates are the anomaly that's easiest to accidentally r
 
 ## 4. How Does MVCC Work?
 
-**How I'd say it:**
+**Answer:**
 
 "Multi-Version Concurrency Control is the mechanism most modern relational databases (PostgreSQL, MySQL/InnoDB, Oracle) use to provide strong isolation *without* readers and writers blocking each other for ordinary reads. Instead of a reader taking a lock to prevent a writer from changing a row it's currently reading, the database keeps **multiple versions** of a row simultaneously — when a transaction updates a row, it doesn't overwrite the old version in place; it creates a *new* version of the row (tagged with the transaction ID that created it) while the old version remains, still visible to any transaction whose snapshot predates the update.
 
@@ -139,7 +139,7 @@ I'd bring up `VACUUM` (PostgreSQL specifically) as the operationally important c
 
 ## 5. What Is the Default Spring Transaction Propagation Behavior?
 
-**How I'd say it:**
+**Answer:**
 
 "`REQUIRED` is the default propagation for `@Transactional` — if a transaction is already active when a `@Transactional` method is called, the method joins that existing transaction (participates in it, sharing its commit/rollback outcome); if no transaction is currently active, a new one is started. This default is deliberately the 'just make sure there's *a* transaction, reusing one if it already exists' behavior, which is the right default for the overwhelming majority of service-layer methods — most business operations should participate in whatever transactional context their caller established, rather than each method insisting on its own independent transaction.
 
@@ -181,7 +181,7 @@ I'd bring up that this default is precisely why business operations that span mu
 
 ## 6. Explain `REQUIRED`, `REQUIRES_NEW`, `NESTED`, and `NOT_SUPPORTED`
 
-**How I'd say it:**
+**Answer:**
 
 "`REQUIRED` (question 5): join an existing transaction if one is active, otherwise start a new one — one shared, all-or-nothing outcome across the whole call chain that participates in it.
 
@@ -228,7 +228,7 @@ I'd emphasize `REQUIRES_NEW`'s real cost, which directly sets up the next questi
 
 ## 7. Why Might `REQUIRES_NEW` Exhaust a Connection Pool?
 
-**How I'd say it:**
+**Answer:**
 
 "Because `REQUIRES_NEW` suspends the caller's current transaction and connection, then checks out a **separate, additional** connection from the pool for the new, independent transaction — meaning at the moment a `REQUIRES_NEW` method is executing, at least two connections are simultaneously checked out for what is, from the outside, a single logical call chain: the outer, suspended transaction's connection (held, though idle, waiting for the inner call to return) and the inner transaction's own freshly-checked-out connection.
 
@@ -270,7 +270,7 @@ I'd bring up that this is exactly the kind of production incident that's genuine
 
 ## 8. Why Does `@Transactional` Self-Invocation Fail?
 
-**How I'd say it:**
+**Answer:**
 
 "This is the exact same proxy-based AOP mechanism and exact same failure mode covered in depth in the Spring Boot Internals file's self-invocation question, and in the Spring Security file's method-security version of it — `@Transactional` is implemented via a dynamic proxy (or CGLIB subclass) wrapping the bean, and the transaction-management logic (begin, commit, rollback) only runs when a call arrives **through that proxy** from *outside* the bean. A method calling another `@Transactional` method on `this` — via a plain, unqualified call, which always resolves to the raw, unproxied target object from inside the bean's own code — bypasses the proxy entirely, meaning the second method's `@Transactional` annotation has **zero effect**: no new transaction starts, no independent commit/rollback boundary is created, and it simply executes as part of whatever transactional context (or lack thereof) the *calling* method already established."
 
@@ -317,7 +317,7 @@ I'd flag that this is a particularly dangerous instance of the general self-invo
 
 ## 9. What Happens When `@Transactional` Is Used on Private Methods?
 
-**How I'd say it:**
+**Answer:**
 
 "By default, Spring's proxy-based AOP (both JDK dynamic proxies and CGLIB subclass proxies) can only intercept calls to **public** methods reachable through the proxy's exposed interface/subclass — a `private` method can never be called from outside the class at all (that's what `private` means at the language level), so there's no possible external call path for a proxy to intercept in the first place; the proxy mechanism structurally cannot wrap something that's only ever invoked via internal, same-class, `this`-based calls, which is itself just a specific case of the self-invocation problem from the previous question, except here it's not even possible to fix by calling from *outside* the class, since the method isn't accessible from outside at all.
 
@@ -367,7 +367,7 @@ I'd bring up that this is a genuinely good candidate for a compile-time or build
 
 ## 10. Which Exceptions Cause Rollback by Default?
 
-**How I'd say it:**
+**Answer:**
 
 "Spring's default rollback rule is specifically: **unchecked exceptions** (any subclass of `RuntimeException`, plus `Error`) trigger a rollback automatically; **checked exceptions** (any subclass of `Exception` that isn't a `RuntimeException`) do **not** trigger a rollback by default — the transaction commits normally even if a checked exception propagates out of a `@Transactional` method, unless explicitly configured otherwise.
 
@@ -411,7 +411,7 @@ I'd bring up that this default rollback rule's real danger is amplified by how *
 
 ## 11. Why Is Holding a Database Transaction Open During a Remote Call Dangerous?
 
-**How I'd say it:**
+**Answer:**
 
 "This is the database-transaction-specific version of the exact same lock-scope discipline from the concurrency file's 'risks of calling external services while holding a lock' question, and it's arguably an even more severe version of it — a database transaction typically holds a checked-out connection from a finite pool *and* whatever row/table locks its writes have taken for the transaction's entire duration, both of which are now tied to the latency of a network call the application has zero control over.
 
@@ -455,7 +455,7 @@ I'd bring up that this is precisely why the "reserve inventory, then charge paym
 
 ## 12. How Should Transaction Boundaries Align With Business Operations?
 
-**How I'd say it:**
+**Answer:**
 
 "A transaction boundary should correspond to one complete, logically-atomic **business operation** — the smallest unit of work that genuinely needs 'all or nothing' semantics from the caller's/business's point of view, not an arbitrary technical or code-organizational boundary. 'Place an order' (validate, reserve inventory, record the order) is typically one business operation and should typically be one transaction; 'place an order' and 'send a confirmation email' are *not* the same business operation — the email send shouldn't be inside the same transaction (it's an external side effect with its own separate failure mode, tying to question 11, and a failed email send shouldn't roll back an otherwise-successful order).
 
@@ -502,7 +502,7 @@ I'd bring up `@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 
 ## 13. How Do Deadlocks Occur, and How Should an Application Respond?
 
-**How I'd say it:**
+**Answer:**
 
 "A database deadlock occurs the same way an in-process lock deadlock does (covered at length in the concurrency file) — two or more transactions each hold a row/table lock the other needs, and each is blocked waiting for the other to release theirs, with no possible resolution without external intervention. The classic case: transaction A locks row 1 then wants row 2; transaction B locks row 2 then wants row 1 — neither can proceed.
 
@@ -547,7 +547,7 @@ I'd bring up that the actual, durable fix — same principle as the concurrency 
 
 ## 14. How Would You Prevent Lost Updates?
 
-**How I'd say it:**
+**Answer:**
 
 "Building directly on question 3's definition, prevention comes down to one of three approaches, each with a different trade-off, mirroring the exact same choice covered in the JPA/Hibernate file's optimistic-vs-pessimistic-locking questions and the REST API Design file's ETag mechanism — this is genuinely the same underlying problem showing up at three different layers of the stack.
 
@@ -586,7 +586,7 @@ I'd give the practical decision rule directly: prefer the atomic single-statemen
 
 ## 15. Compare Optimistic and Pessimistic Concurrency Control
 
-**How I'd say it:**
+**Answer:**
 
 "Optimistic concurrency control assumes conflicts are the exception, not the rule — it does no locking at read time at all, and instead detects a conflict at write time by checking whether the underlying data changed since it was read (a version number, timestamp, or full-row comparison), failing the write and requiring the application to reload and retry if a conflict is detected. This maximizes concurrency for the common (no-conflict) case, since reads never block anything, at the cost of wasted work and added complexity whenever a conflict genuinely does occur — the application has to handle the failure case explicitly (retry, or surface to a user).
 
@@ -622,7 +622,7 @@ I'd bring up that this decision shouldn't be made once, globally, for an entire 
 
 ## 16. What Is Write Skew?
 
-**How I'd say it:**
+**Answer:**
 
 "Write skew is a subtler anomaly than a simple lost update — it happens when two transactions each read some **overlapping but not identical** set of data, each independently makes a decision and writes to **different** rows based on what they read, and each individual write is perfectly valid *given what that transaction saw* — but the *combination* of both writes together violates an invariant that spans both rows, an invariant neither transaction's own write, in isolation, actually broke.
 
@@ -656,7 +656,7 @@ I'd bring up that this is exactly why PostgreSQL's actual Serializable implement
 
 ## 17. How Do Database Constraints Complement Application Validation?
 
-**How I'd say it:**
+**Answer:**
 
 "Application-level validation is necessary but not sufficient as the *only* correctness guard, because it can be bypassed or made inconsistent in ways a database constraint structurally cannot: a second application instance with slightly different (or buggy, or not-yet-deployed) validation logic, a direct database access path (an ad hoc admin script, a data migration, another service sharing the same database), or a genuine race condition between two concurrent requests each individually passing application-level validation before either one's write actually lands (a classic check-then-act gap, similar in shape to write skew) — none of these are protected by application code alone, since application-level validation only runs within the specific code path that happens to execute it.
 
@@ -694,7 +694,7 @@ I'd bring up the practical pattern this implies for handling the constraint-viol
 
 ## 18. How Do You Coordinate a Database Update and Kafka Publication?
 
-**How I'd say it:**
+**Answer:**
 
 "This is the core distributed-consistency problem that motivates the entire rest of this category: a database and a Kafka broker are two entirely separate systems with no shared transaction coordinator by default, so there is no way to make 'commit this database row' and 'publish this Kafka message' happen as one truly atomic operation using ordinary means — whichever one you do second is always at risk of failing *after* the first one already succeeded, leaving the two systems inconsistent with each other (the database committed but no message was published, or a message was published but the database transaction that was supposed to precede it then rolled back).
 
@@ -734,7 +734,7 @@ I'd walk through exactly why "just retry the Kafka send if it fails" doesn't ful
 
 ## 19. Explain the Transactional Outbox Pattern
 
-**How I'd say it:**
+**Answer:**
 
 "The pattern solves question 18's problem by never trying to make a database write and a Kafka publish atomic with each other directly — instead, the application writes the event **to an outbox table in the same database**, as part of the *same* database transaction as the actual business data change. Since both writes (the business row and the outbox row) are ordinary rows in the same database, the database's own ACID guarantees make them atomic with each other for free — either both are committed together, or neither is, with no possibility of one succeeding without the other.
 
@@ -789,7 +789,7 @@ I'd bring up the polling-vs-CDC trade-off explicitly: a polling relay is simpler
 
 ## 20. How Do Outbox Relays Handle Duplicate Publication?
 
-**How I'd say it:**
+**Answer:**
 
 **"They don't fully prevent it — and they're not designed to; instead, the outbox pattern (and the systems built on top of it) accept 'at-least-once' delivery as the realistic guarantee and push the responsibility for handling duplicates onto consumers, rather than trying to achieve true exactly-once delivery at the relay/publish layer itself.** Concretely: if the relay process crashes or fails *after* successfully publishing a message to Kafka but *before* it manages to mark that outbox row as published (or delete it), the relay will, upon recovery, see that row as still 'unpublished' and publish it again — a genuine duplicate, arriving on the Kafka topic a second time. This gap is fundamentally unavoidable without a true, distributed two-phase-commit-style protocol between the outbox database and Kafka (which the pattern deliberately avoids, precisely because 2PC has its own severe availability costs, question 22), so the pattern instead treats duplicate delivery as an accepted, expected possibility.
 
@@ -832,7 +832,7 @@ I'd bring up that this is exactly the concrete instance of Kafka's broader "why 
 
 ## 21. Why Does Kafka Exactly-Once Processing Not Automatically Include a Relational Database?
 
-**How I'd say it:**
+**Answer:**
 
 "Kafka's exactly-once semantics (transactional producers, idempotent producers, transactional consumers reading only committed offsets) are scoped **entirely within Kafka's own ecosystem** — they guarantee that a producer's writes across multiple Kafka partitions/topics, combined with a consumer's offset commits, behave atomically *with respect to Kafka itself*. This says nothing at all about, and provides no coordination mechanism for, any *external* system a consumer might also write to while processing a message — a relational database write performed inside a Kafka consumer's message-handling logic is entirely outside the scope of Kafka's own transactional coordinator, since that coordinator has no visibility into or control over the database at all.
 
@@ -867,7 +867,7 @@ I'd bring up that genuinely atomic "Kafka offset commit + external database writ
 
 ## 22. What Is a Distributed Transaction, and Why Is Two-Phase Commit Often Avoided?
 
-**How I'd say it:**
+**Answer:**
 
 "A distributed transaction is a single logical transaction whose operations span **multiple, independent systems** (two different databases, a database and a message broker, two different microservices each with their own database) — all of which need to either all commit together or all roll back together, exactly like a single-database ACID transaction, but now coordinated across systems that don't share a single transaction log or lock manager.
 
@@ -903,7 +903,7 @@ I'd bring up that 2PC isn't *never* used — it genuinely exists and is supporte
 
 ## 23. Explain the Saga Pattern and Compensating Transactions
 
-**How I'd say it:**
+**Answer:**
 
 "A saga is a sequence of **local transactions**, each in a single service/database, where each step's success triggers the next step, and — critically — each step that has a real-world effect worth undoing has an associated **compensating transaction**: a separate, explicit operation that semantically reverses that step's effect, used if a *later* step in the sequence fails and the whole saga needs to be unwound.
 
@@ -954,7 +954,7 @@ I'd bring up that not every step is compensable, and that's a genuine design con
 
 ## 24. Compare Choreography and Orchestration Sagas
 
-**How I'd say it:**
+**Answer:**
 
 "**Choreography** has no central coordinator at all — each service, upon completing its own local transaction, publishes an event, and the *next* service(s) in the logical sequence independently subscribe to and react to that event, triggering their own local transaction and publishing their own resulting event in turn. The saga's overall flow emerges from this decentralized chain of event publication and reaction, with no single place that 'knows' the whole sequence.
 
@@ -997,7 +997,7 @@ I'd give a practical recommendation rather than presenting these as equally good
 
 ## 25. How Would You Design Idempotency for a Transactional Consumer?
 
-**How I'd say it:**
+**Answer:**
 
 "The core mechanism, as touched on in question 20, is tracking which specific messages have already been fully processed, keyed by a stable identifier that's the same across any redelivery of the *same* logical message — and critically, that tracking has to happen **atomically with the actual processing side effect itself**, in the same local database transaction, or you reintroduce exactly the same 'two things need to happen together but might not' gap the outbox pattern exists to solve, just one layer further down the pipeline.
 
@@ -1034,7 +1034,7 @@ I'd bring up that the message ID used for this check has to be genuinely stable 
 
 ## 26. How Do You Safely Retry a Failed Transaction?
 
-**How I'd say it:**
+**Answer:**
 
 "Safe retry requires first classifying *why* the transaction failed, since the correct response differs completely depending on the failure category — retrying blindly regardless of cause is itself a common source of bugs. **Transient infrastructure failures** (a deadlock victim, question 13; a brief connection-pool exhaustion; a momentary network blip to the database) are the genuinely safe-to-retry category — the transaction's own logic wasn't wrong, an external, temporary condition prevented it from completing, and retrying the *entire* transaction from the beginning (not just a partial resumption) against a now-hopefully-recovered environment is the correct response. **Business-rule/validation failures** (insufficient inventory, a failed fraud check, a genuinely invalid request) are **not** safe to blindly retry — retrying the exact same operation against the exact same invalid input will simply fail again, identically, and blind retry logic here just wastes resources and potentially confuses monitoring/alerting with repeated, predictable failures that were never going to succeed.
 
@@ -1073,7 +1073,7 @@ I'd bring up that the safest transactions to retry are ones designed with retry 
 
 ## 27. When Might a Retry Repeat an External Side Effect?
 
-**How I'd say it:**
+**Answer:**
 
 "Any time a transaction includes a call to something **outside the local database transaction's own rollback scope** — an external HTTP call, a Kafka publish (unless it's specifically going through an outbox, question 19, which is exactly designed to bring it *inside* the local transaction's atomicity), a file write, an email send — that external effect does **not** automatically roll back if the surrounding database transaction later fails or is retried, because it was never actually part of that transaction's atomic scope in the database sense at all; it's a real-world action that already happened, independent of what the database later decides to do.
 
@@ -1123,7 +1123,7 @@ I'd frame the general architectural rule this motivates explicitly: external, no
 
 ## 28. How Would You Investigate Transactions That Remain Open for Several Minutes?
 
-**How I'd say it:**
+**Answer:**
 
 "First step is identifying the actual long-running transactions and what they're doing/waiting on, using the database's own introspection tools rather than guessing from application logs alone — PostgreSQL's `pg_stat_activity` view, filtered by `state` and `xact_start`, shows exactly which sessions have transactions open, for how long, and what query (if any) they're currently executing (or whether they're `idle in transaction`, which is its own specific and very common culprit, covered below).
 
@@ -1163,7 +1163,7 @@ I'd bring up `idle_in_transaction_session_timeout` as a genuinely valuable, defe
 
 ## 29. How Would You Perform a Destructive Schema Migration Without Downtime?
 
-**How I'd say it:**
+**Answer:**
 
 "I'd apply the general **expand/contract** pattern, the same discipline referenced in the JPA/Hibernate file's entity-relationship-migration question, but stated here at the schema level directly. **Expand**: add the new schema element (a new column, a new table, a new constraint) alongside the existing one, without removing or altering anything the currently-deployed application version depends on — this deploy is purely additive and safe to release independently. **Migrate**: backfill the new structure from the old (in bounded batches, per the JPA/Hibernate batch-processing discipline, not one giant transaction), and deploy an application version that writes to *both* old and new structures simultaneously (dual-write) while reading from whichever is authoritative for the current rollout stage — this is the phase where actual application code changes happen, and it can proceed gradually, verified against production traffic, with the old structure still fully intact as a safety net. **Contract**: once every consumer/application instance is confirmed migrated to use the new structure exclusively (verified, not assumed) and a safe rollback window has passed, remove the old structure entirely.
 
@@ -1208,7 +1208,7 @@ I'd bring up that the "migrate" phase's verification step — confirming every c
 
 ## 30. When Is Compensation Impossible, and How Should the Workflow Be Designed?
 
-**How I'd say it:**
+**Answer:**
 
 "Compensation is impossible whenever a step's real-world effect genuinely cannot be reversed or semantically undone — an email or SMS that's already been sent and read, a physical shipment that's already left a warehouse and can't be recalled before delivery, funds that have been irrevocably transferred to a system outside your control (a wire transfer to an external bank, once it clears), or any action with an observable, external, human-facing effect that a 'compensating' follow-up action can mitigate but never truly erase (you can send a follow-up 'please disregard our previous email' message, but you can't make the original message un-read).
 

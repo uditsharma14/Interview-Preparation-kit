@@ -6,7 +6,7 @@ How to use this: each question has **the answer the way I'd actually say it out 
 
 ## 1. How Does `HashMap` Work Internally — Collisions, Resizing, Treeification, Equality?
 
-**How I'd say it:**
+**Answer:**
 
 "A `HashMap` is an array of buckets under the hood — `Node<K,V>[] table`, 16 slots by default. When you call `put(key, value)`, Java takes `key.hashCode()`, runs it through a spreading function to mix the high bits into the low bits, and uses `(n - 1) & hash` to pick a bucket index. If nothing's there, it just drops the entry in. If something's already there — a collision — it either walks a linked list comparing each existing key with `.equals()`, or, if that bucket's gotten long enough, walks a small red-black tree instead.
 
@@ -53,7 +53,7 @@ I'd also mention: only one `null` key is allowed (it lives in bucket 0, since th
 
 ## 2. What Can Go Wrong If a Mutable Object Is Used as a `HashMap` Key?
 
-**How I'd say it:**
+**Answer:**
 
 "The map decides which bucket a key belongs in at insertion time, based on `hashCode()` at that exact moment. If you mutate the key afterward in a way that changes its hash code, the map has no way of knowing — the entry is still sitting in its *original* bucket, but now a fresh `get()` call computes a *different* hash and goes looking in the wrong place entirely. The entry isn't lost from memory — it's just permanently unreachable through the API. You can't `get()` it, you can't `remove()` it. It's a silent, hard-to-diagnose leak, because nothing ever throws."
 
@@ -95,7 +95,7 @@ I'd talk about this as a design principle, not just a gotcha: value objects used
 
 ## 3. When Would You Use `ConcurrentHashMap` Instead of a Synchronized Map?
 
-**How I'd say it:**
+**Answer:**
 
 "`Collections.synchronizedMap()` wraps every method in one shared lock — so even two threads reading completely different keys have to take turns. It works, but it turns the map into a single-lane road no matter how many threads want in.
 
@@ -133,7 +133,7 @@ One sharp edge worth mentioning: unlike `HashMap`, `ConcurrentHashMap` **does no
 
 ## 4. Are Compound Operations on `ConcurrentHashMap` Thread-Safe? `get`-then-`put` vs. `computeIfAbsent`
 
-**How I'd say it:**
+**Answer:**
 
 "Individual calls are atomic — one `get()`, one `put()`, each safe on its own. But *chaining* two calls together is not automatically atomic as a unit, and this trips people up constantly. If you do `if (map.get(key) == null) map.put(key, expensiveCompute())`, two threads can both see `null` at the same instant and both proceed — one just overwrites the other, or you've done expensive work twice for nothing. That's a textbook check-then-act race, and it doesn't matter that each individual line is thread-safe, because the *gap between* the lines is where the bug lives.
 
@@ -178,7 +178,7 @@ And I'd flag the general rule explicitly, because it's the kind of thing that se
 
 ## 5. How Would You Design an In-Memory Structure Supporting High Write Concurrency and Snapshot Reads?
 
-**How I'd say it:**
+**Answer:**
 
 "This is a genuinely interesting tension because the two requirements pull in opposite directions — high write concurrency wants writes to be cheap and unblocked by anything, and snapshot reads want a frozen, consistent point-in-time view, which usually means *something* gets copied or locked. I wouldn't reach for one silver-bullet answer here; I'd walk through the trade-offs."
 
@@ -224,7 +224,7 @@ Then I'd go one level deeper into alternatives, since a staff interviewer usuall
 
 ## 6. Compare `ArrayList`, `LinkedList`, `ArrayDeque`, and `CopyOnWriteArrayList`
 
-**How I'd say it:**
+**Answer:**
 
 "`ArrayList` is a resizable array — O(1) random access, cache-friendly since everything's contiguous in memory, and O(n) if you're inserting or removing from the middle because it has to shift elements. It's my default unless I have a specific reason not to use it.
 
@@ -259,7 +259,7 @@ This question is often a trap for candidates who memorized "LinkedList is good f
 
 ## 7. When Is `CopyOnWriteArrayList` a Good Choice, and When Is It Disastrous?
 
-**How I'd say it:**
+**Answer:**
 
 "Good fit: small-to-moderate lists where reads/iteration vastly outnumber writes. The textbook case is a list of event listeners — you register a handful rarely, but fire/iterate over them constantly. Since writes are rare, the copy-on-write cost basically never gets paid, and in exchange every reader gets a lock-free, guaranteed-consistent snapshot with zero risk of a `ConcurrentModificationException`, even if a listener gets added mid-iteration.
 
@@ -296,7 +296,7 @@ I'd mention where this actually shows up in real frameworks — listener/callbac
 
 ## 8. How Do Weakly Consistent Iterators Differ From Fail-Fast Iterators?
 
-**How I'd say it:**
+**Answer:**
 
 "Fail-fast iterators — `ArrayList`, `HashMap`, most of the classic collections — track a hidden modification counter and check it on every step. If the collection was structurally changed by anyone since the iterator was created, the next `next()` call throws `ConcurrentModificationException`. Important nuance: this is explicitly documented as a *best-effort* detection mechanism, not a hard guarantee — you're not supposed to rely on it for actual thread-safety, only treat it as a debugging aid that catches *some* bugs.
 
@@ -334,7 +334,7 @@ I'd point out that "best-effort" is doing real work in that sentence — the `mo
 
 ## 9. What Are the Memory and Performance Costs of Boxed Collections?
 
-**How I'd say it:**
+**Answer:**
 
 "Generic collections can't hold primitives directly — `List<int>` isn't legal, only `List<Integer>`. So every `int` you put into a `List<Integer>` gets autoboxed into an `Integer` object behind the scenes. That costs you in a few ways: a raw `int` is 4 bytes, but a boxed `Integer` costs a lot more once you account for the object header — you can easily be paying 4-5x the memory for the same data. It also means pointer indirection — a primitive array is contiguous in memory and cache-friendly; a `List<Integer>` is a list of *references* to separately-allocated objects scattered around the heap, so iterating it means chasing pointers and eating cache misses. And every one of those small boxed objects is something the garbage collector eventually has to deal with — a hot loop boxing and discarding millions of values creates real GC churn a primitive array would never generate."
 
@@ -373,7 +373,7 @@ For the performance side at staff level, I'd bring up primitive-specialized coll
 
 ## 10. How Would You Diagnose a Collection That Continuously Grows in Production?
 
-**How I'd say it:**
+**Answer:**
 
 "This is really a memory-leak investigation where the growing collection is just the visible symptom. First step is capturing evidence — heap dumps at intervals, either manually via `jmap` or automatically on OOM with `-XX:+HeapDumpOnOutOfMemoryError` so I've got the actual moment it broke. Then I'd load those into a profiler — Eclipse MAT or VisualVM — and compare retained size across snapshots to see what's actually growing.
 
@@ -427,7 +427,7 @@ I'd push past "how do you diagnose it once it's already a problem" into "how do 
 
 ## 11. How Would You Build an LRU Cache Using `LinkedHashMap`?
 
-**How I'd say it:**
+**Answer:**
 
 "`LinkedHashMap` is a `HashMap` that also threads every entry through a doubly-linked list, so iteration order is predictable instead of the hash-bucket chaos you get from plain `HashMap`. By default that order is insertion order, but there's a constructor flag — `accessOrder = true` — that switches it to *access* order instead: every `get()` (and every `put()` on an existing key) moves that entry to the end of the list as 'most recently used.'
 
@@ -470,7 +470,7 @@ I'd flag that this is a fine single-threaded or low-contention LRU implementatio
 
 ## 12. `TreeMap`/`TreeSet` — How Does Ordering Work, and What Breaks If `compareTo` Is Inconsistent With `equals`?
 
-**How I'd say it:**
+**Answer:**
 
 "`TreeMap` and `TreeSet` keep their entries sorted at all times, backed by a red-black tree — so `get`, `put`, `contains`, and `remove` are all O(log n), not O(1) like a hash-based map, in exchange for always-sorted iteration and range operations like `headMap`, `tailMap`, `ceilingKey`, and `floorKey` that a `HashMap` simply can't offer.
 
@@ -517,7 +517,7 @@ I'd cite the Javadoc directly here, because this is exactly the kind of subtlety
 
 ## 13. What Is `WeakHashMap`, and When Would You Actually Reach for It?
 
-**How I'd say it:**
+**Answer:**
 
 "A normal `HashMap` holds a strong reference to every key, which means a key can never be garbage collected as long as it's sitting in the map — even if nothing else in the program references it anymore. `WeakHashMap` holds its keys through `WeakReference`s instead, so once a key becomes otherwise unreachable, the garbage collector is free to reclaim it, and `WeakHashMap` will lazily clear out that now-dead entry itself, typically the next time you touch the map.
 
@@ -550,7 +550,7 @@ I'd flag the two things that trip people up in practice. First: it's only the *k
 
 ## 14. `Arrays.asList()`, `List.of()`, and `Collections.unmodifiableList()` — What Are the Actual Mutability Differences?
 
-**How I'd say it:**
+**Answer:**
 
 "These three get lumped together as 'ways to make a list' but they have genuinely different mutability semantics, and mixing them up is a real production bug source, not just trivia.
 
@@ -592,7 +592,7 @@ I'd frame this as an API-design lesson worth internalizing: if you're handing a 
 
 ## 15. How Does `PriorityQueue` Work Internally, and What Are Its Complexity Trade-Offs?
 
-**How I'd say it:**
+**Answer:**
 
 "`PriorityQueue` is a binary heap stored in a plain array — not a linked structure, no per-node object overhead. It maintains the heap property: every parent is less-than-or-equal to (for a min-heap, the default) both its children, according to natural ordering or a supplied `Comparator`. That property guarantees the smallest element is always at index 0, so `peek()` is O(1).
 
