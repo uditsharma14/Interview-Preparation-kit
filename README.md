@@ -56,7 +56,7 @@ Lead/Staff-level judgment, influence, and organizational impact — not technolo
 
 ## Microservices & Architecture Patterns
 
-*(reserved — service decomposition, CQRS/event sourcing, hexagonal/clean architecture, API gateways, and inter-service communication patterns)*
+- **[Microservices & Architecture Patterns Interview Prep](Microservices%20%26%20Architecture%20Patterns/Microservices_Architecture_Patterns_Interview_Prep.md)** — Service decomposition and bounded contexts, strangler fig migration, API Gateway/BFF/sidecar/service mesh, CQRS and event sourcing, CAP theorem, hexagonal/clean architecture, contract testing, and the distributed monolith.
 
 ## Design Patterns
 
