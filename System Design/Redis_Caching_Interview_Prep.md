@@ -853,14 +853,20 @@ local key = KEYS[1]
 local limit = tonumber(ARGV[1])
 local window = tonumber(ARGV[2])
 
-local current = redis.call('GET', key)
-if current and tonumber(current) >= limit then
-    return 0 -- rejected — over limit
+local current = redis.call('INCR', key)
+if current == 1 then
+    -- Set the TTL ONLY on the request that creates this window (the first
+    -- increment). Calling EXPIRE unconditionally on every allowed request
+    -- would push the key's expiry forward each time — the window would
+    -- never actually roll over as long as requests keep arriving, so a
+    -- client sending one request every few seconds could stay rate-limited
+    -- indefinitely instead of getting a fresh window every `window` seconds.
+    redis.call('EXPIRE', key, window)
 end
 
-redis.call('INCR', key)
-redis.call('EXPIRE', key, window) -- only meaningfully sets TTL on first increment,
-                                     -- but harmless to reset on every call here
+if current > limit then
+    return 0 -- rejected — over limit
+end
 return 1 -- allowed
 ```
 
@@ -879,7 +885,9 @@ boolean isAllowed(String userId) {
 
 I'd bring up that Lua scripting's atomicity guarantee is genuinely the same underlying mechanism (single-threaded command execution) that makes plain individual Redis commands atomic in the first place — a Lua script is just a way of composing multiple operations into one larger atomic unit, rather than a fundamentally different mechanism, which is a useful mental model for recognizing when Lua is (and isn't) the right tool: any time a Redis-based operation needs multiple logically-related steps to happen as one atomic unit (a check-and-increment, a read-modify-write across multiple keys), Lua is the natural fit, whereas a single, already-atomic Redis command (a plain `INCR`, a single `SET NX`) doesn't need it at all. I'd also mention the operational trade-off worth being aware of: because a Lua script blocks Redis's single-threaded execution for its entire duration, a genuinely slow or unbounded Lua script (one that loops over a huge dataset, say) has exactly the same "blocks the whole node for everyone" risk as the large-key problem from question 14 — Lua scripts used for rate limiting or similar small, bounded operations are fine, but Lua isn't a place to put unbounded or heavy computation.
 
-**Source:** [Redis Documentation — Scripting with Lua](https://redis.io/docs/latest/develop/interact/programmability/eval-intro/), [Redis Documentation — Rate Limiting Patterns](https://redis.io/docs/latest/develop/use-cases/rate-limiter/)
+I'd also flag a correctness pitfall that's easy to introduce by accident here: calling `EXPIRE` unconditionally on every allowed request, instead of only on the request that creates the key (`current == 1`), silently changes the rate limiter's semantics. A true fixed window is supposed to reset at a fixed boundary regardless of traffic; if every accepted request pushes the TTL forward, the key's expiry keeps sliding into the future as long as requests keep arriving, so the window effectively never rolls over for a client that keeps sending occasional traffic — it only resets once the client goes quiet for a full `window` seconds. That's a meaningfully different (and much stricter) behavior than the "N requests per calendar-aligned window" semantics the fixed-window pattern is supposed to provide, so the conditional `EXPIRE` isn't a style nicety — it's what makes the implementation match the stated algorithm.
+
+**Source:** [Redis Documentation — Scripting with Lua](https://redis.io/docs/latest/develop/interact/programmability/eval-intro/), [Redis Documentation — INCR command, "Pattern: rate limiter"](https://redis.io/docs/latest/commands/incr/) (this file's script is the documented "rate limiter 2" pattern, including its conditional-`EXPIRE`-on-`current==1` fix for the race/TTL-reset issue)
 
 ---
 
