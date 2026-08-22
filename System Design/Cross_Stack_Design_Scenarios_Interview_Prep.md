@@ -383,40 +383,32 @@ I'd bring up that this incident is a good candidate for an automated safeguard b
 
 **Answer:**
 
-"This is the canonical idempotency-key scenario (REST API Design file, question 5) — the client generates a unique idempotency key once, per logical payment attempt (not regenerated on each retry), and sends it on every retry of the same logical request. The server, atomically (via a unique database constraint on the key, not a check-then-act race), determines whether this key has already been processed: if yes, it returns the **original** stored result without charging again; if no, it processes the payment and durably records the key alongside the result, in the same transaction as the actual charge, so a crash between 'charge processed' and 'key recorded' is structurally impossible.
+"This is the canonical idempotency-key scenario — see REST API Design question 5 for the full mechanism (unique idempotency key per logical attempt, an atomic check-and-reserve against a unique DB constraint, returning the original stored result on replay) and the working code for it; I won't re-derive that here. What this framing — a customer reporting a suspected double charge — actually tests is the two things around that mechanism that a pure design question doesn't: whether the *client* half of the contract held, and how you'd investigate after the fact rather than just describe the design.
 
-The subtlety worth stating explicitly: the *client's* retry logic and the *server's* idempotency handling are two separate, cooperating halves — the server-side mechanism alone doesn't help if the client generates a brand-new idempotency key on every retry attempt (defeating the whole point), so this needs to be a documented, enforced contract between client and server, not just a server-side implementation detail."
+The mechanism only works if the client reuses the *same* idempotency key across retries of the same logical attempt. If a mobile client or a flaky client library regenerates a fresh UUID on every retry — a genuinely common implementation bug — the server-side mechanism is powerless: each retry looks like a brand-new request to a server that's doing everything right. So this is a client/server contract, not a purely server-side implementation detail, and it needs to be documented and tested against actual client behavior, not just assumed because the server-side code looks correct."
 
-**Code:**
+**Example (incident-investigation sequence):**
 
-```java
-@PostMapping("/payments")
-ResponseEntity<PaymentResult> charge(
-        @RequestHeader("Idempotency-Key") String idempotencyKey,
-        @RequestBody PaymentRequest request) {
+```text
+Customer reports what looks like a double charge on a timed-out payment.
 
-    Optional<IdempotencyRecord> existing = idempotencyRepository.findByKey(idempotencyKey);
-    if (existing.isPresent()) {
-        return ResponseEntity.status(existing.get().getStatusCode())
-            .body(existing.get().getStoredResponse()); // the ORIGINAL result —
-    }                                                       // NOT a new charge
-
-    try {
-        PaymentResult result = paymentProcessor.charge(request);
-        idempotencyRepository.save(new IdempotencyRecord(idempotencyKey, 200, result));
-        return ResponseEntity.ok(result);
-    } catch (DataIntegrityViolationException e) { // unique constraint caught
-        // a concurrent request with the SAME key won the race — fetch and
-        // return ITS result, don't charge a second time
-        return ResponseEntity.status(existing.get().getStatusCode())
-            .body(idempotencyRepository.findByKey(idempotencyKey).get().getStoredResponse());
-    }
-}
+  1. Pull the idempotency_records row(s) for that customer/order around the
+     report time. One row with one key → the server-side mechanism worked;
+     look elsewhere (a genuinely separate payment, a refund/re-attempt the
+     customer initiated themselves, a display bug double-counting one charge).
+  2. Two DIFFERENT idempotency keys for what the customer describes as one
+     attempt → the server did its job correctly on each request it received;
+     the bug is upstream, on the client — check whether the client
+     regenerates the key per retry instead of reusing it.
+  3. Payment processor shows two actual charges against ONE idempotency key
+     → the server-side atomicity is broken (e.g., the unique constraint is
+     missing, or the check-and-reserve isn't in the same transaction as the
+     charge) — this is the REST Q5 atomicity requirement not actually being
+     met in production.
+  4. Confirm the fix category (client key-reuse discipline vs. server-side
+     atomicity) before proposing a change — the two failure modes above have
+     completely different fixes, and "add more retries" fixes neither.
 ```
-
-**Follow-up:**
-
-I'd bring up the client-side half of this contract explicitly, since it's the part that's easy to overlook in a server-focused design discussion — the idempotency key must be generated **once**, at the moment the user initiates the payment action (e.g., on button click, stored client-side), and reused verbatim on every retry of that same logical attempt; a client library or mobile app that regenerates a fresh UUID on every retry attempt (a genuinely common implementation mistake) defeats the entire mechanism regardless of how correct the server-side handling is, so I'd insist on this being explicitly documented and, ideally, tested against actual client behavior, not just assumed correct because the server-side code looks right.
 
 **Source:** [Stripe API — Idempotent Requests](https://stripe.com/docs/api/idempotent_requests)
 
