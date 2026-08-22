@@ -55,7 +55,7 @@ I'd also mention: only one `null` key is allowed (it lives in bucket 0, since th
 
 **Answer:**
 
-"The map decides which bucket a key belongs in at insertion time, based on `hashCode()` at that exact moment. If you mutate the key afterward in a way that changes its hash code, the map has no way of knowing — the entry is still sitting in its *original* bucket, but now a fresh `get()` call computes a *different* hash and goes looking in the wrong place entirely. The entry isn't lost from memory — it's just permanently unreachable through the API. You can't `get()` it, you can't `remove()` it. It's a silent, hard-to-diagnose leak, because nothing ever throws."
+"The map decides which bucket a key belongs in at insertion time, based on `hashCode()` at that exact moment. If you mutate the key afterward in a way that changes its hash code, the map has no way of knowing — the entry is still sitting in its *original* bucket, but now a fresh `get()` or `remove()` call computes a *different* hash from the mutated key and looks in the wrong bucket entirely, so the lookup fails. That doesn't make the entry unreachable in general, though — it's still there for anything that doesn't rely on recomputing the hash: iterating the map (`keySet()`, `entrySet()`, `forEach()`) walks every bucket regardless of hash, so the entry turns up there with no trouble. And if the key's hash-relevant state is later restored to what it was at insertion time, `get()`/`remove()` start working again too, because the hash — and therefore the bucket the lookup computes — matches the bucket the entry actually lives in once more. What's genuinely broken is *hash-based single-key lookup and removal* while the mutation is in effect — not the entry's reachability through the API as a whole. It's still a nasty, silent bug class, because nothing throws and the map's `size()` looks completely normal."
 
 **Code:**
 
@@ -80,14 +80,23 @@ System.out.println(map.get(key)); // "original value" — works fine
 
 key.tags.add("c"); // mutate the key AFTER insertion — hashCode now changes
 
-System.out.println(map.get(key)); // null — same object reference, but "lost"
-System.out.println(map.remove(key)); // null — can't even remove it
-System.out.println(map.size()); // 1 — it's still in there, just unreachable
+System.out.println(map.get(key));    // null — hash-based lookup goes to the wrong bucket
+System.out.println(map.remove(key)); // null — same problem, can't remove via hash lookup
+System.out.println(map.size());      // 1 — the entry is still there
+
+for (MutableKey k : map.keySet()) {  // iteration doesn't hash — it walks every
+    System.out.println(k.tags);      // bucket, so the entry IS found: prints [a, b, c]
+}
+
+key.tags.remove("c"); // restore the key to its original hash-relevant state
+System.out.println(map.get(key)); // "original value" — get() works again, because
+                                    // the recomputed hash now matches the bucket
+                                    // the entry has been sitting in the whole time
 ```
 
 **Follow-up:**
 
-I'd talk about this as a design principle, not just a gotcha: value objects used as map/set keys should be immutable by construction — Java 16+ `record` types are a great fit here specifically *because* they're immutable and generate correct `equals()`/`hashCode()` for you, removing an entire class of this bug. I'd also mention this is especially dangerous in caching layers, where keys are often composite objects (e.g., a request-parameters object) that some other part of the codebase might mutate in place without realizing it's also a live cache key elsewhere.
+I'd talk about this as a design principle, not just a gotcha: value objects used as map/set keys should be immutable by construction — Java 16+ `record` types are a great fit here specifically *because* they're immutable and generate correct `equals()`/`hashCode()` for you, removing an entire class of this bug. I'd also mention this is especially dangerous in caching layers, where keys are often composite objects (e.g., a request-parameters object) that some other part of the codebase might mutate in place without realizing it's also a live cache key elsewhere — and that the "it's still findable by iteration" nuance matters practically too: a naive fix that just calls `map.remove(key)` after noticing a lookup failure will itself silently no-op, while a fix that iterates to find and remove the stale entry will actually work.
 
 **Source:** [`Object.hashCode()` contract, Javadoc](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#hashCode())
 
@@ -113,7 +122,9 @@ synchronized (syncMap) {           // required manually — easy to forget
     }
 }
 
-// ConcurrentHashMap: no external synchronization needed, ever
+// ConcurrentHashMap: individual operations (get/put/remove, and the
+// documented compound methods below) are thread-safe without external
+// locking — no need to wrap this in synchronized(), unlike synchronizedMap:
 Map<String, Integer> chm = new ConcurrentHashMap<>();
 chm.put("a", 1);
 for (String key : chm.keySet()) {  // safe to iterate while other threads mutate
@@ -123,9 +134,11 @@ for (String key : chm.keySet()) {  // safe to iterate while other threads mutate
 
 **Follow-up:**
 
-Worth knowing the history: Java 7's `ConcurrentHashMap` used segment-based locking — 16 fixed segments, each with its own lock, so at most 16 threads could write concurrently regardless of map size. Java 8 replaced this with per-bin locking using `synchronized` blocks on individual bin heads plus CAS operations for inserting into empty bins — meaningfully finer granularity, and it also brought in the same treeification behavior as `HashMap` for badly-collided bins.
+Worth knowing the history: Java 7's `ConcurrentHashMap` used segment-based locking — the map was split into a fixed number of `Segment`s, each independently lockable, so writes to different segments could proceed in parallel while writes to the *same* segment still serialized. 16 was just the **default** `concurrencyLevel` when the no-arg constructor was used; the actual segment count was derived from whatever `concurrencyLevel` was passed to the constructor (rounded up to a power of two), so a map explicitly built for higher write concurrency had more than 16 segments, and the concurrency ceiling scaled with that count, not with a fixed number. Java 8 replaced segments entirely with per-bin locking — `synchronized` blocks on individual bin head nodes plus CAS operations for inserting into empty bins — meaningfully finer granularity that scales with the number of bins rather than a fixed segment count, and it also brought in the same treeification behavior as `HashMap` for badly-collided bins.
 
 One sharp edge worth mentioning: unlike `HashMap`, `ConcurrentHashMap` **does not allow `null` keys or values** — and this is deliberate, not an oversight. In a concurrent map, `map.get(key) == null` is ambiguous — does it mean "not present" or "present with a null value"? In a single-threaded `HashMap` you can disambiguate with `containsKey()` right after. In a concurrent map, another thread could have removed the entry in between those two calls, so that check-then-act pattern isn't safe — hence the map just disallows `null` outright to close off the ambiguity entirely.
+
+Also worth being precise about: thread safety here is per-operation, not per-invariant. `get`/`put`/`remove` are atomic, and so are the documented compound methods (`putIfAbsent`, `computeIfAbsent`, `merge`, `replace`, etc.) — each one is guaranteed atomic on its own. But an invariant that spans *multiple* keys, or spans the map plus some other resource (e.g., "this map and that counter must always agree," or "check two related keys and update both consistently"), is not automatically protected just because the underlying map is a `ConcurrentHashMap` — that kind of compound, cross-key invariant still needs its own coordination (a lock, a single-key redesign, or an atomic compound method that captures the whole invariant in one call).
 
 **Source:** [`ConcurrentHashMap` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html)
 
