@@ -136,4 +136,4 @@ This kit is deliberately not optimizing for question count. See [`CONTRIBUTING.m
 
 ## License
 
-Not yet chosen — see the note in `CONTRIBUTING.md`. Treat all content here as all-rights-reserved until the repository owner adds a license file.
+[CC BY-NC-SA 4.0](LICENSE) — you can share and adapt this material with attribution, for non-commercial purposes, under the same license. See the [`LICENSE`](LICENSE) file for the full terms.

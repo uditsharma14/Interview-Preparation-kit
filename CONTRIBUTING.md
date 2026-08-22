@@ -134,6 +134,6 @@ one.
 
 ## Licensing
 
-This repository does not yet have a license file. Until the owner chooses
-one, treat all content as "all rights reserved" by default — don't
-redistribute it elsewhere or assume permissive reuse.
+This repository is licensed under [CC BY-NC-SA 4.0](LICENSE) — share and
+adapt with attribution, non-commercially, under the same license. By
+contributing, you agree your contribution is licensed under the same terms.
