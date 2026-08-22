@@ -2,7 +2,7 @@
 
 A collection of deep-dive, mid-to-staff-level interview prep notes for technical interviews. Each topic is written as a set of Q&A entries with the answer phrased the way it would actually be said out loud in an interview, backed by code snippets and pointers to where staff-level follow-up questions tend to go.
 
-This repository optimizes for **accuracy over question count**. Every guide has been through an audit pass against primary sources (Oracle/OpenJDK specs, Spring/Hibernate/Kafka/Redis/Kubernetes documentation, IETF RFCs) — see [`AUDIT.md`](AUDIT.md) for the verification status of each guide and [`CONTRIBUTING.md`](CONTRIBUTING.md) for the citation/accuracy policy new material has to meet. If you're prepping for an interview, that means you can trust a claim here enough to repeat it in the room — and if you find one that's wrong or stale, that's exactly what `AUDIT.md` and the contribution policy exist to fix.
+This repository optimizes for **accuracy over question count**. Every guide has undergone an initial audit against primary sources (Oracle/OpenJDK specs, Spring/Hibernate/Kafka/Redis/Kubernetes documentation, IETF RFCs) — see [`AUDIT.md`](AUDIT.md) for the review status of each guide and [`CONTRIBUTING.md`](CONTRIBUTING.md) for the citation/accuracy policy new material has to meet. Version-sensitive and production-specific claims should still be verified against the linked documentation before you repeat them in an interview — and if you find one that's wrong or stale, that's exactly what `AUDIT.md` and the contribution policy exist to fix.
 
 ## Who This Is For
 

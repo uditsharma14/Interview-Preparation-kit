@@ -90,7 +90,7 @@ class LateStartupEventLogger {
 
 **Follow-up:**
 
-I'd bring up `ApplicationContextInitializer` and `SpringApplicationRunListener` as the two lesser-known extension points that platform/infra teams actually use to inject cross-cutting setup (registering property sources from a secrets manager, wiring up early-startup metrics) before the bulk of user bean definitions even load — these run earlier than almost any `@Configuration` class could, which matters for anything that needs to influence the `Environment` itself. I'd also flag the pre-context-vs-post-context split explicitly: `ApplicationStartingEvent`, `ApplicationEnvironmentPreparedEvent`, `ApplicationContextInitializedEvent`, and `ApplicationPreparedEvent` all fire before or during context setup — before the container has instantiated any of your beans — so they require `SpringApplication.addListeners(...)` or a `spring.factories`/`ApplicationListener` registration, not `@EventListener` on a `@Component`. Only events from `ContextRefreshedEvent` onward (`ApplicationStartedEvent`, `ApplicationReadyEvent`, `ApplicationFailedEvent`) are safe to handle with an ordinary managed bean. I'd also mention that `context.refresh()` internally follows the exact `AbstractApplicationContext.refresh()` template method from plain Spring — Boot doesn't replace the core container lifecycle, it wraps convention and auto-configuration around the same context refresh mechanism that's existed since Spring 1.0, which is worth knowing so this doesn't feel like two unrelated systems.
+I'd bring up `ApplicationContextInitializer` and `SpringApplicationRunListener` as the two lesser-known extension points that platform/infra teams actually use to inject cross-cutting setup (registering property sources from a secrets manager, wiring up early-startup metrics) before the bulk of user bean definitions even load — these run earlier than almost any `@Configuration` class could, which matters for anything that needs to influence the `Environment` itself. I'd also flag the pre-context-vs-post-context split explicitly: `ApplicationStartingEvent`, `ApplicationEnvironmentPreparedEvent`, `ApplicationContextInitializedEvent`, and `ApplicationPreparedEvent` all fire before or during context setup — before the container has instantiated any of your beans — so they require `SpringApplication.addListeners(...)` or a `spring.factories`/`ApplicationListener` registration, not `@EventListener` on a `@Component`. Events from `ContextRefreshedEvent` onward (`ApplicationStartedEvent`, `ApplicationReadyEvent`) are safe to handle with an ordinary managed bean, because by that point the context has successfully refreshed and the bean exists to receive them. `ApplicationFailedEvent` is the exception to that pattern, not a member of the safe group: Spring Boot documents it simply as "sent if there is an exception on startup," with no guarantee about *which* stage failed — a failure during environment preparation or context initialization happens before your `@Component` beans are ever created, so a listener defined as an ordinary managed bean simply never gets registered in time to receive it. Reliable failure handling needs a listener registered directly with `SpringApplication.addListeners(...)` (or the `spring.factories`/`ApplicationListener` mechanism), the same as the pre-context events, not an `@EventListener` on a `@Component`. I'd also mention that `context.refresh()` internally follows the exact `AbstractApplicationContext.refresh()` template method from plain Spring — Boot doesn't replace the core container lifecycle, it wraps convention and auto-configuration around the same context refresh mechanism that's existed since Spring 1.0, which is worth knowing so this doesn't feel like two unrelated systems.
 
 **Source:** [`SpringApplication` Javadoc](https://docs.spring.io/spring-boot/api/java/org/springframework/boot/SpringApplication.html), [Spring Boot Reference — Application Events and Listeners](https://docs.spring.io/spring-boot/reference/features/spring-application.html#features.spring-application.application-events-and-listeners)
 
@@ -142,9 +142,9 @@ I'd bring up the ASM-based metadata reading specifically, since it's the detail 
 
 **Instantiation**: Spring creates the actual object — typically via reflection, calling the constructor (or a factory method for `@Bean`-produced beans).
 
-**Dependency injection**: constructor args are resolved before instantiation actually completes (since they must be supplied to the constructor call itself); field and setter injection happen after instantiation, populating already-created objects.
+**Dependency/property population**: constructor args are resolved before instantiation actually completes (since they must be supplied to the constructor call itself); field and setter injection for `@Autowired` members happen after instantiation, via `AutowiredAnnotationBeanPostProcessor.postProcessProperties()` — this runs during property population, *not* during the before-initialization callback phase below, even though both are technically `BeanPostProcessor` hooks. It's a common mix-up: `postProcessProperties` and `postProcessBeforeInitialization` are two distinct `BeanPostProcessor` callback methods that fire at two distinct points in the lifecycle.
 
-**BeanPostProcessor — before-initialization**: runs immediately after DI completes but before any `@PostConstruct`/`InitializingBean` callback — this is where a lot of Spring's own magic happens, e.g. `AutowiredAnnotationBeanPostProcessor`, and crucially, this is also where **AOP proxy creation happens**, specifically in the *after*-initialization phase, wrapping the real bean in a proxy.
+**BeanPostProcessor — before-initialization**: runs immediately after DI completes but before any `@PostConstruct`/`InitializingBean` callback — this is where, for example, `@Async`/`@Cacheable` metadata gets pre-processed by some infrastructure post-processors before user init callbacks run. (`AutowiredAnnotationBeanPostProcessor` is *not* an example of this phase — see the property-population note below.) Crucially, this before-initialization phase is also distinct from where **AOP proxy creation happens**, which is in the *after*-initialization phase, wrapping the real bean in a proxy.
 
 **Initialization**: `@PostConstruct` methods, then `InitializingBean.afterPropertiesSet()`, then any custom `init-method` configured — in that specific order.
 
@@ -174,7 +174,11 @@ class DemonstratesFullLifecycle implements InitializingBean, DisposableBean {
 
     // Actual order observed for a single bean:
     // BeanFactoryPostProcessors already ran (definition-level, before any of this)
-    // -> constructor + DI -> BeanPostProcessor.postProcessBeforeInitialization()
+    // -> Instantiation (constructor call)
+    // -> Dependency/property population (field/setter @Autowired via
+    //    AutowiredAnnotationBeanPostProcessor.postProcessProperties() — NOT
+    //    the same callback as postProcessBeforeInitialization below)
+    // -> BeanPostProcessor.postProcessBeforeInitialization()
     // -> @PostConstruct -> afterPropertiesSet() -> custom init-method (if any)
     // -> BeanPostProcessor.postProcessAfterInitialization() (proxy wrapping happens HERE)
 
@@ -185,9 +189,9 @@ class DemonstratesFullLifecycle implements InitializingBean, DisposableBean {
 
 **Follow-up:**
 
-I'd make the proxy-timing point explicit and connect it forward, since it's the thing that actually explains a whole category of "why doesn't my `@Transactional` work" bugs: the proxy is created in `postProcessAfterInitialization`, wrapping the already-fully-initialized target bean — so any reference *captured earlier* in the lifecycle (e.g., `this` passed to something during `@PostConstruct`, or a raw reference stashed in a static field during construction) is the *unproxied* target, not the proxy, and calling a `@Transactional` method through that stale reference silently bypasses the transaction logic entirely. I'd also flag `BeanFactoryPostProcessor` vs `BeanPostProcessor` as commonly confused despite operating at completely different phases (definition-time vs instance-time) — worth its own question, covered next.
+I'd make the proxy-timing point explicit and connect it forward, since it's the thing that actually explains a whole category of "why doesn't my `@Transactional` work" bugs: the proxy is created in `postProcessAfterInitialization`, wrapping the already-fully-initialized target bean — so any reference *captured earlier* in the lifecycle (e.g., `this` passed to something during `@PostConstruct`, or a raw reference stashed in a static field during construction) is the *unproxied* target, not the proxy, and calling a `@Transactional` method through that stale reference silently bypasses the transaction logic entirely. I'd also flag `BeanFactoryPostProcessor` vs `BeanPostProcessor` as commonly confused despite operating at completely different phases (definition-time vs instance-time) — worth its own question, covered next. And I'd correct a common misconception directly if it comes up: `AutowiredAnnotationBeanPostProcessor` is often cited as an example of the before-initialization callback, but its actual injection work runs through `InstantiationAwareBeanPostProcessor.postProcessProperties()`, during property population — a distinct, earlier stage than `postProcessBeforeInitialization`. The five stages are genuinely separate: instantiation, dependency/property population, `postProcessBeforeInitialization`, `@PostConstruct`/initialization, then `postProcessAfterInitialization` and proxying.
 
-**Source:** [Spring Framework Reference — Bean Lifecycle Callbacks](https://docs.spring.io/spring-framework/reference/core/beans/factory-nature.html), [`AbstractAutoProxyCreator` Javadoc](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/aop/framework/autoproxy/AbstractAutoProxyCreator.html)
+**Source:** [Spring Framework Reference — Bean Lifecycle Callbacks](https://docs.spring.io/spring-framework/reference/core/beans/factory-nature.html), [`AbstractAutoProxyCreator` Javadoc](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/aop/framework/autoproxy/AbstractAutoProxyCreator.html), [`AutowiredAnnotationBeanPostProcessor` Javadoc](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/beans/factory/annotation/AutowiredAnnotationBeanPostProcessor.html)
 
 ---
 
@@ -801,7 +805,7 @@ I'd mention that Spring Boot 2.6+ actually **disabled** circular-reference resol
 
 "Building on question 1, the events fire in a specific, guaranteed order, and each is a legitimate extension point for different kinds of startup logic. In order: `ApplicationStartingEvent` (as early as possible — before the `Environment` or `ApplicationContext` even exist, useful for the very earliest logging/tracing setup); `ApplicationEnvironmentPreparedEvent` (the `Environment` is ready — property sources resolved — but the `ApplicationContext` doesn't exist yet, the right place to programmatically add/modify property sources); `ApplicationContextInitializedEvent` (the context exists and `ApplicationContextInitializer`s have run, but bean definitions haven't been loaded yet); `ApplicationPreparedEvent` (bean definitions are loaded, but not yet refreshed/instantiated); then `context.refresh()` runs its full internal sequence (question 3), after which `ContextRefreshedEvent` fires; then `ApplicationStartedEvent` (context is refreshed, but `CommandLineRunner`/`ApplicationRunner` beans haven't executed yet); then those runners execute; and finally `ApplicationReadyEvent` — the actual 'fully up and ready to serve traffic' signal most application-level code should listen for.
 
-If startup fails at any point, `ApplicationFailedEvent` fires instead, which is the right hook for custom failure-alerting logic that needs to run even when the context never successfully starts."
+If startup fails at any point, `ApplicationFailedEvent` fires instead. Spring Boot documents it simply as the event sent when an exception occurs during startup — deliberately without narrowing *which* stage — and that matters here: the failure can happen before the `ApplicationContext` has been created, let alone before it's instantiated any of your `@Component` beans. So while `ApplicationFailedEvent` is the right *event* for custom failure-alerting logic, an ordinary `@Component` with `@EventListener(ApplicationFailedEvent.class)` isn't a reliable way to receive it — that bean may simply not exist yet when an early-stage failure fires the event. Reliable failure handling means registering a listener directly with `SpringApplication.addListeners(...)` (or the `spring.factories`/`ApplicationListener` mechanism) before `run()` is called, the same registration path used for the pre-context events above."
 
 **Code:**
 
@@ -819,21 +823,30 @@ class ReadinessGate {
     boolean isReady() { return ready; }
 }
 
+// NOT reliable: an ordinary @Component only exists once the context has
+// successfully instantiated it — a failure before that point (e.g. during
+// environment preparation) never reaches this listener at all.
 @Component
-class StartupFailureAlerter {
+class UnreliableFailureAlerter {
     @EventListener(ApplicationFailedEvent.class)
     void onFailure(ApplicationFailedEvent event) {
         alertingClient.pageOncall("startup failed: " + event.getException().getMessage());
-        // fires even if the ApplicationContext itself never fully initialized —
-        // a plain @PostConstruct method on a bean couldn't do this, since a bean
-        // that never finished initializing can't run its own lifecycle callbacks
     }
+}
+
+// Reliable: registered directly with SpringApplication before run() is
+// called, so it's in place no matter which startup stage fails.
+public static void main(String[] args) {
+    SpringApplication app = new SpringApplication(MyApplication.class);
+    app.addListeners((ApplicationListener<ApplicationFailedEvent>) event ->
+        alertingClient.pageOncall("startup failed: " + event.getException().getMessage()));
+    app.run(args);
 }
 ```
 
 **Follow-up:**
 
-I'd bring up `ApplicationRunner`/`CommandLineRunner` versus `@PostConstruct`/`@EventListener(ApplicationReadyEvent.class)` as a real design decision: `CommandLineRunner`/`ApplicationRunner` beans get access to the parsed application arguments and run in a well-defined, orderable sequence (via `@Order`) strictly after the context is fully refreshed — the right tool for genuine startup tasks (schema migrations, cache warming, initial data seeding) — whereas `@PostConstruct` runs *during* context refresh, per-bean, with no guarantee other beans are ready yet, which makes it the wrong tool for anything that needs the *whole* application context to be in a known-good state before running. I'd also mention that `ApplicationFailedEvent` handling needs to be registered carefully — a listener bean itself might not be available if the failure happened early enough in startup, so genuinely critical failure alerting sometimes needs to happen via a `SpringApplicationRunListener` (registered even earlier, via a `META-INF/spring.factories` entry keyed on `org.springframework.boot.SpringApplicationRunListener` — a different, older registration mechanism from the `AutoConfiguration.imports` file used for `@AutoConfiguration` classes) rather than a regular `@Component`.
+I'd bring up `ApplicationRunner`/`CommandLineRunner` versus `@PostConstruct`/`@EventListener(ApplicationReadyEvent.class)` as a real design decision: `CommandLineRunner`/`ApplicationRunner` beans get access to the parsed application arguments and run in a well-defined, orderable sequence (via `@Order`) strictly after the context is fully refreshed — the right tool for genuine startup tasks (schema migrations, cache warming, initial data seeding) — whereas `@PostConstruct` runs *during* context refresh, per-bean, with no guarantee other beans are ready yet, which makes it the wrong tool for anything that needs the *whole* application context to be in a known-good state before running. I'd also flag `ApplicationFailedEvent` specifically as the event most likely to be handled the wrong way: because it can be emitted after a failure at *any* startup stage — including before the `ApplicationContext` has created a single bean — genuinely reliable failure alerting can't rely on a listener bean's own existence. It needs to be registered directly with `SpringApplication` (via `addListeners(...)` or a `spring.factories` entry keyed on `org.springframework.context.ApplicationListener`), or via the even-earlier `SpringApplicationRunListener` mechanism (its own `META-INF/spring.factories` entry keyed on `org.springframework.boot.SpringApplicationRunListener` — a different, older registration mechanism from the `AutoConfiguration.imports` file used for `@AutoConfiguration` classes), rather than a regular `@Component`.
 
 **Source:** [Spring Boot Reference — Application Events and Listeners](https://docs.spring.io/spring-boot/reference/features/spring-application.html#features.spring-application.application-events-and-listeners)
 

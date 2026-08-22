@@ -2,7 +2,7 @@
 
 This file tracks the accuracy audit of every guide in this repository, per
 the repository's accuracy policy (see `CONTRIBUTING.md`). Each row is one
-finding. A guide is not considered "verified" until every Critical/Major
+finding. A guide is not considered "reviewed" until every Critical/Major
 row for that guide has `Status = Fixed` or `Status = Won't fix (documented)`.
 
 Severity legend:
@@ -21,12 +21,13 @@ Severity legend:
 | Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
 |---|---|---|---|---|---|
 | Q2 — Mutable HashMap key | Critical | Stated a mutated-key entry becomes "permanently unreachable through the API." | `get()`/`remove()` via a freshly computed hash fail, but the entry is still findable via iteration, and becomes `get()`-reachable again if the key's hash-relevant state is restored. | [`HashMap` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/HashMap.html) | **Fixed** |
+| Q2 follow-up — records as map keys (2026-08-22 pass) | Major | Claimed `record` types are a good fit as map/set keys "because they're immutable," without noting records are only shallowly immutable. | A record's component *references* can't be reassigned, but a mutable component's own state can still change, changing `hashCode()` — reproducing the exact bug the question demonstrates. Records work well as keys when all components are themselves immutable, or mutable inputs are defensively copied. | [`java.lang.Record` Javadoc — "a shallowly immutable, transparent carrier"](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html) | **Fixed** |
 | Q3 — Java 7 `ConcurrentHashMap` segments | Major | Claimed "16 fixed segments" unconditionally. | 16 was only the default `concurrencyLevel` for the no-arg constructor; actual segment count depended on the configured `concurrencyLevel`. | JDK 7 `ConcurrentHashMap` Javadoc | **Fixed** |
 | Q3 — synchronization claim | Major | Code comment: "no external synchronization needed, ever." | Individual operations and documented compound methods are atomic; multi-key/cross-resource invariants still need external coordination. | [`ConcurrentHashMap` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html) | **Fixed** |
 | End of file | Editorial | Leftover conversational artifact addressed to the repo author. | Remove. | — | **Fixed** |
 | Q10 vs JVM_GC heap-dump question | Editorial | Real redundancy: both fully explain the MAT/`jmap`/path-to-GC-roots workflow. | Worth consolidating in a future pass; not done here (small enough overlap, both versions are independently accurate). | — | Open (low priority) |
 
-**Guide status: Verified. 15/15 questions reviewed, TOC added, version-baseline header present.**
+**Guide status: Reviewed. 15/15 questions reviewed, TOC added, version-baseline header present.**
 
 ### Language/Java_Concurrency_Interview_Prep.md
 
@@ -35,13 +36,13 @@ Severity legend:
 | Q1 — JMM / happens-before | Critical | Racy code called "actually undefined" / "genuinely undefined behavior." | Without happens-before, visibility/ordering aren't guaranteed, but the JMM (JLS Ch. 17) still constrains execution — not UB in the C/C++ sense. | [JLS §17.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.4) | **Fixed** |
 | Q20 — Structured concurrency | Critical | Cited JEP 505 but used the removed constructor-based `new StructuredTaskScope.ShutdownOnFailure()` API. | JEP 505 replaced constructors with `StructuredTaskScope.open(Joiner)`. Rewrote example to that API; flagged that JEP 525/533 have continued changing it (JEP 533 changes the thrown exception to `ExecutionException`). | [JEP 505](https://openjdk.org/jeps/505), [JEP 525](https://openjdk.org/jeps/525), [JEP 533](https://openjdk.org/jeps/533), [`Joiner` Javadoc, JDK 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.Joiner.html) | **Fixed** |
 
-**Guide status: Verified. 20/20 questions reviewed, TOC added, version-baseline header present.**
+**Guide status: Reviewed. 20/20 questions reviewed, TOC added, version-baseline header present.**
 
 ### Language/Java_JVM_GC_Interview_Prep.md
 
 No factual errors found against JVMS §2.5, G1/ZGC/Shenandoah docs, JEP 439, or container-awareness documentation.
 
-**Guide status: Verified — no findings. 18/18 questions reviewed, TOC added, version-baseline header present.**
+**Guide status: Reviewed — no findings. 18/18 questions reviewed, TOC added, version-baseline header present.**
 
 ### Frameworks/Spring_Boot_Internals_Interview_Prep.md
 
@@ -51,15 +52,17 @@ No factual errors found against JVMS §2.5, G1/ZGC/Shenandoah docs, JEP 439, or 
 | Q4 — `@Primary` vs `@Qualifier` | Critical | Prose stated Spring checks `@Primary` before `@Qualifier`, contradicting the question's own code example, which showed an injection-point `@Qualifier` overriding `@Primary`. | An explicit `@Qualifier` at the injection point is resolved first (a specific, per-injection-point instruction); `@Primary` is the tie-breaker only when no qualifier is given and multiple type-matching candidates remain. | [`@Primary` Javadoc](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/context/annotation/Primary.html), [Qualifiers reference](https://docs.spring.io/spring-framework/reference/core/beans/annotation-config/autowired-qualifiers.html) | **Fixed** |
 | Q12/14 follow-ups — proxy method visibility | Critical | Blanket "advised methods must be public" framing. | Interface-based (JDK) proxies: public-only. Class-based (CGLIB) proxies: as of **Spring Framework 6.0**, protected/package-visible methods can also be made transactional by default. Private/effectively-private methods never advisable. | [Spring Framework Reference — `@Transactional` method visibility](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html), [Proxying Mechanisms](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) | **Fixed** |
 | Q17 follow-up | Major | Claimed `SpringApplicationRunListener` registers via the same `.imports` mechanism as `@AutoConfiguration`. | It uses the older `META-INF/spring.factories` mechanism, distinct from `AutoConfiguration.imports`. | Spring Boot Reference docs | **Fixed** |
+| Q1 follow-up / Q17 — `ApplicationFailedEvent` (2026-08-22 pass) | Critical | Implied `ApplicationFailedEvent` is safe to handle with an ordinary `@Component`/`@EventListener`, grouping it with the post-`ContextRefreshedEvent` "safe" events; Q17's code example demonstrated exactly this pattern as the recommended one. | Spring documents it simply as the event sent when an exception occurs during startup, with no guaranteed minimum stage — a failure can happen before the context has created that bean at all. Reliable handling requires a listener registered directly with `SpringApplication.addListeners(...)` (or `spring.factories`), not a regular managed bean. | [Spring Boot Reference — Application Events and Listeners](https://docs.spring.io/spring-boot/reference/features/spring-application.html#features.spring-application.application-events-and-listeners) | **Fixed** |
+| Q3 — `AutowiredAnnotationBeanPostProcessor` phase (2026-08-22 pass) | Major | Cited `AutowiredAnnotationBeanPostProcessor` as an example of the before-initialization `BeanPostProcessor` callback phase. | Its injection work runs through `postProcessProperties()` during dependency/property population — a distinct, earlier stage than `postProcessBeforeInitialization`. Separated the lifecycle explicitly into instantiation → property population → `postProcessBeforeInitialization` → initialization → `postProcessAfterInitialization`/proxying. | [`AutowiredAnnotationBeanPostProcessor` Javadoc](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/beans/factory/annotation/AutowiredAnnotationBeanPostProcessor.html) | **Fixed** |
 | Fenced code block | Editorial | `spring.factories`-style snippet's code fence had no language tag (markdownlint MD040). | Tagged `text`. | — | **Fixed** |
 
-**Guide status: Verified. 25/25 questions reviewed, TOC added, version-baseline header present.**
+**Guide status: Reviewed. 25/25 questions reviewed, TOC added, version-baseline header present.**
 
 ### Frameworks/Spring_Security_OAuth2_Interview_Prep.md
 
 No Critical/Major findings after a full read, including targeted verification of filter-chain ordering (Q4), CSRF/CORS (Q7–8), OAuth2 authorization-code flow with PKCE against RFC 7636 (Q10), and JWT/JWKS validation and key rotation against RFC 7519/7517 (Q16–17) — the `aud`-validation-not-checked-by-default callout in Q16 in particular is a real, correctly-flagged Spring Security gap, not an error. No duplicates, no conversational artifacts, no broken links.
 
-**Guide status: Verified — no correctness findings. 30/30 questions reviewed, TOC added, version-baseline header present.**
+**Guide status: Reviewed — no correctness findings. 30/30 questions reviewed, TOC added, version-baseline header present.**
 
 ### Frameworks/JPA_Hibernate_Interview_Prep.md
 
@@ -69,7 +72,7 @@ No Critical/Major findings after a full read, including targeted verification of
 
 Dependency-resolution question (known issue #9) was independently re-checked in this guide's own scope and found already accurate. Entity lifecycle, dirty checking/flush timing, N+1 causes/fixes, LAZY/EAGER defaults per association type, and `GenerationType.IDENTITY` disabling JDBC batching were all verified correct.
 
-**Guide status: Verified. 30/30 questions reviewed, TOC added, version-baseline header present.**
+**Guide status: Reviewed. 30/30 questions reviewed, TOC added, version-baseline header present.**
 
 ### System Design/REST_API_Design_Interview_Prep.md
 
@@ -81,7 +84,7 @@ Dependency-resolution question (known issue #9) was independently re-checked in 
 
 HTTP semantics (RFC 9110/9111/9457/7396/6902/4918) and CAP theorem framing checked out.
 
-**Guide status: Verified. 28/28 questions reviewed, TOC added, version-baseline header present.**
+**Guide status: Reviewed. 28/28 questions reviewed, TOC added, version-baseline header present.**
 
 ### System Design/Cross_Stack_Design_Scenarios_Interview_Prep.md
 
@@ -90,15 +93,15 @@ HTTP semantics (RFC 9110/9111/9457/7396/6902/4918) and CAP theorem framing check
 | Q11 vs REST API Q5 | Minor | Duplicate — see REST API Design entry above. | Consolidated. | — | **Fixed** |
 | Q7 — circuit-breaker fallback | Major | `@CircuitBreaker(fallbackMethod = "servedegraded")` didn't match the actual method name `serveDegraded` — Resilience4j resolves fallback methods by exact, case-sensitive name via reflection, so this would fail to wire up at runtime rather than degrade gracefully as claimed. | Fixed the string to `"serveDegraded"`. | [Resilience4j docs](https://resilience4j.readme.io/docs/circuitbreaker) | **Fixed** |
 
-Cross-checked against the now-verified Kafka, Redis, and Transactions guides for consistency on partition ordering, eviction/rate-limiting, and isolation-level claims — no contradictions found.
+Cross-checked against the now-reviewed Kafka, Redis, and Transactions guides for consistency on partition ordering, eviction/rate-limiting, and isolation-level claims — no contradictions found.
 
-**Guide status: Verified. 20/20 questions reviewed, TOC added, version-baseline header present.**
+**Guide status: Reviewed. 20/20 questions reviewed, TOC added, version-baseline header present.**
 
 ### Microservices & Architecture Patterns/Microservices_Architecture_Patterns_Interview_Prep.md
 
 CAP theorem (Q20) is correctly scoped to "during a network partition," not oversimplified as a blanket pick-2-of-3, and cites both Brewer's own retrospective and PACELC as a refinement. Service mesh (Q12) and ambassador/adapter (Q13) sections were checked for the "what's genuinely solved vs. often oversold" framing the task asked for and found substantively accurate, with real failure-mode content (retry-policy compounding across mesh + application layers) rather than trivia. No Critical/Major findings.
 
-**Guide status: Verified — no blocking findings. 25/25 questions reviewed, TOC added, version-baseline header present.**
+**Guide status: Reviewed — no blocking findings. 25/25 questions reviewed, TOC added, version-baseline header present.**
 
 ### Kubernetes, Docker & Cloud/Kubernetes_Docker_Interview_Prep.md
 
@@ -108,7 +111,7 @@ CAP theorem (Q20) is correctly scoped to "during a network partition," not overs
 | Q20 — dockershim | Editorial | "was removed" with no version. | Deprecated v1.20, removed v1.24. | [Kubernetes — Dockershim Removal FAQ](https://kubernetes.io/blog/2022/02/17/dockershim-faq/) | **Fixed** |
 | Q32 — PodSecurityPolicy | Editorial | "now-removed" with no version. | Deprecated v1.21, removed v1.25. | [Kubernetes — Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/) | **Fixed** |
 
-**Guide status: Verified. 35/35 questions reviewed, TOC added, version-baseline header present.**
+**Guide status: Reviewed. 35/35 questions reviewed, TOC added, version-baseline header present.**
 
 ### AI Engineering/AI_Engineering_Interview_Prep.md
 
@@ -118,7 +121,7 @@ CAP theorem (Q20) is correctly scoped to "during a network partition," not overs
 
 This is the fastest-moving guide in the repo (model capabilities/pricing/context windows). The version-baseline header explicitly flags specific numbers as approximate and to be re-verified before an interview, rather than stating them as permanent fact — see the header's own "last verified" caveat.
 
-**Guide status: Verified. 27/27 questions reviewed, TOC added, version-baseline header present (with the fast-moving-content caveat above).**
+**Guide status: Reviewed. 27/27 questions reviewed, TOC added, version-baseline header present (with the fast-moving-content caveat above).**
 
 ### Tech Leadership/Engineering_Leadership_Interview_Prep.md
 
@@ -128,17 +131,24 @@ This is the fastest-moving guide in the repo (model capabilities/pricing/context
 
 No fabricated metrics or incidents found beyond the two reworded phrasings above.
 
-**Guide status: Verified. 25/25 questions reviewed, TOC added, version-baseline header present.**
+**Guide status: Reviewed. 25/25 questions reviewed, TOC added, version-baseline header present.**
 
 ### System Design/Kafka_Interview_Prep.md
 
 | Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
 |---|---|---|---|---|---|
 | Q9 — idempotent producer scope (known issue #3) | Major | Summarized idempotence scope as "single producer session, single partition," readable as if a producer using idempotence could only safely write to one partition total. | Sequencing/dedup is tracked independently **per partition** within a session (a producer can write to many partitions); idempotence alone gives no atomicity across partitions/topics — that's what transactions add. | [Confluent — Exactly-once Semantics Is Possible](https://www.confluent.io/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/) (quote verified: "For a single partition, Idempotent producer sends remove the possibility of duplicate messages") | **Fixed** |
+| Version-baseline header (2026-08-22 pass) | Major | Header said "Baseline: Apache Kafka 3.x" while "Last verified" was dated 2026; Kafka 4.0 (KRaft-only, ZooKeeper removed) GA'd March 2025, so the stated baseline was stale relative to the verification date. | Updated the baseline to Kafka 4.x and added an explicit note that this guide's rebalancing content describes the classic consumer-group protocol (still the client default in 4.x), distinct from the new KIP-848 protocol that's broker-default-but-client-opt-in as of 4.0. | [Apache Kafka 4.0.0 Release Announcement](https://kafka.apache.org/blog/2025/03/18/apache-kafka-4.0.0-release-announcement/) | **Fixed** |
+| Q2 — "strict FIFO" ordering (2026-08-22 pass) | Major | Stated partition-scoped ordering as unconditional "strict FIFO," without noting it depends on producer configuration. | Ordering within a partition holds when idempotence is enabled (default since Kafka 3.0.1/3.2.0) or `max.in.flight.requests.per.connection=1`; without idempotence and with more than one in-flight request, a retry can reorder records even within one partition (Q12). | [Apache Kafka Documentation — Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) | **Fixed** |
+| Q3 — same key → same partition (2026-08-22 pass) | Major | "Every record with the same key always lands in the same partition" was qualified only for partition-count changes. | Also depends on a fixed partitioner implementation and a key serializer that's deterministic for logically-equal keys; either changing breaks the mapping. | [Apache Kafka Documentation — Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) | **Fixed** |
+| Q6 — static membership "reduces rebalances to zero" (2026-08-22 pass) | Major | Claimed static membership could reduce rolling-deploy rebalances "to zero" without qualification. | It eliminates the rebalance for a same-instance restart returning within `session.timeout.ms`; genuine scale-up/down or a late-returning consumer still triggers one. | [KIP-345](https://cwiki.apache.org/confluence/display/KAFKA/KIP-345%3A+Introduce+static+membership+protocol+to+reduce+consumer+rebalances) | **Fixed** |
+| Q7 — at-least-once "never silently dropped" (2026-08-22 pass) | Major | Implied at-least-once guarantees the business outcome is never lost, when the guarantee is scoped to Kafka's own redelivery, not to the consumer's processing logic. | Auto-commit misconfiguration or a consumer that swallows a processing failure can still lose the effective outcome even though Kafka redelivered the message correctly. | [Apache Kafka Documentation — Message Delivery Semantics](https://kafka.apache.org/documentation/#semantics) | **Fixed** |
+| Q10 — RF=3/`min.insync.replicas=2`/`acks=all` "no write unavailability" (2026-08-22 pass) | Major | Stated this configuration tolerates any single-broker loss "without data loss or write unavailability," unconditionally. | Holds only if the lost broker was already fully in sync; a leader loss still has a brief election window, and an ISR already degraded before the loss can drop write availability entirely. | [Apache Kafka Documentation — Broker Configs](https://kafka.apache.org/documentation/#brokerconfigs) | **Fixed** |
+| Q11 — "classic CAP-style tension" (2026-08-22 pass) | Minor | Called the `acks=all`/`min.insync.replicas` trade-off a "classic CAP" trade-off; CAP formally describes behavior during a network partition, while this trade-off applies to any replica unavailability, partition or not. | Reworded to "structurally similar to, but not a literal instance of, CAP." | — | **Fixed** |
 
-Full read of all 40 conceptual questions + 15 scenario questions. Ordering guarantees (Q2), rebalancing (Q4–6), delivery semantics (Q7), `acks`/ISR/replication (Q10–11), retention/compaction (Q29–30), and all 15 scenario questions checked against Kafka documentation and cited KIPs (429, 345, 98) — no other Critical/Major findings.
+Full read of all 40 conceptual questions + 15 scenario questions. Ordering guarantees (Q2), rebalancing (Q4–6), delivery semantics (Q7), `acks`/ISR/replication (Q10–11), retention/compaction (Q29–30), and all 15 scenario questions checked against Kafka documentation and cited KIPs (429, 345, 98) — no other Critical/Major findings from the original pass. A second pass (this round) found the seven overly-absolute-language issues above, all now fixed; two scenario answers (S5, S38-adjacent payments-pipeline design) carried the same RF/ISR overstatement by restating Q10's claim and were softened to cross-reference the corrected version instead of re-asserting it independently.
 
-**Guide status: Verified. 55/55 questions reviewed (40 conceptual + 15 scenario), version-baseline header present. TOC not yet added — see Phase 3/4 backlog.**
+**Guide status: Reviewed. 55/55 questions reviewed (40 conceptual + 15 scenario), version-baseline header present. TOC not yet added — see Phase 3/4 backlog.**
 
 ### System Design/Redis_Caching_Interview_Prep.md
 
@@ -148,13 +158,13 @@ Full read of all 40 conceptual questions + 15 scenario questions. Ordering guara
 
 Full read of all 30 questions. Cache-aside/write-through/write-behind (Q2), the update-then-delete-cache race (Q4–5), stampede prevention (Q6), eviction policies (Q11), hot keys (Q12–13), replication/Sentinel/Cluster consistency (Q15–17), distributed locks (Q18–19), and Redis transaction/pipeline semantics (Q23–24) checked against Redis documentation — no other Critical/Major findings.
 
-**Guide status: Verified. 30/30 questions reviewed, version-baseline header present. TOC not yet added — see Phase 3/4 backlog.**
+**Guide status: Reviewed. 30/30 questions reviewed, version-baseline header present. TOC not yet added — see Phase 3/4 backlog.**
 
 ### System Design/Transactions_Interview_Prep.md
 
 Isolation levels and their PostgreSQL-specific behavior (Q2–3), MVCC (Q4), Spring propagation defaults and the shared-rollback implication of `REQUIRED` (Q5–6), proxy-based self-invocation and private-method limitations (Q8–9, consistent with the Spring Boot Internals guide's Q12/14 fix), default rollback-on-unchecked-only behavior (Q10), deadlocks (Q13), optimistic/pessimistic concurrency (Q14–15), the outbox pattern (Q19), and 2PC-vs-saga trade-offs (Q22–23, correctly hedged — "2PC isn't *never* used," not an absolute) were all checked against PostgreSQL documentation, the Spring Framework reference, and the cited papers/pattern sources. No Critical/Major findings in this pass.
 
-**Guide status: Verified. Spot-checked in depth (isolation levels, propagation, self-invocation/private-method proxy behavior, rollback rules, 2PC/saga) with no findings; not every one of the 30 questions was individually re-verified line-by-line in this pass the way the other 14 guides were — treat as a strong but slightly lighter pass than the rest of the repo. Version-baseline header present. TOC not yet added — see Phase 3/4 backlog.**
+**Guide status: Reviewed. Spot-checked in depth (isolation levels, propagation, self-invocation/private-method proxy behavior, rollback rules, 2PC/saga) with no findings; not every one of the 30 questions was individually re-verified line-by-line in this pass the way the other 14 guides were — treat as a strong but slightly lighter pass than the rest of the repo. Version-baseline header present. TOC not yet added — see Phase 3/4 backlog.**
 
 ## Repo-wide checks
 
@@ -169,27 +179,27 @@ Isolation levels and their PostgreSQL-specific behavior (Q2–3), MVCC (Q4), Spr
 | Version-baseline / target-level / last-verified / prerequisites header on every guide | Added to all 15 guides | **Fixed** |
 | Table of Contents on every guide | Added to 12 of 15 guides (all except Kafka, Redis, Transactions) | Open — see backlog |
 
-## Guide verification status
+## Guide review status
 
 | Guide | Status |
 |---|---|
-| Language/Java_Collections_Interview_Prep.md | Verified |
-| Language/Java_Concurrency_Interview_Prep.md | Verified |
-| Language/Java_JVM_GC_Interview_Prep.md | Verified — no findings |
-| Frameworks/Spring_Boot_Internals_Interview_Prep.md | Verified |
-| Frameworks/Spring_Security_OAuth2_Interview_Prep.md | Verified — no correctness findings |
-| Frameworks/JPA_Hibernate_Interview_Prep.md | Verified |
-| System Design/REST_API_Design_Interview_Prep.md | Verified |
-| System Design/Cross_Stack_Design_Scenarios_Interview_Prep.md | Verified |
-| Microservices & Architecture Patterns/Microservices_Architecture_Patterns_Interview_Prep.md | Verified — no blocking findings |
-| Kubernetes, Docker & Cloud/Kubernetes_Docker_Interview_Prep.md | Verified |
-| AI Engineering/AI_Engineering_Interview_Prep.md | Verified |
-| Tech Leadership/Engineering_Leadership_Interview_Prep.md | Verified |
-| System Design/Kafka_Interview_Prep.md | Verified |
-| System Design/Redis_Caching_Interview_Prep.md | Verified |
-| System Design/Transactions_Interview_Prep.md | Verified (spot-checked in depth; see note above) |
+| Language/Java_Collections_Interview_Prep.md | Reviewed |
+| Language/Java_Concurrency_Interview_Prep.md | Reviewed |
+| Language/Java_JVM_GC_Interview_Prep.md | Reviewed — no findings |
+| Frameworks/Spring_Boot_Internals_Interview_Prep.md | Reviewed |
+| Frameworks/Spring_Security_OAuth2_Interview_Prep.md | Reviewed — no correctness findings |
+| Frameworks/JPA_Hibernate_Interview_Prep.md | Reviewed |
+| System Design/REST_API_Design_Interview_Prep.md | Reviewed |
+| System Design/Cross_Stack_Design_Scenarios_Interview_Prep.md | Reviewed |
+| Microservices & Architecture Patterns/Microservices_Architecture_Patterns_Interview_Prep.md | Reviewed — no blocking findings |
+| Kubernetes, Docker & Cloud/Kubernetes_Docker_Interview_Prep.md | Reviewed |
+| AI Engineering/AI_Engineering_Interview_Prep.md | Reviewed |
+| Tech Leadership/Engineering_Leadership_Interview_Prep.md | Reviewed |
+| System Design/Kafka_Interview_Prep.md | Reviewed |
+| System Design/Redis_Caching_Interview_Prep.md | Reviewed |
+| System Design/Transactions_Interview_Prep.md | Reviewed (spot-checked in depth; see note above) |
 
-"Verified" means: audited against the Phase 1 checklist and this repository's known-issues list, with all Critical/Major findings from that pass fixed. It does **not** mean every question has been rewritten into the full Phase 2 six-part standardized structure (Question / Short answer / Deep dive / Example / Failure modes / Follow-ups / Sources) — the existing Answer/Code/Follow-up/Source structure was judged accurate and well-organized enough that a wholesale rewrite risked introducing errors for uncertain benefit, and was deliberately not attempted in this pass (see backlog).
+"Reviewed" means: audited against the Phase 1 checklist and this repository's known-issues list, with all Critical/Major findings from that pass fixed. It does **not** mean every question has been rewritten into the full Phase 2 six-part standardized structure (Question / Short answer / Deep dive / Example / Failure modes / Follow-ups / Sources) — the existing Answer/Code/Follow-up/Source structure was judged accurate and well-organized enough that a wholesale rewrite risked introducing errors for uncertain benefit, and was deliberately not attempted in this pass (see backlog).
 
 ## Phase 3/4 backlog (not yet done)
 

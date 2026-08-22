@@ -2,10 +2,20 @@ name: Docs check
 
 on:
   pull_request:
-    paths: ["**/*.md"]
+    paths:
+      - "**/*.md"
+      - "scripts/**"
+      - ".github/workflows/**"
+      - ".markdownlint.yaml"
+      - ".lychee.toml"
   push:
     branches: [main, master]
-    paths: ["**/*.md"]
+    paths:
+      - "**/*.md"
+      - "scripts/**"
+      - ".github/workflows/**"
+      - ".markdownlint.yaml"
+      - ".lychee.toml"
   workflow_dispatch: {}
   schedule:
     # External sites reorganize docs over time even when nothing here

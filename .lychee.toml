@@ -62,7 +62,11 @@ exclude_private = true
 exclude_link_local = true
 exclude_loopback = true
 
-# 429 (rate-limited) and 403 (some sites bot-block HEAD/GET from CI
-# runners even for genuinely public pages) are treated as "recheck later"
-# rather than "broken" — a real 404/DNS failure still fails the check.
+# 429 (rate-limited) is treated as "recheck later" rather than "broken."
+# 403 is deliberately NOT in this blanket accept list — a real 404/DNS
+# failure, or an unreviewed 403, should still fail the check. Sites that
+# are confirmed live but bot-block CI/automated traffic with 403 are
+# handled individually via the domain-specific `exclude` allowlist above,
+# not by accepting 403 globally (which would also hide a genuinely broken
+# or access-restricted link on a domain nobody has manually verified).
 accept = [200, 429]
