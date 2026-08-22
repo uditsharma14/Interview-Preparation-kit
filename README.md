@@ -136,4 +136,10 @@ This kit is deliberately not optimizing for question count. See [`CONTRIBUTING.m
 
 ## License
 
-[CC BY-NC-SA 4.0](LICENSE) — you can share and adapt this material with attribution, for non-commercial purposes, under the same license. See the [`LICENSE`](LICENSE) file for the full terms.
+Not yet chosen — see the note in `CONTRIBUTING.md`. Treat all content here as all-rights-reserved until the repository owner adds a license file.
+
+Recommended options for the owner to choose from (not chosen on the owner's behalf):
+- **CC BY-NC-SA 4.0** — share/adapt with attribution, non-commercial only, share-alike. Fits a personal study resource the owner wants circulated but not resold or repackaged commercially.
+- **CC BY-SA 4.0** — same, minus the non-commercial restriction. Fits if the owner is fine with commercial reuse (e.g. a bootcamp using it in paid material) as long as it stays attributed and share-alike.
+- **MIT / Apache-2.0** — permissive, no share-alike requirement, minimal restriction. Fits if the owner wants maximum reuse with no obligation on downstream users beyond attribution (Apache-2.0 also adds an explicit patent grant, irrelevant for prose/docs but standard for code-heavy repos).
+- **All-rights-reserved (no license file)** — the current default. Fits if the owner doesn't want redistribution at all right now.
