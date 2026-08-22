@@ -16,14 +16,15 @@ How to use this: each question has **the answer the way I'd actually say it out 
 
 **Ordering** is about whether operations can be reordered relative to each other from another thread's point of view. The JVM and CPU are both allowed to reorder independent instructions for performance, as long as it doesn't change the *single-threaded* semantics of the thread doing the reordering — but another thread observing without synchronization can see effects out of the order they were written in source code.
 
-The **happens-before** relationship is the formal contract that ties all three together: if action X happens-before action Y, then X's effects (visibility, ordering) are guaranteed visible to Y. It's established by specific things — a monitor unlock happens-before the next lock on that same monitor, a volatile write happens-before a subsequent volatile read of the same field, a thread's `start()` happens-before anything in the thread it started, the last action in a thread happens-before another thread's successful `join()` on it. Without one of these specific relationships, the JMM makes *no* guarantee at all — not 'probably fine,' actually undefined."
+The **happens-before** relationship is the formal contract that ties all three together: if action X happens-before action Y, then X's effects (visibility, ordering) are guaranteed visible to Y. It's established by specific things — a monitor unlock happens-before the next lock on that same monitor, a volatile write happens-before a subsequent volatile read of the same field, a thread's `start()` happens-before anything in the thread it started, the last action in a thread happens-before another thread's successful `join()` on it. Without one of these specific relationships, the JMM makes *no* guarantee about visibility or ordering between those two actions — not 'probably fine,' genuinely not guaranteed. That's a narrower claim than saying the program's behavior is 'undefined' in the C/C++ sense, though: the JMM (JLS Chapter 17) still constrains what a racy program is allowed to do — for ordinary reads/writes it guarantees no 'out of thin air' values, and the language and JVM remain otherwise fully specified. What you lose is the *guarantee* of a particular visible order or a particular value being seen promptly, not all behavioral guarantees whatsoever."
 
 **Code:**
 
 ```java
 // No synchronization at all — this can loop forever, or read a stale value,
-// depending on JIT optimizations and CPU caching. Genuinely undefined behavior,
-// not just "unlikely to work":
+// depending on JIT optimizations and CPU caching. Not guaranteed by the JMM
+// (no happens-before edge between the write and the read) — not just
+// "unlikely to work in practice," genuinely unspecified by the spec:
 class NoVisibility {
     boolean ready = false;
     int value = 0;
@@ -957,7 +958,7 @@ I'd bring up `ScopedValue` (finalized alongside virtual threads, JEP 506 as of r
 
 "Without structured concurrency, spawning concurrent subtasks — via a raw executor, `CompletableFuture.allOf()`, or fire-and-forget threads — doesn't give you a clean, single owning scope for their lifetimes. If one subtask fails, the others don't automatically get cancelled; they just keep running, wasting work on a result that's already going to be discarded because the overall operation failed. And if the *parent* is cancelled or times out, there's no automatic mechanism propagating that cancellation down to the child tasks either — they keep running as orphans, potentially past the point their result even matters, holding onto resources (connections, threads) for no reason.
 
-Structured concurrency (`StructuredTaskScope`, part of the ongoing preview APIs building on virtual threads) fixes this by giving concurrent subtasks a well-defined parent scope with a lexical lifetime — a subtask can't outlive the block that spawned it. Within that scope, if one subtask fails, the scope's configured policy (e.g., `ShutdownOnFailure`) automatically cancels the sibling subtasks rather than letting them run to completion pointlessly, and the scope only 'joins' (returns to the caller) once every child is genuinely done, one way or another — so there's no possibility of a subtask outliving the operation that spawned it, unlike a fire-and-forget thread or unmanaged executor submission."
+Structured concurrency (`StructuredTaskScope`, a preview API built on virtual threads) fixes this by giving concurrent subtasks a well-defined parent scope with a lexical lifetime — a subtask can't outlive the block that spawned it. Within that scope, a `Joiner` policy (e.g. 'all subtasks must succeed, or fail the whole scope') automatically cancels the sibling subtasks the moment one fails, rather than letting them run to completion pointlessly, and the scope only 'joins' (returns to the caller) once every child is genuinely done, one way or another — so there's no possibility of a subtask outliving the operation that spawned it, unlike a fire-and-forget thread or unmanaged executor submission."
 
 **Code:**
 
@@ -970,26 +971,34 @@ CompletableFuture<Order> orderFuture = CompletableFuture.supplyAsync(() -> fetch
 // wasted work, and you have to manually wire up cancellation if you want it
 CompletableFuture.allOf(userFuture, orderFuture).join();
 
-// With structured concurrency (StructuredTaskScope, preview API):
-try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+// With structured concurrency — this targets JEP 505 (5th preview, JDK 25):
+// StructuredTaskScope.open(...) + a Joiner, NOT the older ShutdownOnFailure()
+// constructor-based API from earlier previews (JEP 453 through JEP 499),
+// which JEP 505 removed. The exact factory-method/exception names below are still
+// a PREVIEW API and have continued to change in later previews (JEP 525,
+// JEP 533) — check the Joiner Javadoc for whatever JDK you're actually on.
+try (var scope = StructuredTaskScope.open(Joiner.<Object>allSuccessfulOrThrow())) {
     Subtask<User> userTask = scope.fork(() -> fetchUser(id));
     Subtask<Order> orderTask = scope.fork(() -> fetchOrder(id));
 
-    scope.join();            // waits for both — or returns early on first failure
-    scope.throwIfFailed();   // propagates the failure as a single exception
+    scope.join(); // waits for both, or returns as soon as one fails and
+                   // cancels the other — throws StructuredTaskScope.FailedException
+                   // (wrapping the subtask's exception) if any subtask failed
 
-    // if orderTask failed, userTask was automatically cancelled by the scope
-    // the moment the failure was detected — no orphaned work, no manual wiring
+    // if orderTask had failed, userTask would have been cancelled automatically
+    // by the scope the moment the failure was detected — no manual wiring
     User user = userTask.get();
     Order order = orderTask.get();
 } // scope guarantees no subtask survives past this block, structurally
 ```
 
+**Failure modes and trade-offs:** `StructuredTaskScope.FailedException` is what `join()` throws under JEP 505/525; JEP 533 (7th preview, targeted at JDK 27) changes that to `ExecutionException` instead — so pin the exact JDK version before writing production code against this, and expect to update the catch clause across JDK previews until the API stabilizes as a permanent (non-preview) feature.
+
 **Follow-up:**
 
-I'd frame the core idea as bringing the same discipline single-threaded code already has for free — a method's call stack has a clean, lexical shape where a child call can't outlive its caller, and an exception naturally propagates up and unwinds everything below it — into the concurrent world, where none of that was previously guaranteed by default. I'd also note this is explicitly still a preview/incubating API as of recent JDK versions (it's evolved across several JEPs), so I'd flag that in a real system today, achieving similar discipline manually (an explicit "scope" object that tracks and cancels its own children, propagating cancellation via `Future.cancel()`/interruption) is still the common approach until the API stabilizes — but the underlying principle (bound the lifetime of concurrent work to an explicit parent scope, propagate failure and cancellation automatically within it) is the actual staff-level insight the interviewer is looking for, independent of which specific API version ships it.
+I'd frame the core idea as bringing the same discipline single-threaded code already has for free — a method's call stack has a clean, lexical shape where a child call can't outlive its caller, and an exception naturally propagates up and unwinds everything below it — into the concurrent world, where none of that was previously guaranteed by default. I'd also note this is explicitly still a preview API — it's gone through multiple JEPs (428 → 437 incubating in JDK 19–20, then previewing as 453 → 462 → 480 → 499 → 505 → 525 → 533 from JDK 21 through the JDK 27 preview cycle), with real API-shape changes along the way (the constructor-based `ShutdownOnFailure`/`ShutdownOnSuccess` classes from earlier previews were removed in JEP 505 in favor of `StructuredTaskScope.open(Joiner)`), so I'd flag that in a real system today, achieving similar discipline manually (an explicit 'scope' object that tracks and cancels its own children, propagating cancellation via `Future.cancel()`/interruption) is still the common fallback until the API stabilizes — but the underlying principle (bound the lifetime of concurrent work to an explicit parent scope, propagate failure and cancellation automatically within it) is the actual staff-level insight the interviewer is looking for, independent of which specific preview API version ships it.
 
-**Source:** [JEP 505, Structured Concurrency (fifth preview)](https://openjdk.org/jeps/505)
+**Source:** [JEP 505, Structured Concurrency (fifth preview)](https://openjdk.org/jeps/505), [`StructuredTaskScope.Joiner` Javadoc, JDK 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.Joiner.html), [JEP 525, Structured Concurrency (sixth preview)](https://openjdk.org/jeps/525), [JEP 533, Structured Concurrency (seventh preview)](https://openjdk.org/jeps/533)
 
 ---
 
@@ -1019,5 +1028,8 @@ I'd frame the core idea as bringing the same discipline single-threaded code alr
 | Spring `TaskDecorator` Javadoc | https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/core/task/TaskDecorator.html |
 | JEP 506 — Scoped Values | https://openjdk.org/jeps/506 |
 | JEP 505 — Structured Concurrency (5th preview) | https://openjdk.org/jeps/505 |
+| `StructuredTaskScope.Joiner` Javadoc, JDK 25 | https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.Joiner.html |
+| JEP 525 — Structured Concurrency (6th preview) | https://openjdk.org/jeps/525 |
+| JEP 533 — Structured Concurrency (7th preview) | https://openjdk.org/jeps/533 |
 | Caffeine cache library | https://github.com/ben-manes/caffeine |
 | *Java Concurrency in Practice* (Goetz et al.) | ISBN 978-0321349606 |
