@@ -120,6 +120,7 @@ Idempotent (safe to retry blindly after a timeout/network failure):
   PUT     — idempotent, not safe (has an effect, but repeating doesn't compound it)
   DELETE  — idempotent, not safe
   OPTIONS — safe AND idempotent
+  TRACE   — safe AND idempotent
 
 NOT guaranteed idempotent (retrying blindly risks a DUPLICATE effect):
   POST    — e.g., retrying a payment-creation POST after a timeout could create
@@ -335,7 +336,7 @@ I'd give the practical recommendation: JSON Merge Patch is the right default for
 
 "A lost update happens when two clients read the same resource, both make changes based on that (now-stale) read, and the second client's write silently overwrites the first client's changes without either client ever being told a conflict occurred — classic last-write-wins data loss.
 
-The standard HTTP-native mechanism is `ETag` combined with conditional requests: the server includes an `ETag` header (an opaque version identifier — a hash of the content, or a version number) on every `GET` response. When the client later wants to update the resource, it includes that same value in an `If-Match` header on the `PUT`/`PATCH` request. The server compares the `If-Match` value against the resource's **current** `ETag** at the moment the write is about to be applied — if they don't match, someone else modified the resource in between, and the server rejects the write with `412 Precondition Failed` rather than silently applying it over the intervening change. This is optimistic concurrency control (question 15 in the transactions category covers the broader pattern) expressed at the HTTP layer, giving the client an explicit, actionable signal ('someone else changed this — reload and reconcile') instead of silently losing data.
+The standard HTTP-native mechanism is `ETag` combined with conditional requests: the server includes an `ETag` header (an opaque version identifier — a hash of the content, or a version number) on every `GET` response. When the client later wants to update the resource, it includes that same value in an `If-Match` header on the `PUT`/`PATCH` request. The server compares the `If-Match` value against the resource's **current** `ETag` at the moment the write is about to be applied — if they don't match, someone else modified the resource in between, and the server rejects the write with `412 Precondition Failed` rather than silently applying it over the intervening change. This is optimistic concurrency control (question 15 in the transactions category covers the broader pattern) expressed at the HTTP layer, giving the client an explicit, actionable signal ('someone else changed this — reload and reconcile') instead of silently losing data.
 
 An application-level `version` field in the resource body (incrementing on every update, checked and required on every write) achieves the identical semantic, just expressed in the request/response body rather than HTTP headers — functionally equivalent, and the choice between the two is mostly about whether the team wants the concurrency-control mechanism to be visible/enforced at the HTTP layer (where caches, proxies, and generic HTTP tooling can participate) or purely within the application's own data model."
 
