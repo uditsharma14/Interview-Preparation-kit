@@ -110,7 +110,7 @@ Small, topic-scoped commits with a message that says what was wrong, what's
 correct now, and (for a factual fix) what source verified it — see the git
 log for the pattern this repo already follows, e.g.:
 
-```
+```text
 fix(kafka): clarify idempotent-producer scope (per-partition, not single-partition-only)
 
 Q9 previously summarized idempotence scope as 'single producer session,

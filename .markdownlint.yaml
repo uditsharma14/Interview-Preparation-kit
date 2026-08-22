@@ -1,0 +1,39 @@
+# markdownlint-cli2 configuration.
+#
+# This repo's guides are deliberately written as long, dense paragraphs (an
+# interview answer said out loud isn't short), so line-length and a few
+# other stylistic rules are disabled rather than fought. What's left catches
+# genuine structural problems: broken heading hierarchy, malformed lists,
+# duplicate content, trailing whitespace, inconsistent emphasis markers.
+
+default: true
+
+# Long paragraphs are the house style — an interview answer isn't a tweet.
+MD013: false
+
+# Every question is an H2/H3; the repo doesn't need a single H1 == filename
+# convention enforced strictly given per-folder README files too.
+MD041: false
+
+# Headings like "## 4. How Does Spring Resolve..." intentionally start with
+# a number for cross-referencing ("see Q4") — don't flag that as a list-like
+# heading.
+MD029: false
+
+# Bare URLs appear in a few "Source:" lines and code comments.
+MD034: false
+
+# Emphasis used mid-sentence for emphasis (not just bold headers) is house
+# style throughout every guide's Answer prose.
+MD036: false
+
+# Scenario-style headings ("S8. ... How do you evaluate the trade-offs.")
+# and framework Follow-up lists are written as flowing prose, not spaced
+# out with blank lines before every embedded list — consistent existing
+# style across all 15 guides, not something worth a repo-wide reformat for.
+MD026: false
+MD032: false
+
+# The "compact" table-pipe-spacing rule is newer/stricter than the padded
+# GFM table style already used consistently throughout this repo.
+MD060: false

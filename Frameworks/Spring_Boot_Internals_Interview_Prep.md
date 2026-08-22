@@ -933,7 +933,7 @@ public class PlatformTracingAutoConfiguration {
 }
 ```
 
-```
+```text
 # META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
 com.platform.tracing.autoconfigure.PlatformTracingAutoConfiguration
 ```
