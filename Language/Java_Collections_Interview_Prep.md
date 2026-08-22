@@ -657,5 +657,3 @@ I'd bring up that `PriorityQueue` is unbounded and grows dynamically like `Array
 | `Collections#unmodifiableList` Javadoc | https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collections.html#unmodifiableList(java.util.List) |
 | `PriorityQueue` (JDK 21 Javadoc) | https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/PriorityQueue.html |
 | `PriorityBlockingQueue` (JDK 21 Javadoc) | https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/PriorityBlockingQueue.html |
-
-**One assumption I made:** I read "mid to staff level" as each answer working as a complete, solid mid-level response on its own, with a clearly separated "staff-level" layer you can add if the interviewer probes further — rather than two entirely separate documents. If you'd rather have a shorter mid-level-only version split out from a deeper staff-only one, let me know and I'll restructure it that way.
