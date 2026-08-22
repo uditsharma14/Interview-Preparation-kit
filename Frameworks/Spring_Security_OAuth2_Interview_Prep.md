@@ -36,7 +36,7 @@ public class SecurityConfig {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up `DelegatingFilterProxy` explicitly as the bridge between the plain servlet container (which knows nothing about Spring beans) and Spring's own `FilterChainProxy` (a Spring-managed bean) — this indirection is why Spring Security filters can be reconfigured, reordered, or replaced entirely via Spring configuration without touching `web.xml` or servlet container registration directly. I'd also mention that filter *order* is not incidental — adding a custom filter (say, a custom header-based auth mechanism) requires explicitly specifying where in the chain it runs relative to Spring's built-in filters (`addFilterBefore`/`addFilterAfter`), and getting this wrong is a common, hard-to-diagnose source of "my custom auth filter runs, but the request is still rejected" bugs, since authorization checks further down the chain don't know about context a misplaced filter set up too late.
 
@@ -74,7 +74,7 @@ class AccountController {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up the 403-vs-404 information-disclosure trade-off explicitly as a deliberate architectural decision that should be made per-resource-type, not left to whatever a framework defaults to: for a multi-tenant system, returning 403 for "this resource exists but isn't yours" versus 404 for "as far as you're concerned, this doesn't exist" has real security implications — a 403 confirms the resource's existence to an attacker probing IDs, a 404 doesn't. I'd also mention that this exact distinction — and getting the response code right for each failure mode — is one of the practical diagnostics behind question 29 (investigating intermittent 401 vs 403), since conflating the two in logs/monitoring makes root-causing much harder.
 
@@ -131,7 +131,7 @@ boolean isAdmin = auth.getAuthorities().stream()
     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd flag the `ThreadLocal`-backed `SecurityContextHolder` as a direct callback to the concurrency file's context-propagation question — the authenticated principal does *not* automatically follow work handed off to another thread (an `@Async` method, a manually-submitted executor task), and forgetting to explicitly propagate it (via a `TaskDecorator`, or Spring Security's own `DelegatingSecurityContextExecutor`) is a very common cause of "authorization mysteriously fails only for async-processed requests" bugs. I'd also mention `SecurityContextHolderStrategy` options — `MODE_THREADLOCAL` (default, per-thread), `MODE_INHERITABLETHREADLOCAL` (propagates to child threads spawned via `new Thread()`, though not to pooled-executor tasks, which don't create new child threads), and `MODE_GLOBAL` (rare, mostly for specific standalone-application contexts) — as the actual configurable mechanism behind this behavior.
 
@@ -180,7 +180,7 @@ public class MultiChainSecurityConfig {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd emphasize the "exactly one chain applies, no fallthrough or merging" behavior as the thing that most commonly surprises people migrating from a single-chain setup — if a broad `/**` matcher chain is accidentally given a lower `@Order` than a more specific one, every request gets swallowed by the broad chain and the specific chain's rules (which might include, say, stricter checks for a sensitive subpath) never run at all, silently. I'd also mention that this pattern is exactly how a single application serves both a stateless, bearer-token-authenticated API and a stateful, session-based UI simultaneously without either mechanism interfering with the other — a common real-world requirement for services with both a machine-facing API and a human-facing admin console.
 
@@ -221,7 +221,7 @@ class OrderService {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd flag `@PostAuthorize` specifically as needing careful judgment: because it evaluates *after* the method body has already run, using it on a method with side effects (anything beyond a pure read) means the side effect already happened by the time the authorization check fails and throws — which is almost always the wrong behavior for a mutating operation. I'd say the practical rule is: `@PostAuthorize` is reasonable for read-only methods where checking the loaded object's ownership is the only way to express the rule, but any authorization check for a method with side effects should be expressed as a `@PreAuthorize` check against the arguments (or an explicit ownership-check query performed before the mutation), precisely to avoid ever executing an unauthorized side effect even momentarily. I'd also mention enabling method security requires `@EnableMethodSecurity` and, per the Spring Boot Internals file's self-invocation question, is subject to the exact same proxy-based self-invocation limitation as `@Transactional`/`@Cacheable`/`@Async`.
 
@@ -274,7 +274,7 @@ class TreasuryOperations {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd treat this as high enough severity to warrant an actual automated safeguard rather than relying on code review alone to catch it: a static-analysis rule (ArchUnit is a common choice) that flags any `@PreAuthorize`/`@Secured`/`@RolesAllowed`-annotated method called from within the same class is a genuinely valuable, cheap piece of platform tooling, precisely because the bug is silent and security-critical, unlike a `@Cacheable` self-invocation miss which is merely a performance regression. I'd also mention that AspectJ weaving (compile-time or load-time, rather than Spring's default runtime proxying) does correctly intercept self-invocation, since it rewrites bytecode directly rather than wrapping an external proxy object — a legitimate, if heavier, mitigation for a codebase where this pattern keeps recurring despite review and tooling.
 
@@ -318,7 +318,7 @@ public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd flag the dangerous middle-ground configuration explicitly, since it's a real, recurring mistake: an API that stores its auth token in a cookie (often done for browser-convenience, avoiding manual header management on the frontend) but disables CSRF protection because "it's an API, not a traditional web app" — this combination has the exact vulnerable property (automatic credential attachment) *and* no CSRF defense, a genuinely exploitable configuration. The correct rule to state explicitly: the deciding factor for CSRF is never "is this an API vs a web app," it's specifically "does this endpoint's authentication mechanism get automatically attached to requests by the browser regardless of origin" — cookie-based auth always needs CSRF protection (or the `SameSite=Strict`/`Lax` cookie attribute as a complementary, browser-native defense), explicit-header-based auth generally doesn't need it.
 
@@ -369,7 +369,7 @@ public CorsConfigurationSource corsConfigurationSource() {
 // tries to READ the response, it just needs the side effect to happen
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd state the core mental model explicitly, since it's the thing that resolves the confusion permanently: CORS is about *response confidentiality* across origins (can this other origin's script read what came back), CSRF is about *request authenticity* (was this request genuinely intended by the user, or forged by another site exploiting their ambient credentials) — completely orthogonal concerns, and a system needs both defenses independently, configured for their own specific threat model, never treating one as covering for the other. I'd also mention that `SameSite=Strict`/`Lax` cookie attributes are a complementary, browser-native CSRF defense layer that's become standard practice alongside explicit CSRF tokens — but I'd be careful to note it's a defense-in-depth layer, not a full replacement, since older browsers and certain cross-site navigation patterns can still have gaps.
 
@@ -412,7 +412,7 @@ public SecurityFilterChain jwtFilterChain(HttpSecurity http) throws Exception {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd frame the actual decision as being about the deployment topology and revocation requirements, not just "modern vs old-fashioned": a small number of server instances behind a load balancer with sticky sessions, or a shared Redis-backed session store (Spring Session makes this straightforward), makes session-based auth entirely viable and simpler to reason about at moderate scale, with the real advantage of trivially instant, precise revocation. Bearer tokens win decisively for genuinely distributed, multi-service, cross-domain, or mobile-client scenarios where a shared session store becomes an availability and latency liability, but that scalability comes at the direct cost of the harder revocation story — so the actual staff-level answer is naming this trade-off explicitly and picking based on the system's real topology and revocation needs, not defaulting to JWT because it's the more commonly discussed pattern.
 
@@ -473,7 +473,7 @@ public SecurityFilterChain oauth2LoginFilterChain(HttpSecurity http) throws Exce
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that PKCE is now recommended for **all** clients, not just public ones without a client secret — the current OAuth 2.1 draft actually mandates it universally, since it's a strict security improvement with no real downside even for confidential clients, and defense-in-depth against authorization-code interception is worth having regardless of client type. I'd also mention the `state` parameter's separate, distinct purpose from `code_challenge`/`code_verifier` — `state` defends against CSRF on the redirect callback itself (ensuring the authorization response actually corresponds to a flow this browser session initiated), which is a different threat than the authorization-code-interception threat PKCE addresses — both are needed, and conflating them (or omitting `state` because "we already have PKCE") is a real, if subtle, security gap.
 
@@ -508,7 +508,7 @@ GET https://auth.example.com/authorize?response_type=code&client_id=my-app&...
 # client app's UI at all
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd mention the historical context for why ROPC existed at all — it was meant as a migration path for legacy applications that already had a username/password login form and needed a stepping stone toward OAuth2 without an immediate UI rewrite, but that migration-convenience justification never outweighed the structural security cost, which is exactly why it's now formally deprecated rather than merely discouraged. I'd also flag that for genuinely trusted first-party native/mobile clients (a company's own mobile app, not a third party) where redirecting to a system browser feels like worse UX than an in-app password field, the correct modern answer is still authorization-code-with-PKCE using an in-app browser tab (Custom Tabs on Android, `ASWebAuthenticationSession` on iOS) rather than a custom in-app login form — these platform-provided mechanisms let the authorization server's own page render inside a browser context the client app can't inspect or intercept, preserving the "client never sees the password" property even in a native app.
 
@@ -547,7 +547,7 @@ Resource Server -- validates token (question 16) -- serves the protected data
 #   Resource Server = each individual backend microservice validating the token
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that in a large internal microservices architecture, a single service frequently plays **both** the resource-server role (validating incoming tokens from external callers) **and** the client role (acting as a client itself when calling further downstream services, question 22) — recognizing which role a given piece of code is playing at any moment clarifies exactly which OAuth2 concern applies: token *validation* logic belongs to the resource-server role, token *acquisition/attachment* logic belongs to the client role, and conflating the two in a design discussion is a common source of confused, circular architecture conversations. I'd also mention that the same physical service can even be a client to *itself* in a service-mesh context — worth flagging so the vocabulary stays precise rather than devolving into "the service" meaning three different roles in the same sentence.
 
@@ -591,7 +591,7 @@ I'd bring up that in a large internal microservices architecture, a single servi
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd call out the "never send the access token as if it were proof of identity to your own frontend, and never send the ID token to a resource server as if it were an access credential" rule explicitly, since mixing these up is a real, recurring implementation mistake — an ID token's `aud` claim is the client, not a resource server, so a resource server that's misconfigured to accept ID tokens as access tokens is validating a token that was never intended to authorize API access at all, and might not even carry the scope information a resource server needs to make an authorization decision. I'd also mention token lifetime tuning as a genuine security/UX trade-off: shorter access-token lifetimes reduce the blast radius of a leaked token but increase the frequency of refresh-token-exchange calls (more load on the authorization server, and a slightly larger window where a delayed revocation propagation, per question 19, matters); this is a real tuning knob, not a "shorter is always strictly better" decision.
 
@@ -631,7 +631,7 @@ GET https://auth.example.com/.well-known/openid-configuration
 spring.security.oauth2.client.registration.myprovider.scope=openid,profile,email
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up the practical, historical reason OIDC exists at all as useful context: before OIDC standardized this, every identity provider had its own bespoke way of exposing "who is this user" (a proprietary userinfo endpoint shape, non-standard claims), which meant every client integration was custom, provider-specific glue code — OIDC's real contribution was standardizing that layer so a client library can work against *any* OIDC-compliant provider with the same code, the same way OAuth2 itself standardized the authorization mechanics. I'd also flag the discovery document specifically as a genuinely underused piece of pragmatic engineering — pointing a client at just the issuer URL and letting it fetch `/.well-known/openid-configuration` to learn all the other endpoints dynamically is both more robust to a provider's internal endpoint changes and less configuration for the client to hardcode and maintain.
 
@@ -672,7 +672,7 @@ public SecurityFilterChain opaqueResourceServer(HttpSecurity http) throws Except
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd frame the actual decision around the real operational trade-off: JWTs are the right default for high-throughput, latency-sensitive resource servers where an extra network round-trip per request is a genuine cost, and where the (short) window between revocation and natural expiry is an acceptable risk given short-lived access tokens; opaque tokens (or a hybrid — JWT access tokens with short lifetimes, combined with an introspection-checked, longer-lived session concept for high-sensitivity operations) are the right choice when instant, precise revocation genuinely matters more than raw per-request latency — financial transaction authorization, or any system where "this access must be revocable within seconds, not minutes" is a hard requirement. I'd also mention that some architectures split the difference deliberately: a short-lived JWT access token (minutes) minimizes the real-world impact of the "can't revoke early" problem simply by making "early" a very short window, which is often a perfectly sufficient practical answer without needing opaque tokens' introspection overhead at all.
 
@@ -718,7 +718,7 @@ public JwtDecoder jwtDecoder() {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd emphasize the `aud` validation gap as specifically the thing worth bringing up unprompted, since Spring Security's default JWT validation (`JwtValidators.createDefaultWithIssuer`) checks `exp`/`nbf`/`iss` but explicitly does **not** check `aud` by default — a resource server that doesn't add this check itself will happily accept a token minted for an entirely different downstream API, as long as both share the same trusted issuer, which is a genuinely exploitable gap in a multi-service architecture with a shared identity provider. I'd also mention JWKS key rotation handling (question 17) as directly tied to this validation flow — the decoder needs to handle a `kid` it hasn't cached yet gracefully (re-fetching the JWKS document), which most libraries do correctly out of the box, but it's worth confirming rather than assuming for any custom validation code.
 
@@ -762,7 +762,7 @@ public JwtDecoder jwtDecoder() {
                                             // for whatever library is actually in use
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up this exact scenario as a direct link to the cross-stack design question about a rotated signing key causing valid requests to be rejected (question 10 in the design-scenarios category) — the real, common root cause is exactly the sequencing mistake above: the old key gets removed from the JWKS document before every token it signed has actually expired, or a resource server's JWKS cache doesn't get refreshed quickly enough to pick up the new key before tokens signed with it start arriving. The correct operational practice is to always overlap key validity periods for at least the maximum token lifetime, monitor JWKS fetch success/failure and cache-refresh timing explicitly, and treat key rotation as a genuine deployment/rollout process with its own runbook — not a one-off "swap the key" operation performed without regard for tokens already in flight.
 
@@ -808,7 +808,7 @@ I'd bring up this exact scenario as a direct link to the cross-stack design ques
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up `jti` as the specific, standardized mechanism for building a targeted revocation denylist without needing to revoke every token from a user — a resource server (or the authorization server itself, at introspection time) can maintain a small, short-lived store of "revoked jti values still within their natural expiry window," and check incoming tokens' `jti` against it; since the denylist only needs to retain entries until the token's own `exp` would have removed it naturally anyway, this store stays bounded and cheap, unlike trying to denylist every unexpired token a user has ever been issued. I'd also flag that none of these claims are enforced by the JWT format itself — they're conventions defined by RFC 7519 and OAuth2/OIDC profiles on top of it, and it's entirely the validating service's responsibility to actually check them; a JWT library validating only the signature and ignoring `exp`/`aud`/`nbf` is a real, exploitable gap, not a hypothetical one.
 
@@ -848,7 +848,7 @@ void revokeUserSession(String userId) {
                                                            // their own short remaining lifetime
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd name the actual trade-off explicitly as a spectrum, not a binary choice: pure stateless JWTs give maximum performance/availability decoupling but effectively zero instant revocability; adding any revocation mechanism moves along that spectrum toward session-based auth's instant-revocability property, at a proportional cost to the stateless benefit — there's no free option that gets both. For most systems, "short-lived access tokens + fully revocable refresh tokens" is the pragmatic sweet spot, accepting a small, bounded, and known exposure window rather than paying a lookup cost on every single request. For genuinely high-sensitivity scenarios (an admin account compromise, a detected security incident requiring *immediate* full lockout), I'd say the right answer is having a documented emergency mechanism — a global "reject all tokens issued before timestamp X" check, which is cheap to implement (compare `iat` against a stored cutoff) and gives a true instant kill-switch for the rare case where waiting even a few minutes for natural expiry is unacceptable.
 
@@ -893,7 +893,7 @@ async function silentlyRestoreSession() {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that this decision needs to be paired with a broader XSS-prevention posture, not treated as a substitute for one — a strict Content Security Policy (CSP), consistent output encoding, and a locked-down dependency supply chain all reduce the *likelihood* of the XSS that would make `localStorage` dangerous in the first place, but I wouldn't rely on "we have good XSS hygiene" as the sole justification for `localStorage` token storage, since a single missed encoding bug or a compromised third-party script anywhere on the page is enough to defeat it entirely — defense in depth (assume XSS will eventually happen somewhere, and design token storage so that alone doesn't lead to full account takeover) is the more defensible engineering posture. I'd also mention that mobile-app equivalents of this question (Keychain on iOS, Keystore-backed encrypted storage on Android) are generally much safer defaults than either browser storage option, since they're OS-level secure storage rather than something an in-app script (or in a WebView context, similarly-scoped JS) can read directly.
 
@@ -940,7 +940,7 @@ class RefreshTokenService {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd walk through exactly why "revoke the whole family, not just reject this request" is the correct response, since it's the subtle part: if an attacker stole a refresh token and used it *before* the legitimate client did, the legitimate client's *next* attempt to use what it thinks is still its valid token would actually be the reuse-detected event (since the attacker already rotated it away) — meaning the *legitimate* user, not the attacker, might be the one who triggers detection. This is exactly why the response has to be "force full re-authentication for this token family," rather than trying to guess which of the two callers is legitimate — there's genuinely no reliable way to tell from the server's side, and the safe, conservative response is to treat the whole family as burned. I'd also mention this pattern is exactly what's implemented by major identity providers (Auth0's refresh token rotation, for instance) and is worth adopting via a managed provider rather than hand-rolling, given how easy it is to get the family-revocation semantics subtly wrong.
 
@@ -986,7 +986,7 @@ grant_type=urn:ietf:params:oauth:grant-type:token-exchange
                                             not a blanket forward of the original token
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up the "don't just forward the original bearer token to every downstream call" principle explicitly, since it's the thing that separates a naive implementation from a properly-designed one: forwarding an unmodified, broadly-scoped user token to every service in a call chain means every one of those services is now a place where that token's full privileges could be misused or leaked, dramatically widening the blast radius of any single compromised service — token exchange, or at minimum re-issuing narrower, audience-restricted tokens per downstream hop, keeps each service's actual trust/privilege footprint minimal. I'd also mention mTLS and OAuth2 tokens as complementary, not competing, layers — mTLS proves *which service* is calling (network-layer identity), while the token proves *what it's authorized to do, and on whose behalf* (application-layer authorization) — a mature service-mesh security posture uses both together rather than relying on either alone.
 
@@ -1034,7 +1034,7 @@ public void approveRefundScoped(String orderId) {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up the practical failure mode this distinction guards against: teams that model authorization purely via roles, without a separate tenant dimension explicitly enforced at the data-access layer, are extremely prone to cross-tenant data leaks — a role check passing (`hasRole('ADMIN')`) says nothing about *which tenant's* data the admin should be restricted to, and it's very easy to write a query that's correctly permission-checked but forgets the tenant filter entirely. My general recommendation for a genuinely multi-tenant system: enforce tenant scoping as close to the data-access layer as possible (a Hibernate filter, a repository base class that always injects a tenant-ID predicate) rather than relying on every individual authorization check to remember to include it — that way tenant isolation is structurally hard to bypass by accident, rather than a rule every new endpoint has to remember to apply correctly.
 
@@ -1078,7 +1078,7 @@ interface TenantScopedRepository<T, ID> {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up this exact vulnerability class as consistently ranking #1 in OWASP's API Security Top 10 for good reason — it's simultaneously extremely common (any team under time pressure will eventually write an ID-based lookup without the ownership check) and extremely severe (it directly leaks or lets attackers modify other users' data, often trivially discoverable via simple ID enumeration). The staff-level mitigation isn't "review every endpoint carefully" — that doesn't scale and inevitably misses something — it's structural: repository/DAO method signatures that make the unscoped, dangerous query impossible to write by accident (as in the base-class example), automated tests that specifically attempt cross-user/cross-tenant access against every object-returning endpoint, and treating a new endpoint's data-access pattern as a required code-review checklist item specifically calling out "is this query scoped to the authenticated principal or tenant."
 
@@ -1121,7 +1121,7 @@ class OrderService {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd flag that `SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL)` is a tempting-looking global fix that only solves half the problem — it propagates context to threads created via `new Thread()`, but does **nothing** for pooled-executor tasks (which reuse existing threads rather than creating new ones), which is the far more common real-world pattern (`@Async`, `ExecutorService`, reactive schedulers) — so relying on it as a blanket solution gives a false sense of correctness. I'd also mention that this exact propagation gap is one of the most common causes of "authorization works fine synchronously but silently fails/misbehaves for background-processed requests" bugs in real systems, and that the fix needs to be applied consistently at every executor boundary in an application, not just the first one someone happens to test.
 
@@ -1168,7 +1168,7 @@ void handleRefundRequest(RefundRequestedEvent event) {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up the specific staleness risk this design has to account for explicitly: by the time an asynchronously-processed event is actually consumed, the user's permissions might have legitimately changed (role revoked, account suspended, tenant access removed) since the event was originally published — so "authorization was valid at publish time" is not the same guarantee as "authorization is valid now," and a consumer handling anything sensitive should re-validate against *current* authorization state at consume time, not just trust the embedded claim blindly as if it were still current truth. I'd also mention Kafka ACLs and application-level authorization as genuinely separate, complementary layers — broker-level ACLs answer "can this service read this topic at all" (infrastructure-level, coarse), while the embedded-claim-plus-revalidation pattern answers "is this specific action, on behalf of this specific user, still authorized right now" (application-level, fine-grained) — conflating the two, or assuming broker-level ACLs are sufficient application authorization, is a real gap.
 
@@ -1212,7 +1212,7 @@ void adjustInventoryFixed(@PathVariable String sku, @RequestBody AdjustmentReque
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up the classic, canonical confused-deputy example for context — the original 1988 case involved a compiler service with legitimate write access to a shared billing log file, which a user could trick into overwriting an *arbitrary* file by supplying a crafted output filename, since the compiler used its *own* elevated file-write privilege without checking whether the requesting user actually had permission to write to that specific target file. The modern microservices version is structurally identical: any service holding a broader downstream privilege than an individual caller should have is a potential confused deputy the moment it forwards caller-controlled input into that privileged downstream call without its own independent authorization check. I'd frame the general defense as: **never let a service's own credential silently substitute for verifying the original requester's actual, specific authorization** — every privilege-bearing hop needs its own check against the real originating principal, and object-capability-style design (only ever holding references/tokens scoped to exactly what's needed, never a broad ambient credential) is the deeper architectural principle this specific fix is an instance of.
 
@@ -1256,7 +1256,7 @@ public class SensitiveFieldRedactingFilter extends OncePerRequestFilter {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that this is exactly the kind of thing that shouldn't rely on every developer remembering the rule correctly at every single log statement — a structural safeguard (a logging filter/interceptor that automatically redacts known-sensitive header names and field patterns before anything reaches the actual log sink, applied globally rather than trusted to individual call sites) is far more reliable than a coding-standard document saying "don't log tokens." I'd also mention that log *retention* and *access control* are part of the same overall concern, not a separate problem: even correctly-redacted logs containing user IDs and behavioral data still need appropriate retention limits and access restrictions under most privacy regulations (GDPR, CCPA), so "we redacted the actual secrets" doesn't fully close out the security/privacy review for a logging pipeline — it's a necessary but not sufficient step.
 
@@ -1303,7 +1303,7 @@ OAuth2TokenValidator<Jwt> loggingValidator = jwt -> {
 };
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd emphasize that the single highest-leverage diagnostic step is almost always adding structured, specific logging *at the point of the actual authorization/authentication decision* — logging not just "401" or "403" but *which specific check failed and why* (expired vs bad signature vs missing audience vs role check failed vs stale cache) — since without that granularity, "investigate intermittent 401s" devolves into speculative guessing across a huge space of possible causes. I'd also mention that intermittent-by-instance patterns (some pods failing, others not, for the identical request) are worth checking first specifically because they're both common (config drift, cache staleness across a fleet) and cheap to rule in or out via a simple correlation query, before investing time in deeper token-validation-logic hypotheses.
 
@@ -1358,7 +1358,7 @@ class OrderService {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up Hibernate/JPA's `@Filter` mechanism (or an equivalent row-level-security feature at the database level, e.g. PostgreSQL RLS) as a genuinely stronger structural defense than relying on every repository method to remember the tenant parameter — a database-enforced row-level-security policy that automatically restricts every query to the current session's tenant, set once per connection/transaction, means even a query written by a developer who *forgot* to add tenant scoping still can't leak across tenants, because the database itself refuses to return rows outside the current tenant regardless of what the application-level query asked for. This is the kind of defense-in-depth I'd specifically push for in a Staff-level design review for a multi-tenant platform — not relying on a single layer (application code discipline) to be the only thing standing between "correct" and "catastrophic cross-tenant data leak," given how severe and reputation-damaging that specific failure category is compared to most other bug classes.
 

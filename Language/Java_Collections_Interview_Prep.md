@@ -41,7 +41,7 @@ for (int i = 0; i < 20; i++) {
 // with .equals() on every lookup — O(n) instead of O(1).
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 This is where I'd bring up the Java 8 resize optimization most people don't know: when the table doubles, Java doesn't recompute the hash for every entry from scratch. Because capacity is always a power of two and it's exactly doubling, each existing entry either stays at its current index or moves to `index + oldCapacity` — nothing else is possible. So resize just splits each bucket's chain into a "stays" list and a "moves" list using one extra bit of the already-computed hash, which is meaningfully cheaper than a full rehash. It's a small detail, but bringing it up unprompted is a good signal you've actually read the source, not just a blog post about it.
 
@@ -85,7 +85,7 @@ System.out.println(map.remove(key)); // null — can't even remove it
 System.out.println(map.size()); // 1 — it's still in there, just unreachable
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd talk about this as a design principle, not just a gotcha: value objects used as map/set keys should be immutable by construction — Java 16+ `record` types are a great fit here specifically *because* they're immutable and generate correct `equals()`/`hashCode()` for you, removing an entire class of this bug. I'd also mention this is especially dangerous in caching layers, where keys are often composite objects (e.g., a request-parameters object) that some other part of the codebase might mutate in place without realizing it's also a live cache key elsewhere.
 
@@ -121,7 +121,7 @@ for (String key : chm.keySet()) {  // safe to iterate while other threads mutate
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 Worth knowing the history: Java 7's `ConcurrentHashMap` used segment-based locking — 16 fixed segments, each with its own lock, so at most 16 threads could write concurrently regardless of map size. Java 8 replaced this with per-bin locking using `synchronized` blocks on individual bin heads plus CAS operations for inserting into empty bins — meaningfully finer granularity, and it also brought in the same treeification behavior as `HashMap` for badly-collided bins.
 
@@ -160,7 +160,7 @@ map.computeIfAbsent("a", k -> {
 });
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up `merge()` as the sibling method worth knowing for accumulate-style updates (like a concurrent counter or histogram):
 
@@ -208,7 +208,7 @@ public class SnapshotableStore<K, V> {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd name the real trade-off explicitly: this gives readers a slightly-stale-but-internally-consistent view, not the absolute latest state — and that's usually the right trade, because true "latest state + zero write cost + zero read cost" isn't achievable simultaneously without giving something up.
 
@@ -249,7 +249,7 @@ stack.push(2);
 stack.pop(); // 2 — LIFO, and noticeably faster than java.util.Stack or LinkedList here
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 This question is often a trap for candidates who memorized "LinkedList is good for insertions" without understanding *why that's usually wrong in practice* on modern hardware. I'd say that explicitly: Big-O analysis ignores cache behavior, and cache misses dominate real-world performance far more than people expect for anything but very large N. I'd also mention that `ArrayDeque` explicitly prohibits `null` elements (unlike `ArrayList`) — a real gotcha if you're migrating code that relied on nulls as sentinel values.
 
@@ -286,7 +286,7 @@ for (int i = 0; i < 1_000_000; i++) {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd mention where this actually shows up in real frameworks — listener/callback registries in various parts of the JDK and common libraries use exactly this pattern, because the "register rarely, fire often" shape is extremely common. I'd also flag the subtlety in the code example above explicitly, since it's a good one to catch someone off guard with: the iterator is a snapshot from the moment it was created, so it will *never* see items added during that specific iteration — which is usually exactly what you want (stable, predictable iteration) but can surprise people who assume an iterator reflects "live" state.
 
@@ -324,7 +324,7 @@ for (String key : chm.keySet()) {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd point out that "best-effort" is doing real work in that sentence — the `modCount` check can miss genuine concurrent modification bugs in certain interleavings, so you should never treat "my code didn't throw `CME` in testing" as proof of thread-safety. And I'd give the practical guidance: if you need to modify a collection during iteration, either use `Iterator.remove()` on a fail-fast collection, collect the items to remove into a separate list and remove them after the loop, or reach for a genuinely concurrent collection (`ConcurrentHashMap.newKeySet()`, `CopyOnWriteArrayList`) if actual concurrent access is the real requirement.
 
@@ -361,7 +361,7 @@ Integer[] boxed = new Integer[1_000_000];   // ~4MB just for the references,
                                               // roughly 20MB+ total
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd cite the actual spec here rather than just asserting it — the JLS explicitly requires this caching behavior for values in `-128` to `127` (Section 5.1.7, Boxing Conversion), so it's not implementation-specific trivia, it's a language guarantee that engineers routinely get bitten by anyway because it *looks* like it should just work with `==`. I'd also mention that the cache's upper bound can actually be raised via `-XX:AutoBoxCacheMax` (or the `java.lang.Integer.IntegerCache.high` system property), which is a fun fact but also a trap — code that "happens to work" with `==` because the cache was tuned larger in one environment can silently break in another.
 
@@ -417,7 +417,7 @@ void handleRequestCorrectly() {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd push past "how do you diagnose it once it's already a problem" into "how do you catch it before it becomes an incident" — Java Flight Recorder (JFR) running continuously with low overhead, or a scheduled `jcmd GC.class_histogram` comparison, gives you a live trend line of which classes are growing over time, so this becomes something caught by a dashboard rather than discovered via a customer complaint or an OOM crash. I'd also mention that this is a great "tell me about a production incident" story if you've actually debugged one — staff-level interviews often want the *narrative* of how you traced it (what tool, what you saw, what the fix was, what monitoring you added afterward) more than the abstract checklist, so if you've genuinely lived through one of these — the mutable-key case, a listener leak, whatever it was — that's worth having ready as a concrete story, not just the general theory.
 
@@ -460,7 +460,7 @@ cache.put(4, "d");       // capacity exceeded — evicts 2, the true LRU entry, 
 System.out.println(cache.keySet()); // [3, 1, 4]
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd flag that this is a fine single-threaded or low-contention LRU implementation, but it is not thread-safe out of the box — every `get()` mutates the internal linked list (even reads are writes here, structurally), so concurrent access needs external synchronization, e.g. wrapping the whole thing and synchronizing `get`/`put` together, which reintroduces the single-lock bottleneck from question 3. For a genuinely concurrent LRU at scale, I'd point at `Caffeine` (or Guava's `CacheBuilder` before it) — it implements approximate LRU/LFU eviction (via a Window TinyLFU policy in Caffeine's case) with striped, low-contention internals rather than one global lock, which is what production caching layers actually reach for instead of hand-rolling `LinkedHashMap`.
 
@@ -507,7 +507,7 @@ public int compareTo(Employee other) {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd cite the Javadoc directly here, because this is exactly the kind of subtlety that's spelled out explicitly rather than left to intuition: *"the ordering maintained by a sorted set (or map) must be consistent with equals if it is to correctly implement the Set (or Map) interface"* — and the Javadoc goes further to say a sorted set can technically be used *without* that consistency, but every operation that relies on `equals()` elsewhere (like passing the set to another collection's `addAll`) will misbehave. I'd also mention `NavigableMap`/`NavigableSet` (the interfaces `TreeMap`/`TreeSet` implement) as the thing that unlocks the real reason to reach for a tree structure at all — `floorEntry`, `ceilingEntry`, `subMap` — which come up constantly in scheduling, range-query, and interval-overlap problems where a hash-based structure genuinely can't help.
 
@@ -540,7 +540,7 @@ System.gc();        // in real code you'd never force this — for demonstration
 System.out.println(cache.size()); // likely 0, though timing depends on the GC
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd flag the two things that trip people up in practice. First: it's only the *keys* that are weakly referenced — the values are held strongly, so if a value indirectly holds a strong reference back to its own key (a common accident with inner classes or listener objects capturing an outer `this`), the key never actually becomes unreachable and you get no cleanup at all, silently defeating the whole point. Second: entry removal happens lazily, tied to GC activity and to when you next interact with the map — it is explicitly not deterministic or immediate, so `WeakHashMap` is the wrong tool if you need predictable eviction timing (that's a job for size- or time-based eviction in something like Caffeine, not automatic GC-driven cleanup). I'd contrast it with `WeakReference`/`SoftReference` directly used in a manual cache, and with `ThreadLocal`'s own internal use of weak references for its keys, which is the same underlying idea applied to a different leak.
 
@@ -582,7 +582,7 @@ mutable.add(4);
 System.out.println(view); // [1, 2, 3, 4] — the "unmodifiable" view just showed a new element
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd frame this as an API-design lesson worth internalizing: if you're handing a collection out of a method as something the caller shouldn't mutate, `Collections.unmodifiableList()` around a mutable list you still hold onto is a leaky abstraction — the caller can't mutate it directly, but you can still change it out from under them, which is confusing for anyone reading only the caller's code. `List.of()` (or `List.copyOf()` if you need to defensively snapshot an incoming list) gives a much stronger, harder-to-misuse guarantee. I'd also mention `List.copyOf()` specifically as the right tool when you're handed a mutable list from a caller and want a genuinely independent, immutable snapshot rather than another view over their list.
 
@@ -625,7 +625,7 @@ while (!pq.isEmpty()) sorted.add(pq.poll());
 System.out.println(sorted); // [1, 2, 3, 4, 5] — correct, via repeated poll()
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that `PriorityQueue` is unbounded and grows dynamically like `ArrayList`, but it's explicitly *not* thread-safe — for a concurrent producer/consumer priority queue, the answer is `PriorityBlockingQueue`, which wraps the same heap logic with locking and blocking semantics for `take()`/`put()`. I'd also flag `remove(Object)` as a trap: removing an arbitrary (non-root) element is O(n), not O(log n), because the heap has no efficient way to locate an arbitrary value — only the root is known in O(1). That asymmetry matters for problems like 'top-K streaming' or Dijkstra's algorithm with decrease-key semantics, where naive implementations that repeatedly remove-and-reinsert arbitrary entries can quietly degrade a solution from O(n log n) to O(n²) without the interviewee noticing.
 

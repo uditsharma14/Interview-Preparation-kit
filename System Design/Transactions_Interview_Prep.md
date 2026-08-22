@@ -24,7 +24,7 @@ COMMIT;
 -- account 1 with nowhere to go
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that "consistency" in ACID is a genuinely different, narrower notion than "consistency" in the CAP theorem sense — a common point of confusion in interviews and in casual conversation alike. ACID consistency means "the database's own declared constraints are never violated by a committed transaction" (a foreign key always points at a row that exists, a unique constraint is never doubly satisfied); CAP consistency means "every read sees the most recent write, across a distributed set of replicas/nodes." A system can be perfectly ACID-consistent on a single node while being eventually (not CAP-)consistent across replicas — these are separate axes, and conflating them in a distributed-systems discussion is a real, common mistake worth explicitly avoiding.
 
@@ -57,7 +57,7 @@ BEGIN ISOLATION LEVEL REPEATABLE READ;
 COMMIT;                                        -- by Repeatable Read's snapshot semantics
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd emphasize the point that matters most in practice: **the SQL standard describes anomalies each level must *prevent*, not the exact mechanism**, so two databases both claiming "Repeatable Read" can have subtly different actual guarantees (PostgreSQL's Repeatable Read also prevents phantoms and write skew via serializable-snapshot-isolation-adjacent techniques; the SQL standard's minimal definition of Repeatable Read does not require phantom prevention) — meaning "what isolation level are we running" is necessary but not sufficient information; you have to know the *specific database's* actual documented behavior at that level, not just assume standard-textbook semantics apply verbatim. I'd also flag that most application code defaults to whatever the database's own default is (Read Committed, typically) without the team having made a deliberate choice — and that default is often the right choice for typical CRUD workloads, but any code relying on multi-statement read consistency within a transaction (a report computing an aggregate from several queries that all need to reflect the same point in time) needs to explicitly choose and justify a stronger level, not assume the default happens to provide it.
 
@@ -93,7 +93,7 @@ COMMIT;                                    COMMIT;
 -- neither transaction was ever told a conflict occurred
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd point out that lost updates are the anomaly that's easiest to accidentally reproduce in *application* code even when the database's own isolation level would otherwise prevent a pure SQL-level version — specifically, the common "read a row in one statement, compute in application code, write it back in a separate statement" pattern (`SELECT` then, in Java, `balance - amount`, then a separate `UPDATE ... SET balance = ?`) reintroduces exactly this race regardless of the database's isolation level, because the check-then-act sequence spans two separate round trips with application logic in between, not one atomic SQL statement — the fix is either a single atomic `UPDATE accounts SET balance = balance - ? WHERE id = ?` (letting the database do the arithmetic in one statement) or explicit optimistic/pessimistic locking around the read-modify-write sequence. I'd frame this as the direct bridge to the JPA/Hibernate file's optimistic-locking discussion — the exact same lost-update problem, just expressed at the ORM/entity level instead of raw SQL.
 
@@ -129,7 +129,7 @@ Transaction 10 (still running, same snapshot as before):
   -- and without txn 11 having had to block waiting for txn 10 to finish reading
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up `VACUUM` (PostgreSQL specifically) as the operationally important consequence of MVCC that's easy to overlook until it becomes an incident: old row versions ("dead tuples") accumulate as updates/deletes happen, and if `VACUUM` falls behind (heavy write load, long-running transactions holding old snapshots open and preventing cleanup of versions they might still need), table bloat grows, index efficiency degrades, and in an extreme, genuinely dangerous case, PostgreSQL's transaction ID (`xid`) counter can approach wraparound, which the database proactively guards against by refusing new writes entirely until an aggressive forced vacuum completes — a real, production-halting failure mode that traces directly back to MVCC's version-accumulation mechanism, not a mysterious unrelated database bug. I'd mention this specifically because "why is my database suddenly refusing writes" or "why did performance degrade gradually over months" investigations in a PostgreSQL system very often trace back to exactly this — long-running transactions (an idle-in-transaction connection left open, a batch job holding a transaction open far longer than intended) preventing vacuum from reclaiming old versions.
 
@@ -171,7 +171,7 @@ class InventoryService {
                                                                    // own code never itself failed
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that this default is precisely why business operations that span multiple service-layer methods should be thought of as one atomic unit from a transactional-boundary perspective, even though they're implemented as separate Java method calls across separate classes — the `@Transactional` boundary that actually matters for a given business operation is typically the outermost, entry-point method (`placeOrder()` in the example), and inner `@Transactional` annotations on methods that are only ever called from within an already-transactional context are, practically speaking, mostly documentation/safety-net annotations (ensuring the method still behaves correctly if it's ever called standalone) rather than the methods that actually determine transaction boundaries in the common call path. I'd also connect this forward to question 12 — transaction boundaries should align with business operations, and `REQUIRED`'s join-the-existing-transaction default is exactly the mechanism that makes a multi-method, multi-class business operation cohere into one correct atomic unit without every individual method needing to reason about where the actual transaction started.
 
@@ -218,7 +218,7 @@ public void attemptRiskyStep(Order order) {         // SAME outer transaction/co
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd emphasize `REQUIRES_NEW`'s real cost, which directly sets up the next question: it acquires a genuinely **separate** database connection from the pool for the duration of the inner transaction (the outer connection is suspended, not reused), so a call chain that nests several `REQUIRES_NEW` calls (or calls one repeatedly in a loop) can exhaust the connection pool far faster than the `REQUIRED` default would, since each `REQUIRES_NEW` invocation checks out its own connection on top of whatever the outer, suspended transaction is already holding. I'd also mention `NESTED` as the generally underused middle ground worth considering more often than it typically gets reached for — it gives partial-rollback-and-continue semantics without the connection-pool cost of a fully independent transaction, though its savepoint-based implementation means it's still tied to the outer transaction's ultimate fate (if the *outer* transaction itself rolls back entirely, the nested savepoint's work is rolled back too, regardless of whether the nested portion itself "succeeded" earlier).
 
@@ -260,7 +260,7 @@ void logAuditEventsBatch(List<AuditEntry> entries) {
 }                                        // regardless of batch size
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that this is exactly the kind of production incident that's genuinely hard to spot in code review, since `REQUIRES_NEW` on an individual method looks completely reasonable in isolation — the danger only manifests from the *calling pattern* (inside a loop, or nested several layers deep under load), which requires tracing actual call chains and connection-pool metrics under realistic concurrency to catch, not reading the annotation on one method at a time. I'd recommend connection-pool monitoring (active/idle connection counts, wait-time-for-a-connection metrics) as the concrete early-warning signal for this class of problem, and I'd advocate for treating `REQUIRES_NEW` as something used deliberately and sparingly for specific, justified needs (genuinely independent-of-outer-outcome writes like audit logs) rather than a default reached for whenever "I want this to definitely commit" seems appealing — the far more common, safer default remains `REQUIRED`, precisely because it doesn't have this connection-multiplication cost.
 
@@ -307,7 +307,7 @@ class OrderServiceFixed {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd flag that this is a particularly dangerous instance of the general self-invocation problem specifically because a `REQUIRES_NEW` self-invocation failure doesn't just silently skip an *optimization* (unlike a missed `@Cacheable`) — it silently changes the actual **atomicity and durability guarantees** of the code: a developer who wrote `saveWithNewTransaction` specifically to guarantee it commits independently of the caller's outcome (e.g., an audit log meant to survive the caller's later rollback) gets no such guarantee at all when reached via self-invocation, and the bug is invisible until the exact scenario the independent-commit guarantee was meant to protect against actually occurs in production — at which point the "guaranteed to survive" data is unexpectedly missing. I'd recommend the same ArchUnit-style static-analysis safeguard mentioned in the Spring Security file, specifically flagging any `@Transactional`-annotated method (especially non-`REQUIRED` propagation types) called from within its own class, given how severe and silent the resulting bug can be.
 
@@ -357,7 +357,7 @@ class OrderServiceFixed {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that this is a genuinely good candidate for a compile-time or build-time lint check, since it's completely invisible at runtime (no exception, no log line by default) and only discoverable by noticing the *absence* of expected transactional behavior — a much harder bug to trace than one that throws. I'd also mention that AspectJ compile-time/load-time weaving (unlike Spring's default proxy-based AOP) *can* correctly intercept private methods, since it rewrites bytecode directly rather than relying on an external wrapping object — this is a legitimate, if heavier, mitigation worth knowing about for a codebase where this class of mistake keeps recurring, though I'd generally prefer fixing the actual method visibility and call pattern over reaching for a different, more complex AOP weaving strategy just to route around a fixable design issue.
 
@@ -401,7 +401,7 @@ class InsufficientInventoryException extends RuntimeException { } // extends
 // rollbackFor override needed anywhere it's thrown
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that this default rollback rule's real danger is amplified by how *easy* it is to accidentally trigger, especially at an API/service boundary translating a lower-level exception into a domain-specific checked exception — a developer wrapping a caught exception into a custom checked exception for a "cleaner" method signature can unknowingly disable rollback for exactly the failure case they were trying to represent, with no error, warning, or test failure signaling the gap unless a test specifically asserts on database state after a failure path. I'd recommend, as a team-wide convention rather than a case-by-case decision, that all business/domain exceptions extend `RuntimeException`, and that any genuinely-needed checked exception crossing a `@Transactional` boundary be explicitly reviewed for its rollback implications — treating "does this exception correctly roll back the transaction" as a required part of code review for any new exception type introduced in transactional code, given how silent and easy-to-miss getting this wrong is.
 
@@ -445,7 +445,7 @@ public void placeOrderFixed(Order order) {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that this is precisely why the "reserve inventory, then charge payment, then confirm" flow needs to be modeled as a saga (question 19/20) rather than one long-held database transaction spanning multiple external calls — the whole architectural point of a saga is to break a multi-step, multi-system operation into a sequence of independently-committing local transactions with compensating actions for failure, specifically *because* holding one database transaction open across multiple network calls (to a payment gateway, in this example) is both a severe reliability/scalability risk and, in a genuinely distributed system, often impossible in the first place (the payment gateway isn't part of your database and can't participate in the same ACID transaction anyway). I'd frame this as the direct, concrete motivation for why sagas exist as a pattern, not an abstract distributed-systems theory — this exact anti-pattern is the thing they're designed to replace.
 
@@ -492,7 +492,7 @@ public void placeOrderThenNotify(Order order) {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up `@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)` as the concrete Spring mechanism for correctly expressing "this side effect should happen only if, and only after, the business transaction actually commits" — decoupling the side effect (sending an email, publishing an event) from the transaction's own atomicity boundary while still guaranteeing it doesn't fire on a rolled-back operation. I'd also connect this question directly to the transactional outbox pattern (question 19) as the more rigorous version of the same underlying principle applied specifically to Kafka publication — "the side effect and the database change need to be atomic with each other, but the side effect itself (a network call, a message publish) can't safely be *inside* the same database transaction," and the outbox pattern is exactly how that tension gets resolved correctly rather than either accepting an inconsistency window or dangerously holding a transaction open across an external call.
 
@@ -537,7 +537,7 @@ DETAIL: Process 1234 waits for ShareLock on transaction 5678; blocked by process
         Process 5678 waits for ShareLock on transaction 1234; blocked by process 1234.
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that the actual, durable fix — same principle as the concurrency file's advice on in-process lock ordering — is enforcing a **consistent lock acquisition order** across every code path that takes multiple row locks in the same transaction (e.g., always locking accounts in ascending ID order, regardless of which account is logically "from" or "to" in a given call), which structurally prevents the circular-wait condition that causes deadlocks in the first place, rather than relying on retry-after-the-fact as the only mitigation. I'd frame retry as the correct *safety net* for deadlocks that do occur despite good lock-ordering discipline (some deadlocks are hard to fully eliminate in complex schemas with many interacting foreign keys/indexes), not as a substitute for actually designing lock acquisition order carefully in the first place — a system relying purely on retry-and-hope without any lock-ordering discipline will see deadlock rates scale badly with concurrency and schema complexity.
 
@@ -576,7 +576,7 @@ BEGIN;
 COMMIT;
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd give the practical decision rule directly: prefer the atomic single-statement update whenever the update logic is genuinely simple arithmetic/set-operations on the current value, since it's the cheapest and most foolproof option and requires no additional concurrency-control machinery at all; reach for optimistic locking when the update logic is more complex (multi-field, business-rule-driven) but conflicts are expected to be rare, accepting the cost of retry logic on the (uncommon) conflict case; reach for pessimistic locking specifically when conflicts are frequent enough that optimistic retries would themselves become a meaningful source of wasted work and latency, or when the cost of a failed/retried attempt is high enough that preventing the race outright is worth the reduced concurrency — this is the exact same decision framework from the JPA/Hibernate file's pessimistic-locking question, just stated at the raw-SQL level here rather than the ORM level.
 
@@ -612,7 +612,7 @@ Account account = entityManager.find(Account.class, id, LockModeType.PESSIMISTIC
 // and retrying repeatedly under contention that would make retries themselves costly
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that this decision shouldn't be made once, globally, for an entire application — it's legitimately a **per-hot-path** decision, and a mature system often uses both simultaneously for different tables/operations based on each one's actual measured contention profile: optimistic locking as the default for most entities (low contention, typical CRUD), pessimistic locking specifically for the small number of genuinely hot, high-contention rows (a popular flash-sale item's inventory count, a shared counter/sequence). I'd also mention that under genuinely extreme contention, even pessimistic locking on a single row becomes a serialization bottleneck no locking strategy alone can fix — at that point the actual fix is usually architectural (sharding the hot counter across multiple rows and summing them, or moving the operation to a purpose-built high-throughput primitive like a Redis atomic counter, tying to the Redis/Caching category) rather than tuning the locking strategy further on a single, inherently-contended row.
 
@@ -646,7 +646,7 @@ COMMIT;                                       COMMIT;
 -- neither transaction touched the SAME row the other one wrote to
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that this is exactly why PostgreSQL's actual Serializable implementation (Serializable Snapshot Isolation, SSI) exists as a distinct, additional mechanism beyond plain MVCC snapshotting — it specifically tracks read-write dependencies *between* concurrent transactions (not just conflicting writes to the same row) and aborts one of them if it detects a pattern that could produce a non-serializable outcome like write skew, even though no single row was written by both transactions. I'd also mention the practical application-level alternative when Serializable isolation isn't used or available: explicitly locking (or re-checking, within the same transaction, immediately before the write) the *entire read set* the invariant depends on, not just the specific row being written — in the doctors example, that would mean each transaction taking a lock on (or re-verifying, right before its own update, inside the same transaction) the *count* of on-call doctors, not just locking its own row, which is a subtler and easier-to-miss requirement than typical single-row locking intuition would suggest.
 
@@ -684,7 +684,7 @@ ALTER TABLE users ADD CONSTRAINT uq_users_email UNIQUE (email);
 -- constraint is the thing that ACTUALLY guarantees uniqueness, unconditionally
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up the practical pattern this implies for handling the constraint-violation case gracefully rather than letting it surface as a raw, ugly database exception: catching the specific `DataIntegrityViolationException` (or its more specific subtype) at the application layer and translating it into the same friendly, user-facing error the application-level check was already producing for the common case — meaning both checks coexist deliberately: the application-level check for the fast, common-case UX, and the database constraint (with graceful exception handling wrapping it) as the actual, unbypassable correctness guarantee for the rare race-condition case the application check alone can't catch. I'd frame this as a general principle worth stating explicitly in any data-modeling discussion: any invariant that's genuinely required for correctness (not just a nice-to-have UX check) should have a database-level constraint enforcing it, full stop — relying purely on application code discipline for a true correctness invariant is a bet that every current and future code path touching that table will always get the check right, which is a bet that eventually loses as a system and its number of write paths grow.
 
@@ -724,7 +724,7 @@ public void placeOrderCommitFirst(Order order) {
 // kafkaTemplate.send("order-events", new OrderPlacedEvent(order)); // never runs
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd walk through exactly why "just retry the Kafka send if it fails" doesn't fully close the gap in the commit-first approach: retrying handles a *transient* publish failure, but it does nothing for the case where the *process itself* crashes (or is killed, or the pod is rescheduled) in the exact gap between the database commit and the retry logic even getting a chance to run — no in-memory retry mechanism survives a process crash, which is precisely why the outbox pattern's durability comes from writing the pending event to the *same database*, in the *same transaction*, rather than trying to make the Kafka publish itself more reliable through retries alone. I'd frame the outbox pattern as the answer specifically because it converts "atomically do two things across two different systems" (genuinely hard) into "atomically do one thing in one system" (a normal database transaction) plus "reliably, eventually relay already-durably-recorded data to a second system" (a much more tractable, retry-until-success problem, covered in question 19's implementation).
 
@@ -779,7 +779,7 @@ Debezium CDC-based relay (the modern, generally-preferred approach over polling)
     "outbox_events row" shape
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up the polling-vs-CDC trade-off explicitly: a polling relay is simpler to build and reason about but adds latency (bounded by the poll interval) and repeated query load on the outbox table; a CDC-based relay (Debezium) has near-zero latency (reading the WAL as changes happen) and doesn't add polling load, but introduces a genuinely more complex piece of infrastructure (a Kafka Connect cluster, Debezium connector configuration, its own operational monitoring needs) that has to be built, deployed, and kept healthy as a first-class production dependency in its own right. I'd also mention that the outbox table needs its own cleanup/retention strategy regardless of relay mechanism (old, already-published rows shouldn't accumulate forever, tying to the general table-bloat/vacuum concerns from question 4), and that this pattern is precisely how the cross-stack design scenario "a service sometimes publishes events without committing its database update" gets fixed architecturally — the outbox table's atomicity with the business write is the structural guarantee that makes that failure mode impossible by construction, rather than something handled by more careful error-handling code around a direct publish call.
 
@@ -822,7 +822,7 @@ void handleOrderPlaced(OrderPlacedEvent event) {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that this is exactly the concrete instance of Kafka's broader "why must consumers remain idempotent even when Kafka transactions are used" principle from the Kafka/Messaging category — the outbox pattern's relay-side duplicate risk is just one specific *source* of duplicate delivery among several (producer retries, consumer rebalances re-processing uncommitted offsets), and the fix is the same regardless of the specific source: idempotent consumers, not trying to eliminate every possible duplicate-delivery cause at the producing/relaying side, since that's an unbounded and ultimately unwinnable game across a genuinely distributed system. I'd also mention that "mark as published, then delete/flag the outbox row" itself needs to happen as its own transaction distinct from the original business-write transaction (it happens later, in the relay process, not atomically with the original save) — and getting the ordering right here (publish first, then mark-as-published, accepting the crash-after-publish-before-mark gap as the acceptable at-least-once risk, rather than mark-as-published-first-then-publish, which would risk the opposite, worse failure of marking something published that never actually made it to Kafka at all) is a subtle but important implementation detail.
 
@@ -857,7 +857,7 @@ void handleOrderPlaced(OrderPlacedEvent event) { // it has NO relationship to,
 // regardless of how "exactly-once" Kafka's own internal machinery is
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that genuinely atomic "Kafka offset commit + external database write" coordination *is* theoretically achievable via distributed transactions (XA/2PC, question 22) spanning both systems, but this is rarely done in practice — it requires both the database and the Kafka client to support and correctly implement the two-phase commit protocol together, adds significant latency and availability cost (2PC's coordinator becomes a single point of blocking failure for both systems), and is exactly the kind of heavyweight distributed-transaction machinery that sagas and idempotent-consumer patterns exist specifically to avoid needing. I'd frame the practical, almost-universally-adopted industry answer as: don't try to make the database write and the Kafka offset commit atomic with each other at all — instead, make the database write **idempotent** (track processed event IDs, as in question 20), and accept that a message might be redelivered and reprocessed after a crash, relying on idempotency rather than cross-system atomicity to achieve the correct end result.
 
@@ -893,7 +893,7 @@ It's avoided in most modern distributed-systems designs for a few serious, pract
               coordinator remains down
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that 2PC isn't *never* used — it genuinely exists and is supported in specific enterprise contexts (some legacy JMS/JTA-based Java EE systems, certain financial systems with strict, non-negotiable cross-system atomicity requirements and a controlled, reliable coordinator infrastructure) — but the modern consensus, especially for cloud-native/microservices architectures, strongly favors avoiding it in favor of the saga pattern (question 23) specifically because sagas trade strict atomicity for availability and loose coupling, accepting eventual consistency and explicit compensation logic instead of a blocking, tightly-coupled cross-system commit protocol. I'd frame the actual decision as a real instance of the broader CP-vs-AP trade-off from distributed systems theory (CAP-theorem-adjacent, though not identical) — 2PC prioritizes strict consistency at the cost of availability during coordinator/participant failure; sagas prioritize availability and independent service operation, accepting a temporary inconsistency window that compensating actions are designed to resolve.
 
@@ -944,7 +944,7 @@ class OrderPlacementSaga {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that not every step is compensable, and that's a genuine design constraint sagas have to be built around explicitly, not an edge case to handle later — an email that's already been sent can't be un-sent (question 30 in this category covers exactly this "compensation impossible" case), so a saga's design has to either order genuinely irreversible steps **last** (after every reversible step has already succeeded, minimizing the chance a later failure would need to "un-send" something un-sendable) or accept and explicitly design for the residual risk that an irreversible action might occasionally need a different kind of remediation (a follow-up corrective email, a manual customer-service intervention) rather than a clean, automatic compensating transaction. I'd also mention idempotency as a requirement for compensating transactions themselves, not just the forward steps — a compensation that gets triggered twice (due to a retry, or an orchestrator restarting after a crash mid-saga) needs to be safe to execute twice without, say, double-refunding a payment.
 
@@ -987,7 +987,7 @@ ORCHESTRATION — one component explicitly drives the whole sequence:
   -- the ENTIRE flow, including every compensation, is visible in ONE place
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd give a practical recommendation rather than presenting these as equally good in all cases: for sagas with more than a small handful of steps, or with non-trivial compensation logic, I'd generally favor orchestration specifically *because* of its debuggability and the ability to actually see and test the whole business process as one unit — choreography's decentralization sounds appealing architecturally but tends to become genuinely difficult to operate in practice once a saga has more than 2-3 steps, since understanding "why did this order get stuck in a weird state" requires tracing event flows across several services' independent subscription logic rather than reading one orchestrator's code. I'd reserve choreography for genuinely simple, small sagas (2 steps, minimal/no compensation needed) where the loose-coupling benefit clearly outweighs the lost visibility, and I'd note that a dedicated orchestration framework (Temporal, Camunda, AWS Step Functions, or a simpler in-house state-machine-based orchestrator) is usually worth adopting for orchestration-based sagas rather than hand-rolling the state-tracking and compensation-invocation logic from scratch, given how easy it is to get the failure/retry/compensation-ordering logic subtly wrong by hand.
 
@@ -1024,7 +1024,7 @@ void handlePaymentRequest(PaymentRequestEvent event) { // business effect, atomi
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that the message ID used for this check has to be genuinely stable and unique across redeliveries specifically — if the message ID is generated fresh by the producer on every send (rather than once, at the point the underlying business event was first created, as in the outbox pattern's approach from question 20), a producer-side retry that resends the "same" logical message with a *new* ID would defeat the whole idempotency mechanism, since the consumer would see it as a genuinely new, never-before-seen message. I'd also mention that for very high-throughput consumers, the processed-message-tracking table itself needs its own retention/cleanup strategy (old entries can eventually be purged once they're old enough that no realistic redelivery window could still produce a duplicate for them) — an unbounded, ever-growing "processed messages" table is a real, if slow-building, operational cost worth planning for from the start rather than discovering as a table-bloat problem months into production.
 
@@ -1063,7 +1063,7 @@ public void processPayment(PaymentRequest request) {
                                                 // external side effect
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that the safest transactions to retry are ones designed with retry in mind from the start — no external, non-idempotent side effects inside the transactional method itself (question 12's guidance on keeping side effects outside transaction boundaries directly supports this), and any writes performed being naturally idempotent or protected by the same idempotency-key mechanism covered in questions 20/25, so that even an *accidental* double-execution (a retry that fires when the original attempt actually had succeeded, but the success signal was lost) doesn't cause a duplicated real-world effect. I'd frame this as the practical reason "design for retry from the start" is a better principle than "add retry logic to existing code as an afterthought" — retrofitting safe retry onto a transaction that wasn't designed with idempotency/side-effect-isolation in mind often requires restructuring the operation anyway, so it's cheaper to get right the first time than to bolt on carefully later.
 
@@ -1113,7 +1113,7 @@ public void placeOrderFixed(Order order) {
                                              // if IT needs to be retried independently)
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd frame the general architectural rule this motivates explicitly: external, non-idempotent side effects should be **structurally separated** from the database transaction they're logically associated with — either performed and confirmed *before* the transaction that records the result (as in the fixed example, where the payment is confirmed first, and only the database recording is subject to retry), or deferred entirely via the outbox pattern so the side effect is itself made idempotent-safe and decoupled from any retry of the local transaction. I'd also connect this back to question 11's "never hold a transaction open across a remote call" guidance — that's about the transaction's *lock duration*, this question is about the transaction's *retry safety*, but they're both symptoms of the same root design smell: an external call embedded inside a database-transactional method, which is dangerous for at least two independent reasons (lock/connection duration, AND retry-duplication risk), reinforcing why "external calls don't belong inside a `@Transactional`/`@Retryable` boundary" is a strong, broadly-applicable design principle rather than a narrow fix for one specific symptom.
 
@@ -1153,7 +1153,7 @@ ORDER BY xact_start ASC;
 idle_in_transaction_session_timeout = 30s  # postgresql.conf
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up `idle_in_transaction_session_timeout` as a genuinely valuable, defensive production safeguard worth setting proactively (not just reaching for during an active incident) — it won't fix the underlying application bug that left a transaction idle (an external call inside a transaction boundary, a forgotten commit), but it bounds the *damage* any single occurrence of that bug can do, automatically terminating the offending session after a threshold rather than letting it hold locks/a connection indefinitely until someone manually notices and intervenes. I'd also mention that this exact investigation — `pg_stat_activity`, sorted by transaction duration, cross-referenced against application logs/traces for whatever request/job correlates with the offending PID's start time — is precisely the diagnostic path for the cross-stack design scenario "a low-latency service has periodic pauses" when the root cause turns out to be database-side lock contention from a long-held transaction elsewhere in the system, rather than anything wrong with the specific slow-looking request itself.
 
@@ -1198,7 +1198,7 @@ void saveOrder(Order order) {
 }
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that the "migrate" phase's verification step — confirming every consumer has genuinely stopped relying on the old structure before contracting — deserves the exact same rigor as the REST API Design file's endpoint-deprecation discussion: measure actual usage (query logs, application metrics on which code path/column is being read) rather than assuming a deploy completed successfully means every instance is running the new code, since a stuck deployment, a long-lived batch job on an old version, or an unexpected rollback mid-migration could all mean the old structure is still genuinely load-bearing longer than expected. I'd also mention that for genuinely large tables, even the "expand" phase's `ALTER TABLE ADD COLUMN` needs care — modern PostgreSQL versions handle a nullable column addition without a full table rewrite (fast, metadata-only), but adding a column with a non-null default, or certain other schema changes, can still trigger a full table rewrite that locks the table for the operation's duration on some database versions — this is exactly the kind of database-version-specific detail worth verifying explicitly (via `EXPLAIN`/documentation for the specific database version in use) rather than assuming based on general schema-migration folklore, before running it against a large, heavily-used production table.
 
@@ -1235,7 +1235,7 @@ Order Fulfillment Saga — DELIBERATE ordering, irreversible steps LAST:
   service intervention), explicitly outside the automatic saga machinery
 ```
 
-**Where staff-level interviews push further:**
+**Follow-up:**
 
 I'd bring up that this reality — some workflows genuinely have a true point of no return — is exactly why a mature saga implementation includes an explicit **"irreversible step" boundary** in its design, clearly documented and reviewed, rather than treating every step as uniformly compensable and discovering the gap only when a real incident requires "undoing" something that can't be undone. I'd also mention that this is a legitimate place where extra validation, confirmation, or even a deliberate, brief human-in-the-loop delay before the irreversible step (a "review before final shipment" gate for high-value orders, for instance) is a reasonable, deliberate design trade-off — accepting slightly slower throughput specifically at the one-way-door step, in exchange for meaningfully reducing the rate at which the system ever needs a remediation process that doesn't cleanly fit the automated-compensation model at all. I'd frame the broader staff-level takeaway as: not every distributed-workflow problem has a fully automatable solution, and recognizing exactly where that boundary is — and designing the system to minimize how often it's actually reached — is itself the correct engineering answer, rather than forcing every step into a compensating-transaction shape that doesn't genuinely apply to it.
 
