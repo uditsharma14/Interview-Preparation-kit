@@ -14,24 +14,38 @@ The `context.refresh()` call in step six is genuinely the core of the whole thin
 
 **Code:**
 
+`ApplicationStartingEvent` and `ApplicationEnvironmentPreparedEvent` fire before the `ApplicationContext` exists — a `@Component` bean can't receive them, because there is no container yet to instantiate the bean or dispatch the event to it. They have to be registered directly on the `SpringApplication` (or via a `spring.factories` entry) instead:
+
 ```java
 public static void main(String[] args) {
     SpringApplication app = new SpringApplication(MyApplication.class);
-    app.addListeners(new MyApplicationStartingListener()); // hooks into step 2
+    app.addListeners(new EarlyStartupListener()); // must be registered here — see below
     ConfigurableApplicationContext context = app.run(args); // the full sequence above
 }
 
-// Listening to the actual lifecycle events, in order:
-@Component
-class StartupEventLogger {
-    @EventListener
-    void onStarting(ApplicationStartingEvent event) { log.info("starting"); }
-
-    @EventListener
-    void onEnvironmentPrepared(ApplicationEnvironmentPreparedEvent event) {
-        log.info("environment ready, profiles: {}", event.getEnvironment().getActiveProfiles());
+// Plain (non-Spring-managed) listener for the two pre-context events.
+// Registered via SpringApplication.addListeners(...) above. A library that
+// wants this wired up automatically for any consuming application, without
+// requiring them to edit main(), would instead add to
+// META-INF/spring.factories:
+//   org.springframework.context.ApplicationListener=com.example.EarlyStartupListener
+class EarlyStartupListener implements ApplicationListener<ApplicationEvent> {
+    @Override
+    public void onApplicationEvent(ApplicationEvent event) {
+        if (event instanceof ApplicationStartingEvent) {
+            log.info("starting");
+        } else if (event instanceof ApplicationEnvironmentPreparedEvent e) {
+            log.info("environment ready, profiles: {}", e.getEnvironment().getActiveProfiles());
+        }
     }
+}
 
+// Events fired AFTER context.refresh() has instantiated singleton beans
+// CAN be observed by an ordinary @Component + @EventListener, because the
+// bean (and the ApplicationEventMulticaster that calls it) already exists
+// by the time these fire:
+@Component
+class LateStartupEventLogger {
     @EventListener
     void onContextRefreshed(ContextRefreshedEvent event) { log.info("context refreshed"); }
 
@@ -42,7 +56,7 @@ class StartupEventLogger {
 
 **Follow-up:**
 
-I'd bring up `ApplicationContextInitializer` and `SpringApplicationRunListener` as the two lesser-known extension points that platform/infra teams actually use to inject cross-cutting setup (registering property sources from a secrets manager, wiring up early-startup metrics) before the bulk of user bean definitions even load — these run earlier than almost any `@Configuration` class could, which matters for anything that needs to influence the `Environment` itself. I'd also mention that `context.refresh()` internally follows the exact `AbstractApplicationContext.refresh()` template method from plain Spring — Boot doesn't replace the core container lifecycle, it wraps convention and auto-configuration around the same context refresh mechanism that's existed since Spring 1.0, which is worth knowing so this doesn't feel like two unrelated systems.
+I'd bring up `ApplicationContextInitializer` and `SpringApplicationRunListener` as the two lesser-known extension points that platform/infra teams actually use to inject cross-cutting setup (registering property sources from a secrets manager, wiring up early-startup metrics) before the bulk of user bean definitions even load — these run earlier than almost any `@Configuration` class could, which matters for anything that needs to influence the `Environment` itself. I'd also flag the pre-context-vs-post-context split explicitly: `ApplicationStartingEvent`, `ApplicationEnvironmentPreparedEvent`, `ApplicationContextInitializedEvent`, and `ApplicationPreparedEvent` all fire before or during context setup — before the container has instantiated any of your beans — so they require `SpringApplication.addListeners(...)` or a `spring.factories`/`ApplicationListener` registration, not `@EventListener` on a `@Component`. Only events from `ContextRefreshedEvent` onward (`ApplicationStartedEvent`, `ApplicationReadyEvent`, `ApplicationFailedEvent`) are safe to handle with an ordinary managed bean. I'd also mention that `context.refresh()` internally follows the exact `AbstractApplicationContext.refresh()` template method from plain Spring — Boot doesn't replace the core container lifecycle, it wraps convention and auto-configuration around the same context refresh mechanism that's existed since Spring 1.0, which is worth knowing so this doesn't feel like two unrelated systems.
 
 **Source:** [`SpringApplication` Javadoc](https://docs.spring.io/spring-boot/api/java/org/springframework/boot/SpringApplication.html), [Spring Boot Reference — Application Events and Listeners](https://docs.spring.io/spring-boot/reference/features/spring-application.html#features.spring-application.application-events-and-listeners)
 
@@ -475,7 +489,7 @@ public class OrderService {
 
 **Follow-up:**
 
-I'd frame this as the deliberate trade-off proxies represent: they let cross-cutting concerns stay entirely out of business logic (a genuinely valuable separation of concerns), at the cost of some "spooky action at a distance" — behavior that isn't visible by reading the annotated method's own code, and specific structural requirements (public methods, no self-invocation, no final classes/methods for certain proxy types) that aren't obvious unless you understand the proxy mechanism underneath. I'd say that understanding *how* the proxy works is exactly what separates "I use `@Transactional`" from "I can explain why it silently didn't apply in this specific case" — which is precisely the gap the next several questions probe.
+I'd frame this as the deliberate trade-off proxies represent: they let cross-cutting concerns stay entirely out of business logic (a genuinely valuable separation of concerns), at the cost of some "spooky action at a distance" — behavior that isn't visible by reading the annotated method's own code, and specific structural requirements (method-visibility rules that differ between JDK and CGLIB proxies — see question 12 — no self-invocation, no final classes/methods for certain proxy types) that aren't obvious unless you understand the proxy mechanism underneath. I'd say that understanding *how* the proxy works is exactly what separates "I use `@Transactional`" from "I can explain why it silently didn't apply in this specific case" — which is precisely the gap the next several questions probe.
 
 **Source:** [Spring Framework Reference — Aspect Oriented Programming with Spring](https://docs.spring.io/spring-framework/reference/core/aop.html)
 
@@ -491,7 +505,9 @@ I'd frame this as the deliberate trade-off proxies represent: they let cross-cut
 
 **CGLIB (subclass-based) proxies** work by generating, at runtime, an actual *subclass* of the target's concrete class, overriding its methods to insert interception logic before delegating to the real (super) implementation via `super.method()`. This doesn't require an interface at all — it works directly against concrete classes — which is why Spring Boot switched its **default** to CGLIB proxies for everything (even when an interface exists) starting around Spring Boot 2.x, specifically for more consistent behavior regardless of whether a bean happens to implement an interface.
 
-The practical difference that bites people: because CGLIB works by *subclassing*, it fundamentally cannot proxy `final` classes (you can't subclass a final class) or `final` methods (you can't override a final method) — those silently don't get the cross-cutting behavior applied at all, without any compile-time error, which is the subject of question 14."
+The practical difference that bites people: because CGLIB works by *subclassing*, it fundamentally cannot proxy `final` classes (you can't subclass a final class) or `final` methods (you can't override a final method) — those silently don't get the cross-cutting behavior applied at all, without any compile-time error, which is the subject of question 14.
+
+Method **visibility** is the other place these two mechanisms genuinely differ, and it's version-sensitive, not a blanket 'must be public' rule: a JDK dynamic proxy can only advise methods declared on the proxied interface, which are necessarily `public`. A CGLIB (class-based) proxy can override `protected` and package-visible methods too, in principle — but Spring's own `@Transactional` support historically only looked at `public` methods regardless of proxy type, because `AnnotationTransactionAttributeSource` restricted itself to public methods. That changed in **Spring Framework 6.0**: for class-based proxies, `protected` and package-visible methods can now be made transactional by default (interface-based proxies still require `public`, since that's all the interface exposes). `private` methods and methods that are 'effectively private' (package-visible, inherited from a superclass in a different package) can never be advised by either mechanism, because neither can override them."
 
 **Code:**
 
@@ -530,7 +546,7 @@ spring.aop.proxy-target-class=false
 
 I'd bring up the practical implication of Spring Boot's CGLIB-by-default choice: it means proxied beans are, by default, runtime subclasses of your actual class — which has real implications for reflection-heavy code, certain serialization libraries, and any code doing `bean.getClass() == MyService.class` style identity checks (that check will now fail, since `getClass()` returns the generated CGLIB subclass, not the original class) — a subtle gotcha worth knowing if debugging "why does this reflection-based check behave differently in a Spring-managed bean vs. a plain unit-tested instance." I'd also mention that CGLIB requires a no-arg (or otherwise accessible) constructor path for subclass generation, which occasionally surfaces as an odd instantiation error for classes with only complex, heavily-parameterized constructors, though modern CGLIB/Spring versions have gotten better at handling this via Objenesis-based instantiation that bypasses constructors entirely for the generated subclass.
 
-**Source:** [Spring Framework Reference — Proxying Mechanisms](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html)
+**Source:** [Spring Framework Reference — Proxying Mechanisms](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html), [Spring Framework Reference — Using `@Transactional` (method visibility)](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html)
 
 ---
 
@@ -633,7 +649,7 @@ class PartiallyFinalService {
 
 **Follow-up:**
 
-I'd bring up that some Kotlin codebases hit this constantly and non-obviously, since Kotlin classes and methods are `final` **by default** (unlike Java) — a Kotlin `@Service` class needs to be explicitly marked `open` (and its `@Transactional`/`@Cacheable` methods too) for Spring's default CGLIB proxying to work at all, which is exactly why the `kotlin-spring` compiler plugin exists — it automatically opens classes annotated with Spring stereotypes at compile time, specifically to route around this exact problem. I'd also mention this as a genuinely good candidate for a static-analysis/lint rule at the platform level: flagging `@Transactional`/`@Cacheable`/`@Async`/`@PreAuthorize` on a `final` class or method (or on a non-`public` method — proxies generally can't intercept non-public methods either) as a build-time warning, since catching this class of silent-no-op bug via automated tooling is far more reliable than hoping a code reviewer notices.
+I'd bring up that some Kotlin codebases hit this constantly and non-obviously, since Kotlin classes and methods are `final` **by default** (unlike Java) — a Kotlin `@Service` class needs to be explicitly marked `open` (and its `@Transactional`/`@Cacheable` methods too) for Spring's default CGLIB proxying to work at all, which is exactly why the `kotlin-spring` compiler plugin exists — it automatically opens classes annotated with Spring stereotypes at compile time, specifically to route around this exact problem. I'd also mention this as a genuinely good candidate for a static-analysis/lint rule at the platform level: flagging `@Transactional`/`@Cacheable`/`@Async`/`@PreAuthorize` on a `final` class or method, or on a `private` method (never advisable by either proxy mechanism), as a build-time warning, since catching this class of silent-no-op bug via automated tooling is far more reliable than hoping a code reviewer notices.
 
 **Source:** [Spring Framework Reference — Proxying Mechanisms, limitations section](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html), [`kotlin-spring` compiler plugin documentation](https://kotlinlang.org/docs/all-open-plugin.html#spring-support)
 
@@ -783,7 +799,7 @@ class StartupFailureAlerter {
 
 **Follow-up:**
 
-I'd bring up `ApplicationRunner`/`CommandLineRunner` versus `@PostConstruct`/`@EventListener(ApplicationReadyEvent.class)` as a real design decision: `CommandLineRunner`/`ApplicationRunner` beans get access to the parsed application arguments and run in a well-defined, orderable sequence (via `@Order`) strictly after the context is fully refreshed — the right tool for genuine startup tasks (schema migrations, cache warming, initial data seeding) — whereas `@PostConstruct` runs *during* context refresh, per-bean, with no guarantee other beans are ready yet, which makes it the wrong tool for anything that needs the *whole* application context to be in a known-good state before running. I'd also mention that `ApplicationFailedEvent` handling needs to be registered carefully — a listener bean itself might not be available if the failure happened early enough in startup, so genuinely critical failure alerting sometimes needs to happen via a `SpringApplicationRunListener` (registered even earlier, via the same `.imports`-style mechanism as auto-configuration) rather than a regular `@Component`.
+I'd bring up `ApplicationRunner`/`CommandLineRunner` versus `@PostConstruct`/`@EventListener(ApplicationReadyEvent.class)` as a real design decision: `CommandLineRunner`/`ApplicationRunner` beans get access to the parsed application arguments and run in a well-defined, orderable sequence (via `@Order`) strictly after the context is fully refreshed — the right tool for genuine startup tasks (schema migrations, cache warming, initial data seeding) — whereas `@PostConstruct` runs *during* context refresh, per-bean, with no guarantee other beans are ready yet, which makes it the wrong tool for anything that needs the *whole* application context to be in a known-good state before running. I'd also mention that `ApplicationFailedEvent` handling needs to be registered carefully — a listener bean itself might not be available if the failure happened early enough in startup, so genuinely critical failure alerting sometimes needs to happen via a `SpringApplicationRunListener` (registered even earlier, via a `META-INF/spring.factories` entry keyed on `org.springframework.boot.SpringApplicationRunListener` — a different, older registration mechanism from the `AutoConfiguration.imports` file used for `@AutoConfiguration` classes) rather than a regular `@Component`.
 
 **Source:** [Spring Boot Reference — Application Events and Listeners](https://docs.spring.io/spring-boot/reference/features/spring-application.html#features.spring-application.application-events-and-listeners)
 
