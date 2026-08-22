@@ -90,6 +90,7 @@ Architecture, distributed-systems trade-offs, and cross-service concerns.
 - **[Transactions Interview Prep](System%20Design/Transactions_Interview_Prep.md)** — ACID and isolation levels, MVCC, Spring propagation types, deadlocks, the transactional outbox pattern, sagas vs. two-phase commit, and zero-downtime schema migration.
 - **[Redis & Caching Interview Prep](System%20Design/Redis_Caching_Interview_Prep.md)** — Caching strategies, stampedes/penetration/pollution, eviction policies, hot keys, replication/Sentinel/Cluster, distributed locks and fencing tokens, rate limiting, and cache-deployment versioning.
 - **[Cross-Stack Design Scenarios Interview Prep](System%20Design/Cross_Stack_Design_Scenarios_Interview_Prep.md)** — 20 end-to-end scenarios spanning Spring Boot, PostgreSQL, Redis, and Kafka: order platforms, multi-region trade-offs, zero-downtime deployments, incident diagnosis, service-boundary evaluation, and SLOs.
+- **[System Design Interview Question Bank](System%20Design/System_Design_Interview_Question_Bank.md)** — a practice-prompt list (not full worked answers) spanning core system design, distributed transactions/payments, event-driven architecture, data-intensive systems, AI/Forward-Deployed scenarios, and the follow-up questions a Principal-level interviewer presses on.
 
 ### Tech Leadership
 
@@ -120,6 +121,12 @@ Lead/Staff-level judgment, influence, and organizational impact — not technolo
 ### Forward-Deployed & Customer-Facing Engineering
 
 *(reserved — rapid prototyping under ambiguity, scripting and data wrangling against messy client data/systems, integrating with a customer's existing infrastructure, and the specific communication/expectation-setting skills these roles are actually screened on. See [that folder's README](Forward-Deployed%20%26%20Customer-Facing%20Engineering/README.md).)*
+
+### Further Reading
+
+External articles, videos, and engineering-blog write-ups — not this repo's own Q&A guides, and not held to the same primary-source citation bar (see the note at the top of the list itself).
+
+- **[System Design & AI Engineering Reading List](Further%20Reading/System_Design_and_AI_Reading_List.md)** — System design deep-dive articles, 26 classic system-design write-ups by category (rate limiters, key-value stores, chat systems, payments, and more), AI agent video courses, AI engineering core concepts, real-world system design case studies from 16 companies' engineering blogs, and 20 foundational system design concepts.
 
 ## How each question is structured
 
