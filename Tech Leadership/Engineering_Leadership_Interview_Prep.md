@@ -79,7 +79,7 @@ in addition to (not instead of) application-layer filtering.
 
 **Follow-up:**
 
-I'd bring up that an ADR is only actually useful if it's **read**, and I'd advocate for making them genuinely discoverable — linked directly from the code they affect, indexed somewhere every engineer actually looks, not buried in a wiki nobody checks — since I've seen plenty of organizations that write good ADRs and then have them functionally invisible, which is nearly as bad as not writing them at all. I'd also mention that the discipline of writing "alternatives rejected, and why" is itself valuable independent of the record it produces — forcing yourself to articulate why the alternative doesn't work often surfaces a flaw in the primary decision, or reveals it was actually closer to a coin flip than initially assumed, which is useful information to know before committing.
+I'd bring up that an ADR is only actually useful if it's **read**, and I'd advocate for making them genuinely discoverable — linked directly from the code they affect, indexed somewhere every engineer actually looks, not buried in a wiki nobody checks — since it's a common failure mode for organizations to write good ADRs and then leave them functionally invisible, which is nearly as bad as not writing them at all. I'd also mention that the discipline of writing "alternatives rejected, and why" is itself valuable independent of the record it produces — forcing yourself to articulate why the alternative doesn't work often surfaces a flaw in the primary decision, or reveals it was actually closer to a coin flip than initially assumed, which is useful information to know before committing.
 
 **Source:** [Michael Nygard — Documenting Architecture Decisions](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions), [ADR GitHub organization — templates](https://adr.github.io/)
 
@@ -709,7 +709,9 @@ Approach to cross-functional alignment:
 
 **Follow-up:**
 
-I'd bring up that a genuinely useful practice here is explicitly naming, out loud, which team's priority is being weighted *less* in a given decision, and confirming that team's actual, genuine agreement (not just passive non-objection) to that trade-off — silence or a lack of pushback in a big cross-team meeting is a weak, unreliable signal of real alignment, and I've seen decisions that looked aligned in a meeting quietly unravel later once the deprioritized team's actual concerns resurfaced during implementation, which is a much more disruptive and costly place to discover a real disagreement than during the original design conversation.
+I'd bring up that a genuinely useful practice here is explicitly naming, out loud, which team's priority is being weighted *less* in a given decision, and confirming that team's actual, genuine agreement (not just passive non-objection) to that trade-off — silence or a lack of pushback in a big cross-team meeting is a weak, unreliable signal of real alignment, a decision that looked aligned in the meeting can quietly unravel later once the deprioritized team's actual concerns resurface during implementation, which is a much more disruptive and costly place to discover a real disagreement than during the original design conversation.
+
+> Personal example to add: describe a real decision where apparent cross-team alignment turned out to be silent non-objection rather than genuine agreement, including what surfaced later, what it cost, and what you'd check for earlier next time.
 
 **Source:** [Team Topologies — Matthew Skelton & Manuel Pais](https://teamtopologies.com/book)
 

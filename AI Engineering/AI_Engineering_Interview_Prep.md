@@ -1088,20 +1088,34 @@ response = client.messages.create(
     messages=[{"role": "user", "content": user_query}])  # scratch every call
 
 # Applying the SAME resilience discipline as any other external
-# dependency (Redis/Cross-Stack files) to LLM API calls specifically
-@CircuitBreaker(name="llm-api", fallbackMethod="degradedResponse")
-@Retryable(maxAttempts=2, backoff=@Backoff(delay=200))
-def call_llm_with_resilience(prompt):
+# dependency (Redis/Cross-Stack files) to LLM API calls specifically —
+# using tenacity for retry/backoff and pybreaker for the circuit breaker,
+# the Python equivalents of Resilience4j's @Retry/@CircuitBreaker:
+import pybreaker
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+llm_breaker = pybreaker.CircuitBreaker(fail_max=5, reset_timeout=60)
+
+@llm_breaker
+@retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=0.2, max=2))
+def call_llm_with_resilience(prompt: str) -> str:
     return llm_client.generate(prompt, timeout=10)  # bounded timeout —
     # an LLM call hanging indefinitely is exactly as dangerous as any
     # other unbounded external call, per the concurrency file's guidance
+
+def call_llm_with_fallback(prompt: str) -> str:
+    try:
+        return call_llm_with_resilience(prompt)
+    except pybreaker.CircuitBreakerError:
+        return degraded_response(prompt)  # breaker open — fail fast, don't
+                                            # keep hammering an unhealthy API
 ```
 
 **Follow-up:**
 
 I'd bring up that cost/latency optimization needs the same "measure before optimizing" discipline as any other performance work in this kit — I'd want actual per-request cost and latency breakdowns (which part of the pipeline — retrieval, generation, tool calls — is actually driving cost/latency) before reaching for any specific optimization, rather than assuming, say, that switching to a cheaper model is the right first lever without knowing whether generation cost is even the dominant cost driver for a specific feature versus, say, an inefficiently-large RAG context being stuffed into every request regardless of actual need.
 
-**Source:** [Anthropic — Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching), [Anthropic — Reducing Latency](https://docs.anthropic.com/en/docs/test-and-evaluate/strengthen-guardrails/reduce-latency)
+**Source:** [Anthropic — Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching), [Anthropic — Reducing Latency](https://docs.anthropic.com/en/docs/test-and-evaluate/strengthen-guardrails/reduce-latency), [tenacity documentation](https://tenacity.readthedocs.io/), [pybreaker documentation](https://github.com/danielfm/pybreaker)
 
 ---
 
