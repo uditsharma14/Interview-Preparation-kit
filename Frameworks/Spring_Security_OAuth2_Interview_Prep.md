@@ -1,5 +1,7 @@
 # Spring Security & OAuth2 — Interview Prep (Lead/Staff Level, with Code & Sources)
 
+> **Target level:** Lead/Staff · **Baseline:** Spring Security 6.x (`SecurityFilterChain` bean-based configuration), Spring Boot 3.x, OAuth 2.0 / OpenID Connect · **Last verified:** 2026-08-22 · **Prerequisites:** [Spring Boot Internals](Spring_Boot_Internals_Interview_Prep.md)
+
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining the actual security model and its failure modes, not naming annotations.
 
 ---

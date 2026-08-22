@@ -1,5 +1,7 @@
 # Docker & Kubernetes — Interview Prep, Basic to Staff Level (with Code & Sources)
 
+> **Target level:** Basic → Staff (graduated — see below) · **Baseline:** Kubernetes 1.28+, Docker Engine 24+ (dockershim removed in 1.24, PodSecurityPolicy removed in 1.25 — this guide assumes both are already gone) · **Last verified:** 2026-08-22 · **Prerequisites:** basic Linux/process fundamentals for the Docker-Basic section; later sections build on earlier ones
+
 How to use this: each question has an **Answer** written the way it would actually be said out loud in an interview, a **Code** snippet you could sketch on a whiteboard or run in a terminal, and — for the mid and staff-level questions especially — a **Follow-up** section covering failure modes and trade-offs. Questions are grouped by level (Docker Basic → Staff, then Kubernetes Basic → Staff) so you can calibrate depth to the interview you're prepping for; the later sections assume the earlier ones as background and don't re-explain them.
 
 ---

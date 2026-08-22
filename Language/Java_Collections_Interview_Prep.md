@@ -1,5 +1,7 @@
 # Java Collections — Interview Prep (Mid → Staff Level, with Code & Sources)
 
+> **Target level:** Mid → Staff · **Baseline:** Java/JDK 21 (LTS) · **Last verified:** 2026-08-22 · **Prerequisites:** core Java syntax, generics, `equals()`/`hashCode()` basics
+
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because the mid-level and staff-level bar for the *same* question isn't the depth of vocabulary, it's whether you can talk about what happens when it breaks in production.
 
 ---

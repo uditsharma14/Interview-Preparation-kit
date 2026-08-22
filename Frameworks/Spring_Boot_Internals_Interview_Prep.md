@@ -1,5 +1,7 @@
 # Spring Boot Internals — Interview Prep (Lead/Staff Level, with Code & Sources)
 
+> **Target level:** Lead/Staff · **Baseline:** Spring Boot 3.2+, Spring Framework 6.1+, Java 21 (version-specific behavior — e.g. the 6.0 proxy-visibility change — is called out explicitly where it applies) · **Last verified:** 2026-08-22 · **Prerequisites:** core Java, basic Spring (`@Component`, `@Autowired`, `@Configuration`)
+
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining *why* the framework is built the way it is and what breaks when its assumptions are violated, not reciting annotation names.
 
 ---

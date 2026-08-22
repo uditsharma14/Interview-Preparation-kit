@@ -1,5 +1,7 @@
 # JPA & Hibernate — Interview Prep (Lead/Staff Level, with Code & Sources)
 
+> **Target level:** Lead/Staff · **Baseline:** Jakarta Persistence 3.1, Hibernate ORM 6.x, Spring Data JPA (Spring Boot 3.x) · **Last verified:** 2026-08-22 · **Prerequisites:** [Spring Boot Internals](Spring_Boot_Internals_Interview_Prep.md), basic SQL
+
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining what the persistence context actually does under the hood and where its abstractions leak, not reciting annotation names.
 
 ---

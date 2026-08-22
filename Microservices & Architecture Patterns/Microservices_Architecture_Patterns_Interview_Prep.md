@@ -1,5 +1,7 @@
 # Microservices & Architecture Patterns — Interview Prep (Lead/Staff Level, with Code & Sources)
 
+> **Target level:** Lead/Staff · **Baseline:** framework-agnostic architecture patterns; code/config examples use Spring Boot 3.x and Kafka · **Last verified:** 2026-08-22 · **Prerequisites:** [Transactions](../System%20Design/Transactions_Interview_Prep.md) (sagas, 2PC), [REST API Design](../System%20Design/REST_API_Design_Interview_Prep.md), [Redis](../System%20Design/Redis_Caching_Interview_Prep.md) & [Kafka](../System%20Design/Kafka_Interview_Prep.md)
+
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **diagram/sketch** you could draw on a whiteboard to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining trade-offs and failure modes, not naming patterns. This file assumes familiarity with the Transactions category (sagas, two-phase commit), the REST API Design file (BFF, idempotency, versioning), and the Redis/Kafka files (circuit breakers, message keys) — it cross-references them rather than repeating them, and focuses on the structural, whole-system architecture questions those files don't cover.
 
 ---

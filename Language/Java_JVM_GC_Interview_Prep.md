@@ -1,5 +1,7 @@
 # Java JVM & Garbage Collection — Interview Prep (Lead/Staff Level, with Code & Sources)
 
+> **Target level:** Lead/Staff · **Baseline:** Java/JDK 21 (LTS) — G1 default collector, generational ZGC/Shenandoah as of JDK 21+ · **Last verified:** 2026-08-22 · **Prerequisites:** [Java Collections](../Language/Java_Collections_Interview_Prep.md); [Java Concurrency](../Language/Java_Concurrency_Interview_Prep.md) helpful for the reference-type/visibility sections
+
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code/command snippet** you could reference or run to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar isn't naming JVM flags, it's explaining what evidence you'd gather before touching them and what the failure actually looks like in production.
 
 ---

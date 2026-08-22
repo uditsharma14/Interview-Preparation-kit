@@ -1,5 +1,7 @@
 # Lead/Staff Engineering & Technical Leadership — Interview Prep (with Framework & Sources)
 
+> **Target level:** Lead/Staff · **Baseline:** not technology-specific (organizational judgment and influence) · **Last verified:** 2026-08-22 · **Prerequisites:** none technical — most useful after you've worked through the technical guides, since Staff-level judgment questions here often draw on that material for concrete grounding
+
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **framework or template** you could sketch on a whiteboard to structure the answer, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is judgment and organizational impact, not a technology opinion. For the narrative/behavioral questions in this file (the ones asking to "describe" a specific incident or strategy), I've given the *shape* a strong answer takes and the structure I'd use to tell it — you'd fill in your own real, specific example, since a genuine story beats a generic one every time an interviewer probes for detail.
 
 ---

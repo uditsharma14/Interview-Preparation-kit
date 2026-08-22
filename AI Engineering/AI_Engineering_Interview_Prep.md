@@ -1,5 +1,7 @@
 # AI Engineering — Interview Prep (Lead/Staff Level, with Code & Sources)
 
+> **Target level:** Lead/Staff · **Baseline:** general hosted-LLM-API patterns (examples reference the Anthropic API); no single model version is pinned · **Last verified:** 2026-08-22 — **this is the fastest-moving guide in the repository (model capabilities, pricing, and context windows change monthly); treat specific numbers here as approximate and re-verify before relying on them in an interview** · **Prerequisites:** general backend engineering (the rest of this kit)
+
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining production failure modes (hallucination, cost blowups, prompt injection, retrieval degradation) and trade-offs, not reciting API syntax. This file assumes the reader already knows general backend engineering (the rest of this kit) and focuses specifically on what's different about building with LLMs — it cross-references the REST API Design, Redis, and Transactions files for patterns (retries, idempotency, caching, circuit breakers) that apply directly to LLM-backed systems without needing to be reinvented.
 
 ---

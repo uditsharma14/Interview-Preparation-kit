@@ -1,5 +1,7 @@
 # REST API Design — Interview Prep (Lead/Staff Level, with Code & Sources)
 
+> **Target level:** Lead/Staff · **Baseline:** HTTP semantics per RFC 9110/9111 (framework-agnostic; code examples use Spring Boot 3.x) · **Last verified:** 2026-08-22 · **Prerequisites:** basic HTTP; [Spring Boot Internals](../Frameworks/Spring_Boot_Internals_Interview_Prep.md) helpful for the code examples
+
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code/example snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining trade-offs and failure modes across client evolution, retries, and multi-team consumption, not reciting HTTP verb definitions.
 
 ---

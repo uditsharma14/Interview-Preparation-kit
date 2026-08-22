@@ -1,5 +1,7 @@
 # Java Concurrency — Interview Prep (Lead/Staff Level, with Code & Sources)
 
+> **Target level:** Lead/Staff · **Baseline:** Java/JDK 21 (LTS); structured concurrency examples target JEP 505 (JDK 25, preview) and are explicitly flagged where later previews (JEP 525/533) change the API · **Last verified:** 2026-08-22 · **Prerequisites:** [Java Collections](../Language/Java_Collections_Interview_Prep.md), core Java
+
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar isn't reciting API names, it's explaining failure modes, trade-offs, and what you'd actually do at 3am when this breaks in production.
 
 ---
