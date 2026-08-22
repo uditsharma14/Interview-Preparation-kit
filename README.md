@@ -1,20 +1,38 @@
 # Interview Preparation Kit
 
-A collection of deep-dive, mid-to-staff-level interview prep notes for technical interviews. Each topic is written as a set of Q&A entries with the answer phrased the way it would actually be said out loud in an interview, backed by code snippets and pointers to where staff-level follow-up questions tend to go.
+*Deep-dive, mid-to-staff-level interview prep — written to be said out loud, not skimmed.*
 
-This repository optimizes for **accuracy over question count**. Every guide has undergone an initial audit against primary sources (Oracle/OpenJDK specs, Spring/Hibernate/Kafka/Redis/Kubernetes documentation, IETF RFCs) — see [`AUDIT.md`](AUDIT.md) for the review status of each guide and [`CONTRIBUTING.md`](CONTRIBUTING.md) for the citation/accuracy policy new material has to meet. Version-sensitive and production-specific claims should still be verified against the linked documentation before you repeat them in an interview — and if you find one that's wrong or stale, that's exactly what `AUDIT.md` and the contribution policy exist to fix.
+[![Docs check](https://github.com/uditsharma14/Interview-Preparation-kit/actions/workflows/docs-check.yml/badge.svg)](https://github.com/uditsharma14/Interview-Preparation-kit/actions/workflows/docs-check.yml)
 
-## Who This Is For
+Each topic is a set of Q&A entries: the answer phrased the way it would actually be said out loud in an interview, backed by a code snippet, and a pointer to where staff-level follow-up questions tend to go.
 
-Current interview loops for **Full Stack**, **Forward Deployed**, and **Staff** engineering roles overlap a lot but weight things differently. Here's what's actually covered today versus still a gap, per role, so you know where to spend time:
+This repository optimizes for **accuracy over question count**. Every guide has undergone an initial audit against primary sources — Oracle/OpenJDK specs, Spring/Hibernate/Kafka/Redis/Kubernetes documentation, IETF RFCs. See [`AUDIT.md`](AUDIT.md) for the review status of each guide and [`CONTRIBUTING.md`](CONTRIBUTING.md) for the citation/accuracy policy new material has to meet. Version-sensitive and production-specific claims should still be verified against the linked documentation before you repeat them in an interview — and if you find one that's wrong or stale, that's exactly what `AUDIT.md` and the contribution policy exist to fix.
 
-| Role | What their loop usually leans on | Covered here | Still a gap |
+## Contents
+
+- [Who this is for](#who-this-is-for)
+- [Recommended study order](#recommended-study-order)
+- [Difficulty by guide](#difficulty-by-guide)
+- [Quick-revision path](#quick-revision-path)
+- [Deep-dive path](#deep-dive-path)
+- [Guides by topic](#guides-by-topic)
+- [How each question is structured](#how-each-question-is-structured)
+- [Accuracy and contribution policy](#accuracy-and-contribution-policy)
+- [License](#license)
+
+## Who this is for
+
+Current interview loops for **Full Stack**, **Forward Deployed**, and **Staff** engineering roles overlap a lot but weight things differently. Here's what's covered today versus still a gap, per role, so you know where to spend time:
+
+| Role | What their loop leans on | Covered here | Still a gap |
 |---|---|---|---|
-| **Full Stack Engineer** | Frontend fundamentals (React/TS, browser/perf), backend API design, databases, light system design, testing | [Frameworks](Frameworks/), [System Design](System%20Design/) (esp. [REST API Design](System%20Design/REST_API_Design_Interview_Prep.md)), [Language](Language/) | [Frontend & Full-Stack](Frontend%20%26%20Full-Stack/) *(reserved — see that folder's README)* |
-| **Forward Deployed Engineer** | Rapid prototyping across the stack, scripting/data wrangling, working with ambiguous client requirements and messy environments, stakeholder communication, deploying into a customer's own (often locked-down) infrastructure, increasingly LLM/agent integration on top of client data | [System Design](System%20Design/) (esp. [Cross-Stack Scenarios](System%20Design/Cross_Stack_Design_Scenarios_Interview_Prep.md)), [Tech Leadership](Tech%20Leadership/) (ambiguity, influence, communication), [AI Engineering](AI%20Engineering/), [Kubernetes, Docker & Cloud](Kubernetes%2C%20Docker%20%26%20Cloud/) | [Forward-Deployed & Customer-Facing Engineering](Forward-Deployed%20%26%20Customer-Facing%20Engineering/) *(reserved — see that folder's README)* |
-| **Staff Engineer** | Deep fundamentals across the stack, system design and trade-offs, architecture/design judgment, organizational leverage and leadership | Nearly everything — [Language](Language/), [Frameworks](Frameworks/), [System Design](System%20Design/), [Tech Leadership](Tech%20Leadership/), [Microservices & Architecture Patterns](Microservices%20%26%20Architecture%20Patterns/), [Kubernetes, Docker & Cloud](Kubernetes%2C%20Docker%20%26%20Cloud/) | [Design Patterns](Design%20Patterns/) *(reserved — see that folder's README)* |
+| **Full Stack Engineer** | Frontend fundamentals (React/TS, browser/perf) • Backend API design • Databases • Light system design • Testing | [Frameworks](Frameworks/) • [System Design](System%20Design/) (esp. [REST API Design](System%20Design/REST_API_Design_Interview_Prep.md)) • [Language](Language/) | [Frontend & Full-Stack](Frontend%20%26%20Full-Stack/) *(reserved)* |
+| **Forward Deployed Engineer** | Rapid prototyping across the stack • Scripting/data wrangling • Ambiguous requirements, messy environments • Stakeholder communication • Deploying into a customer's locked-down infrastructure • Increasingly, LLM/agent integration on client data | [System Design](System%20Design/) (esp. [Cross-Stack Scenarios](System%20Design/Cross_Stack_Design_Scenarios_Interview_Prep.md)) • [Tech Leadership](Tech%20Leadership/) (ambiguity, influence) • [AI Engineering](AI%20Engineering/) • [Kubernetes, Docker & Cloud](Kubernetes%2C%20Docker%20%26%20Cloud/) | [Forward-Deployed & Customer-Facing Engineering](Forward-Deployed%20%26%20Customer-Facing%20Engineering/) *(reserved)* |
+| **Staff Engineer** | Deep fundamentals across the stack • System design and trade-offs • Architecture/design judgment • Organizational leverage and leadership | Nearly everything — [Language](Language/) • [Frameworks](Frameworks/) • [System Design](System%20Design/) • [Tech Leadership](Tech%20Leadership/) • [Microservices & Architecture Patterns](Microservices%20%26%20Architecture%20Patterns/) • [Kubernetes, Docker & Cloud](Kubernetes%2C%20Docker%20%26%20Cloud/) | [Design Patterns](Design%20Patterns/) *(reserved)* |
 
-AI/LLM-application questions have become common across all three loops in the last year or two — even a straightforward backend or full-stack interview now often includes "how would you design a RAG pipeline" or "how do you evaluate an LLM feature" — which is why **AI Engineering** is reserved as its own section rather than folded into System Design.
+*(reserved = see that folder's own README)*
+
+AI/LLM-application questions have become common across all three loops in the last year or two — even a straightforward backend or full-stack interview now often includes "how would you design a RAG pipeline" or "how do you evaluate an LLM feature." That's why **AI Engineering** is reserved as its own section rather than folded into System Design.
 
 ## Recommended study order
 
@@ -49,21 +67,29 @@ The guides build on each other — each one's header states its own prerequisite
 | [AI Engineering](AI%20Engineering/AI_Engineering_Interview_Prep.md) | Staff | Assumes general backend engineering; fastest-moving guide in the repo — check its "last verified" date. |
 | [Tech Leadership](Tech%20Leadership/Engineering_Leadership_Interview_Prep.md) | Staff | Not technology-specific; no technical prerequisite, but most useful after the technical guides. |
 
-Most of this kit is genuinely Staff-scoped by design — see "Who This Is For" above for where the *entry points* (Java Collections, Kubernetes' Basic tier) are more accessible.
+Most of this kit is genuinely Staff-scoped by design — see [Who this is for](#who-this-is-for) above for where the *entry points* (Java Collections, Kubernetes' Basic tier) are more accessible.
 
 ## Quick-revision path
 
-Interview tomorrow, not weeks from now? Don't read every guide front to back — for each guide you need, read only the **bolded Answer paragraph** of each question (skip Code and Follow-up on a first pass), then come back for **Follow-up** sections specifically on the questions closest to what you expect to be asked. That's the "can I say this out loud correctly" layer; Follow-up is the "can I go one level deeper when probed" layer, worth targeted review rather than exhaustive re-reading under time pressure.
+Interview tomorrow, not weeks from now? Don't read every guide front to back:
 
-Highest-yield guides for a generalist Staff/Lead loop, in priority order if you have to cut scope: [Java Concurrency](Language/Java_Concurrency_Interview_Prep.md), [Transactions](System%20Design/Transactions_Interview_Prep.md), [Kafka](System%20Design/Kafka_Interview_Prep.md), [Redis & Caching](System%20Design/Redis_Caching_Interview_Prep.md), [Spring Boot Internals](Frameworks/Spring_Boot_Internals_Interview_Prep.md), [Cross-Stack Design Scenarios](System%20Design/Cross_Stack_Design_Scenarios_Interview_Prep.md) — these are the topics that show up across the widest range of loop types.
+1. For each guide you need, read only the **bolded Answer paragraph** of each question — skip Code and Follow-up on a first pass. That's the "can I say this out loud correctly" layer.
+2. Come back for **Follow-up** sections specifically on the questions closest to what you expect to be asked. That's the "can I go one level deeper when probed" layer — worth targeted review rather than exhaustive re-reading under time pressure.
+
+Highest-yield guides for a generalist Staff/Lead loop, in priority order if you have to cut scope: [Java Concurrency](Language/Java_Concurrency_Interview_Prep.md), [Transactions](System%20Design/Transactions_Interview_Prep.md), [Kafka](System%20Design/Kafka_Interview_Prep.md), [Redis & Caching](System%20Design/Redis_Caching_Interview_Prep.md), [Spring Boot Internals](Frameworks/Spring_Boot_Internals_Interview_Prep.md), [Cross-Stack Design Scenarios](System%20Design/Cross_Stack_Design_Scenarios_Interview_Prep.md) — these show up across the widest range of loop types.
 
 ## Deep-dive path
 
-Weeks of runway, not days? Go in the [recommended study order](#recommended-study-order) above, guide by guide, and for each question: read the Answer, work through the Code example by hand (actually run it where it's real compilable code, not pseudocode), then read the cited primary source rather than trusting the guide's paraphrase of it — the source is there precisely so you don't have to take the paraphrase on faith. The Follow-up section on each question is a good self-check: cover it, answer the question yourself, then compare.
+Weeks of runway, not days? Go in the [recommended study order](#recommended-study-order) above, guide by guide, and for each question:
 
-## Contents
+1. Read the Answer.
+2. Work through the Code example by hand — actually run it where it's real compilable code, not pseudocode.
+3. Read the cited primary source rather than trusting the guide's paraphrase of it. The source is there precisely so you don't have to take the paraphrase on faith.
+4. Use the Follow-up section as a self-check: cover it, answer the question yourself, then compare.
 
-Content is organized by kind of content, not by role — use the tables above to figure out which folders and difficulty levels matter most for the loop you're prepping for.
+## Guides by topic
+
+Organized by kind of content, not by role — use the tables above to figure out which folders and difficulty levels matter most for the loop you're prepping for.
 
 ### Language
 
@@ -137,16 +163,21 @@ Every question in every guide follows the same shape:
 3. **Follow-up** — the deeper probe that separates a mid-level answer from a Staff-level one: failure modes, trade-offs, what breaks at scale.
 4. **Source** — the authoritative reference(s) for the important claims made in that question.
 
+A rollout to a more granular five-part structure (Core answer / Staff-level extension / Example / Follow-up questions / Sources, keeping every core answer within a 30–90-second spoken length) is in progress — see [`AUDIT.md`](AUDIT.md) for which guides have migrated so far.
+
 ## Accuracy and contribution policy
 
-This kit is deliberately not optimizing for question count. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full policy — in short: primary sources over memory, version-scoped claims, no unscoped "always"/"never"/"guaranteed"/"exactly once," no fabricated production experience, and no AI-conversation artifacts. [`AUDIT.md`](AUDIT.md) tracks the verification status of every guide and every known issue found so far, fixed or still open.
+This kit is deliberately not optimizing for question count. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full policy — in short: primary sources over memory, version-scoped claims, no unscoped "always"/"never"/"guaranteed"/"exactly once," no fabricated production experience, and no AI-conversation artifacts. [`AUDIT.md`](AUDIT.md) tracks the review status of every guide and every known issue found so far, fixed or still open.
 
 ## License
 
 Not yet chosen — see the note in `CONTRIBUTING.md`. Treat all content here as all-rights-reserved until the repository owner adds a license file.
 
 Recommended options for the owner to choose from (not chosen on the owner's behalf):
-- **CC BY-NC-SA 4.0** — share/adapt with attribution, non-commercial only, share-alike. Fits a personal study resource the owner wants circulated but not resold or repackaged commercially.
-- **CC BY-SA 4.0** — same, minus the non-commercial restriction. Fits if the owner is fine with commercial reuse (e.g. a bootcamp using it in paid material) as long as it stays attributed and share-alike.
-- **MIT / Apache-2.0** — permissive, no share-alike requirement, minimal restriction. Fits if the owner wants maximum reuse with no obligation on downstream users beyond attribution (Apache-2.0 also adds an explicit patent grant, irrelevant for prose/docs but standard for code-heavy repos).
-- **All-rights-reserved (no license file)** — the current default. Fits if the owner doesn't want redistribution at all right now.
+
+| Option | Terms | Fits if |
+|---|---|---|
+| **CC BY-NC-SA 4.0** | Share/adapt with attribution, non-commercial only, share-alike | A personal study resource the owner wants circulated but not resold or repackaged commercially |
+| **CC BY-SA 4.0** | Same, minus the non-commercial restriction | The owner is fine with commercial reuse (e.g. a bootcamp using it in paid material) as long as it stays attributed and share-alike |
+| **MIT / Apache-2.0** | Permissive, no share-alike requirement, minimal restriction | The owner wants maximum reuse with no obligation on downstream users beyond attribution (Apache-2.0 also adds an explicit patent grant, irrelevant for prose/docs but standard for code-heavy repos) |
+| **All-rights-reserved** (no license file) | The current default | The owner doesn't want redistribution at all right now |
