@@ -1,5 +1,7 @@
 # Kafka Deep-Dive Interview Prep
 
+> **Target level:** Lead/Staff · **Baseline:** Apache Kafka 3.x (broker & client); cooperative rebalancing assumes `CooperativeStickyAssignor` (KIP-429, Kafka 2.4+) as the modern default · **Last verified:** 2026-08-22 · **Prerequisites:** basic messaging/pub-sub concepts; helpful to have read [Transactions](Transactions_Interview_Prep.md) first for the dual-write-problem framing this file reuses
+
 ---
 
 ## PART 1: CONCEPTUAL FOUNDATIONS

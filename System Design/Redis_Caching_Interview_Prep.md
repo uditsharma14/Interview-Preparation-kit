@@ -1,5 +1,7 @@
 # Redis & Caching — Interview Prep (Lead/Staff Level, with Code & Sources)
 
+> **Target level:** Lead/Staff · **Baseline:** Redis 7.x (OSS) — Lua scripting via `EVAL`, Cluster hash-slot model, Sentinel-based failover · **Last verified:** 2026-08-22 · **Prerequisites:** basic Redis commands (`GET`/`SET`/`EXPIRE`); [Transactions](Transactions_Interview_Prep.md) helpful for the dual-write/outbox framing reused here
+
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining what breaks under real production traffic (stampedes, hot keys, failover), not reciting Redis command syntax.
 
 ---

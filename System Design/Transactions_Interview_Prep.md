@@ -1,5 +1,7 @@
 # Transactions — Interview Prep (Lead/Staff Level, with Code & Sources)
 
+> **Target level:** Lead/Staff · **Baseline:** ANSI SQL-92 isolation levels as the reference framework; PostgreSQL (current) as the reference RDBMS wherever database-specific behavior is shown; Spring Framework 6.x declarative transaction management (`@Transactional`, propagation types) · **Last verified:** 2026-08-22 · **Prerequisites:** basic SQL; [Spring Boot Internals](../Frameworks/Spring_Boot_Internals_Interview_Prep.md) helpful for the proxy-based `@Transactional` sections
+
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining what actually breaks across service and database boundaries, not reciting ACID as a definition.
 
 ---
