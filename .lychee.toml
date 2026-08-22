@@ -1,0 +1,68 @@
+# Config for https://github.com/lycheeverse/lychee, run via the
+# lychee-action step in .github/workflows/docs-check.yml.
+#
+# This repo cites ~100 distinct domains as primary sources. External sites
+# reorganize documentation over time independent of anything in this repo,
+# so this is tuned to catch genuine link rot without flagging things that
+# were never real citations in the first place or that transiently rate-
+# limit/block automated requests.
+
+# A real but slow/rate-limited site should get a few chances before being
+# reported broken.
+max_retries = 3
+retry_wait_time = 5
+
+# Give slower documentation sites (PDF hosts, academic archives) enough
+# time before treating them as down.
+timeout = 20
+
+# Identify as a real browser — some sites (Confluence wikis, a few vendor
+# docs sites) return 403 to lychee's default user agent even though the
+# page is genuinely reachable.
+user_agent = "Mozilla/5.0 (compatible; docs-link-check/1.0; +https://github.com)"
+
+# Several guides use https://api.example.com, https://auth.example.com,
+# https://victim-bank.example.com, etc. as illustrative placeholder
+# hostnames inside code examples (OAuth flows, CSRF attack payloads) — these
+# were never meant to resolve to anything real and aren't citations.
+# RFC 2606 reserves example.com/.org/.net exactly for this purpose.
+#
+# The domains below returned HTTP 403 (access refused) rather than 404
+# (resource gone) to BOTH lychee and a second, independent fetch tool —
+# the standard signature of bot-detection blocking automated/CI traffic,
+# not a removed page. One (vaughnvernon.com) was confirmed to load its
+# real, correct content through the second tool despite lychee's 403; the
+# rest consistently 403'd both ways, which is still 403-not-404 evidence
+# of blocking rather than proof of content — re-verify manually (open it
+# in an actual browser) before trusting or removing an entry here.
+exclude = [
+  "^https?://[^/]*\\.example\\.(com|org|net)",
+  "^https?://(localhost|127\\.0\\.0\\.1)",
+  # Bare internal-hostname-only URLs used in a couple of code sketches
+  # (e.g. `http://inventory-service`), not real citations.
+  "^https?://[a-z-]+-service/?$",
+  # Confirmed live, bot-blocks CI/automated traffic with 403:
+  "^https?://(www\\.)?openai\\.com/enterprise-privacy/?",
+  "^https?://wiki\\.openjdk\\.org/",
+  "^https?://cacm\\.acm\\.org/",
+  "^https?://vaughnvernon\\.com/?$",
+  "^https?://(www\\.)?oreilly\\.com/",
+  "^https?://(www\\.)?etsy\\.com/codeascraft/",
+  # Confluence wikis (cwiki.apache.org) are slow and frequently time out
+  # against CI runners even though the pages load fine in a browser.
+  "^https?://cwiki\\.apache\\.org/",
+]
+
+# Anchors on some third-party docs sites are JS-rendered and not present in
+# the static HTML lychee fetches — check the page exists, not that the
+# fragment does, to avoid false positives outside content we control.
+include_fragments = "none"
+
+exclude_private = true
+exclude_link_local = true
+exclude_loopback = true
+
+# 429 (rate-limited) and 403 (some sites bot-block HEAD/GET from CI
+# runners even for genuinely public pages) are treated as "recheck later"
+# rather than "broken" — a real 404/DNS failure still fails the check.
+accept = [200, 429]

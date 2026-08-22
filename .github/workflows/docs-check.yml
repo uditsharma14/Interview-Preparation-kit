@@ -1,0 +1,49 @@
+name: Docs check
+
+on:
+  pull_request:
+    paths: ["**/*.md"]
+  push:
+    branches: [main, master]
+    paths: ["**/*.md"]
+  workflow_dispatch: {}
+  schedule:
+    # External sites reorganize docs over time even when nothing here
+    # changes — catch link rot on a monthly cadence, not just on edits.
+    - cron: "0 6 1 * *"
+
+jobs:
+  markdownlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DavidAnson/markdownlint-cli2-action@v19
+        with:
+          globs: "**/*.md"
+
+  internal-links-and-headings:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - run: python3 scripts/check_internal_links.py
+      - run: python3 scripts/check_duplicate_headings.py
+
+  external-links:
+    runs-on: ubuntu-latest
+    # Link rot in an external citation shouldn't block every unrelated PR —
+    # surface it, but don't fail the whole check. The scheduled monthly run
+    # is what actually gets treated as a signal to go fix citations.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lychee link check
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --config .lychee.toml
+            --no-progress
+            "**/*.md"
+          fail: true
