@@ -4,6 +4,38 @@
 
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **framework or template** you could sketch on a whiteboard to structure the answer, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is judgment and organizational impact, not a technology opinion. For the narrative/behavioral questions in this file (the ones asking to "describe" a specific incident or strategy), I've given the *shape* a strong answer takes and the structure I'd use to tell it — you'd fill in your own real, specific example, since a genuine story beats a generic one every time an interviewer probes for detail.
 
+<!-- toc -->
+## Table of Contents
+
+- [1. How Do You Make an Architectural Decision When Senior Engineers Strongly Disagree?](#1-how-do-you-make-an-architectural-decision-when-senior-engineers-strongly-disagree)
+- [2. What Should an Effective Architecture Decision Record Contain?](#2-what-should-an-effective-architecture-decision-record-contain)
+- [3. How Do You Distinguish a Reversible Decision From an Irreversible One?](#3-how-do-you-distinguish-a-reversible-decision-from-an-irreversible-one)
+- [4. How Do You Balance Delivery Speed Against Accumulated Technical Risk?](#4-how-do-you-balance-delivery-speed-against-accumulated-technical-risk)
+- [5. How Do You Identify the Highest-Leverage Technical Problem in an Organization?](#5-how-do-you-identify-the-highest-leverage-technical-problem-in-an-organization)
+- [6. How Do You Influence Teams When You Have No Direct Authority?](#6-how-do-you-influence-teams-when-you-have-no-direct-authority)
+- [7. Describe a Standard You Introduced Across Multiple Teams](#7-describe-a-standard-you-introduced-across-multiple-teams)
+- [8. How Do You Prevent Platform Standards From Becoming Bureaucracy?](#8-how-do-you-prevent-platform-standards-from-becoming-bureaucracy)
+- [9. When Should a Team Build a Shared Platform Versus Keep Functionality Local?](#9-when-should-a-team-build-a-shared-platform-versus-keep-functionality-local)
+- [10. How Do You Measure Whether an Internal Platform Is Successful?](#10-how-do-you-measure-whether-an-internal-platform-is-successful)
+- [11. How Do You Review a Design Without Becoming a Bottleneck?](#11-how-do-you-review-a-design-without-becoming-a-bottleneck)
+- [12. How Do You Mentor Senior Engineers Toward Staff-Level Impact?](#12-how-do-you-mentor-senior-engineers-toward-staff-level-impact)
+- [13. Describe an Incident Where Your Technical Assumption Was Wrong](#13-describe-an-incident-where-your-technical-assumption-was-wrong)
+- [14. How Do You Lead During a Production Incident?](#14-how-do-you-lead-during-a-production-incident)
+- [15. What Distinguishes Remediation Actions From Action-Item Theater?](#15-what-distinguishes-remediation-actions-from-action-item-theater)
+- [16. How Do You Prioritize Reliability Work Against Feature Commitments?](#16-how-do-you-prioritize-reliability-work-against-feature-commitments)
+- [17. How Do You Communicate Architectural Risk to Nontechnical Stakeholders?](#17-how-do-you-communicate-architectural-risk-to-nontechnical-stakeholders)
+- [18. How Do You Handle a Project That Is Technically Successful but Organizationally Unsuccessful?](#18-how-do-you-handle-a-project-that-is-technically-successful-but-organizationally-unsuccessful)
+- [19. When Would You Stop or Reverse a Migration?](#19-when-would-you-stop-or-reverse-a-migration)
+- [20. How Do You Create Alignment Across Security, Infrastructure, Data, and Application Teams?](#20-how-do-you-create-alignment-across-security-infrastructure-data-and-application-teams)
+- [21. What Evidence Do You Require Before Adopting a New Framework or Database?](#21-what-evidence-do-you-require-before-adopting-a-new-framework-or-database)
+- [22. How Do You Manage Ownership of Shared Services?](#22-how-do-you-manage-ownership-of-shared-services)
+- [23. Describe a Multi-Quarter Technical Strategy You Created and Executed](#23-describe-a-multi-quarter-technical-strategy-you-created-and-executed)
+- [24. How Do You Know When an Architecture Has Become Too Complex?](#24-how-do-you-know-when-an-architecture-has-become-too-complex)
+- [25. What Does Staff-Level Impact Look Like Beyond Writing Code?](#25-what-does-staff-level-impact-look-like-beyond-writing-code)
+- [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
+
+<!-- /toc -->
+
 ---
 
 ## 1. How Do You Make an Architectural Decision When Senior Engineers Strongly Disagree?

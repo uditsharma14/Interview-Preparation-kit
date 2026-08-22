@@ -4,6 +4,33 @@
 
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar isn't reciting API names, it's explaining failure modes, trade-offs, and what you'd actually do at 3am when this breaks in production.
 
+<!-- toc -->
+## Table of Contents
+
+- [1. Explain Visibility, Atomicity, Ordering, and Happens-Before Relationships](#1-explain-visibility-atomicity-ordering-and-happens-before-relationships)
+- [2. What Does `volatile` Guarantee, and What Does It Not Guarantee?](#2-what-does-volatile-guarantee-and-what-does-it-not-guarantee)
+- [3. Compare `synchronized`, `ReentrantLock`, `ReadWriteLock`, and `StampedLock`](#3-compare-synchronized-reentrantlock-readwritelock-and-stampedlock)
+- [4. How Do Deadlock, Livelock, Thread Starvation, and Priority Inversion Differ?](#4-how-do-deadlock-livelock-thread-starvation-and-priority-inversion-differ)
+- [5. How Would You Identify and Resolve a Production Deadlock?](#5-how-would-you-identify-and-resolve-a-production-deadlock)
+- [6. Explain the Risks of Calling External Services While Holding a Lock](#6-explain-the-risks-of-calling-external-services-while-holding-a-lock)
+- [7. Compare Platform Threads, Virtual Threads, Reactive Execution, and Asynchronous Futures](#7-compare-platform-threads-virtual-threads-reactive-execution-and-asynchronous-futures)
+- [8. Where Do Virtual Threads Help, and Where Might They Not Improve Performance?](#8-where-do-virtual-threads-help-and-where-might-they-not-improve-performance)
+- [9. How Would You Size an Executor for CPU-Bound Versus I/O-Bound Workloads?](#9-how-would-you-size-an-executor-for-cpu-bound-versus-io-bound-workloads)
+- [10. What Happens When an Executor's Queue Fills? How Do Rejection Policies Affect Reliability?](#10-what-happens-when-an-executors-queue-fills-how-do-rejection-policies-affect-reliability)
+- [11. Explain Work Stealing in `ForkJoinPool`](#11-explain-work-stealing-in-forkjoinpool)
+- [12. What Is the Danger of Blocking Inside the Common `ForkJoinPool`?](#12-what-is-the-danger-of-blocking-inside-the-common-forkjoinpool)
+- [13. How Do You Prevent Race Conditions in Lazy Initialization?](#13-how-do-you-prevent-race-conditions-in-lazy-initialization)
+- [14. Explain Safe Publication and Escaping `this` During Construction](#14-explain-safe-publication-and-escaping-this-during-construction)
+- [15. How Would You Implement a Bounded, Thread-Safe Cache?](#15-how-would-you-implement-a-bounded-thread-safe-cache)
+- [16. How Do You Test Concurrent Code Without Relying on Timing-Sensitive Sleeps?](#16-how-do-you-test-concurrent-code-without-relying-on-timing-sensitive-sleeps)
+- [17. When Would You Use Atomic Classes Versus Locks?](#17-when-would-you-use-atomic-classes-versus-locks)
+- [18. What Is the ABA Problem?](#18-what-is-the-aba-problem)
+- [19. How Would You Propagate Logging, Tracing, Security, and Transaction Context Through Asynchronous Work?](#19-how-would-you-propagate-logging-tracing-security-and-transaction-context-through-asynchronous-work)
+- [20. How Do Structured Concurrency Concepts Improve Cancellation and Error Handling?](#20-how-do-structured-concurrency-concepts-improve-cancellation-and-error-handling)
+- [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
+
+<!-- /toc -->
+
 ---
 
 ## 1. Explain Visibility, Atomicity, Ordering, and Happens-Before Relationships

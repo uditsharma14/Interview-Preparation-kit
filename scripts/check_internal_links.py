@@ -37,12 +37,16 @@ def strip_code_fences(content: str) -> str:
 
 
 def slugify(heading: str) -> str:
-    """Approximate GitHub's markdown heading-to-anchor algorithm."""
+    """GitHub's markdown heading-to-anchor algorithm (github-slugger): strip
+    emphasis, lowercase, drop non-word/space/hyphen chars, then convert each
+    remaining space to a hyphen INDIVIDUALLY (no collapsing) — a punctuation
+    character stripped from between two spaces (e.g. "A & B" -> "A  B")
+    must become a double hyphen ("a--b"), not a single one."""
     text = re.sub(r"`([^`]*)`", r"\1", heading)  # strip inline code backticks
     text = re.sub(r"[*_]", "", text)  # strip bold/italic markers
     text = text.strip().lower()
     text = re.sub(r"[^\w\s-]", "", text)  # drop punctuation
-    text = re.sub(r"\s+", "-", text)
+    text = text.replace(" ", "-")
     return text
 
 

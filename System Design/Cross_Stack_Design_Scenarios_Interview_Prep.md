@@ -4,6 +4,33 @@
 
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **sketch/diagram or checklist** you could draw on a whiteboard to back it up, and **where the follow-up goes if you're in a Staff-level loop** — these scenarios deliberately span the other files in this kit (Java, Spring, Security, JPA, Transactions, Redis, Kafka, REST API Design), because that's exactly how they show up in a real Staff-level interview: as one messy, cross-cutting problem, not a single-topic question.
 
+<!-- toc -->
+## Table of Contents
+
+- [1. Design an Order-Processing Platform Using Spring Boot, PostgreSQL, Redis, and Kafka](#1-design-an-order-processing-platform-using-spring-boot-postgresql-redis-and-kafka)
+- [2. How Would You Guarantee That an Accepted REST Request Eventually Produces Exactly One Business Outcome?](#2-how-would-you-guarantee-that-an-accepted-rest-request-eventually-produces-exactly-one-business-outcome)
+- [3. Design a Multi-Region Service and State the Consistency Trade-Offs Explicitly](#3-design-a-multi-region-service-and-state-the-consistency-trade-offs-explicitly)
+- [4. Design a Zero-Downtime Deployment Involving Database, Cache, API, and Event-Schema Changes](#4-design-a-zero-downtime-deployment-involving-database-cache-api-and-event-schema-changes)
+- [5. A Deployment Doubles Database Traffic Without Changing Request Volume. How Do You Investigate?](#5-a-deployment-doubles-database-traffic-without-changing-request-volume-how-do-you-investigate)
+- [6. Kafka Lag Grows While CPU and Database Usage Remain Low. What Hypotheses Would You Test?](#6-kafka-lag-grows-while-cpu-and-database-usage-remain-low-what-hypotheses-would-you-test)
+- [7. Redis Fails During Peak Traffic. How Do You Prevent a Database Collapse?](#7-redis-fails-during-peak-traffic-how-do-you-prevent-a-database-collapse)
+- [8. A Service Sometimes Publishes Events Without Committing Its Database Update. Fix the Architecture.](#8-a-service-sometimes-publishes-events-without-committing-its-database-update-fix-the-architecture)
+- [9. Green Application Instances Must Serve HTTP Traffic but Cannot Consume Kafka Messages. Design the Deployment.](#9-green-application-instances-must-serve-http-traffic-but-cannot-consume-kafka-messages-design-the-deployment)
+- [10. A JWT Signing Key Is Rotated and Some Services Begin Rejecting Valid Requests. Diagnose and Redesign.](#10-a-jwt-signing-key-is-rotated-and-some-services-begin-rejecting-valid-requests-diagnose-and-redesign)
+- [11. A Customer Retries a Timed-Out Payment Request. How Do You Prevent Double Charging?](#11-a-customer-retries-a-timed-out-payment-request-how-do-you-prevent-double-charging)
+- [12. A JPA Query Causes Production Memory Spikes but Works Correctly in Testing. How Do You Investigate?](#12-a-jpa-query-causes-production-memory-spikes-but-works-correctly-in-testing-how-do-you-investigate)
+- [13. A Low-Latency Service Has Periodic 10-Second Pauses. Describe Your Diagnostic Process.](#13-a-low-latency-service-has-periodic-10-second-pauses-describe-your-diagnostic-process)
+- [14. How Would You Split a Large Spring Boot Monolith While Preserving Transaction Correctness?](#14-how-would-you-split-a-large-spring-boot-monolith-while-preserving-transaction-correctness)
+- [15. How Would You Determine Whether a Proposed Microservice Boundary Is Appropriate?](#15-how-would-you-determine-whether-a-proposed-microservice-boundary-is-appropriate)
+- [16. How Do You Evolve an Event Contract Used by Dozens of Unknown Consumers?](#16-how-do-you-evolve-an-event-contract-used-by-dozens-of-unknown-consumers)
+- [17. How Would You Design Tenant Isolation Across API, Database, Cache, and Kafka?](#17-how-would-you-design-tenant-isolation-across-api-database-cache-and-kafka)
+- [18. How Do You Introduce Backpressure Across Synchronous and Asynchronous Boundaries?](#18-how-do-you-introduce-backpressure-across-synchronous-and-asynchronous-boundaries)
+- [19. How Do You Define and Measure an End-to-End Reliability SLO?](#19-how-do-you-define-and-measure-an-end-to-end-reliability-slo)
+- [20. How Would You Run a Production Migration With a Tested Rollback and Recovery Plan?](#20-how-would-you-run-a-production-migration-with-a-tested-rollback-and-recovery-plan)
+- [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
+
+<!-- /toc -->
+
 ---
 
 ## 1. Design an Order-Processing Platform Using Spring Boot, PostgreSQL, Redis, and Kafka

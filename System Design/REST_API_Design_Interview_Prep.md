@@ -4,6 +4,41 @@
 
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code/example snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining trade-offs and failure modes across client evolution, retries, and multi-team consumption, not reciting HTTP verb definitions.
 
+<!-- toc -->
+## Table of Contents
+
+- [1. What Makes an API Resource-Oriented Rather Than RPC-Oriented?](#1-what-makes-an-api-resource-oriented-rather-than-rpc-oriented)
+- [2. How Do You Choose Resource Names and URI Structures?](#2-how-do-you-choose-resource-names-and-uri-structures)
+- [3. Explain the Semantics of `GET`, `POST`, `PUT`, `PATCH`, and `DELETE`](#3-explain-the-semantics-of-get-post-put-patch-and-delete)
+- [4. Which HTTP Methods Should Be Idempotent?](#4-which-http-methods-should-be-idempotent)
+- [5. How Would You Make a Payment-Creation Endpoint Safely Retryable?](#5-how-would-you-make-a-payment-creation-endpoint-safely-retryable)
+- [6. Compare Offset, Cursor, and Keyset Pagination](#6-compare-offset-cursor-and-keyset-pagination)
+- [7. How Do You Guarantee Stable Pagination While Data Changes?](#7-how-do-you-guarantee-stable-pagination-while-data-changes)
+- [8. How Would You Design Filtering, Sorting, and Field Selection?](#8-how-would-you-design-filtering-sorting-and-field-selection)
+- [9. Compare JSON Merge Patch and JSON Patch](#9-compare-json-merge-patch-and-json-patch)
+- [10. How Do You Prevent Lost Updates Using ETags or Version Fields?](#10-how-do-you-prevent-lost-updates-using-etags-or-version-fields)
+- [11. When Should an API Return `200`, `201`, `202`, `204`, `400`, `409`, `422`, or `429`?](#11-when-should-an-api-return-200-201-202-204-400-409-422-or-429)
+- [12. What Should a Consistent Error Response Contain?](#12-what-should-a-consistent-error-response-contain)
+- [13. How Should Validation Errors Be Represented?](#13-how-should-validation-errors-be-represented)
+- [14. Compare URI, Header, and Media-Type API Versioning](#14-compare-uri-header-and-media-type-api-versioning)
+- [15. How Would You Evolve an API Without Breaking Existing Clients?](#15-how-would-you-evolve-an-api-without-breaking-existing-clients)
+- [16. How Do You Define Backward Compatibility?](#16-how-do-you-define-backward-compatibility)
+- [17. How Should Long-Running Operations Be Modeled?](#17-how-should-long-running-operations-be-modeled)
+- [18. How Do You Design Asynchronous REST Workflows?](#18-how-do-you-design-asynchronous-rest-workflows)
+- [19. How Would You Expose Bulk Operations With Partial Success?](#19-how-would-you-expose-bulk-operations-with-partial-success)
+- [20. How Do Retries Interact With Timeouts and Duplicate Requests?](#20-how-do-retries-interact-with-timeouts-and-duplicate-requests)
+- [21. How Do You Protect an API From Retry Storms?](#21-how-do-you-protect-an-api-from-retry-storms)
+- [22. How Would You Implement Rate Limiting for Tenants With Different Quotas?](#22-how-would-you-implement-rate-limiting-for-tenants-with-different-quotas)
+- [23. What Is the Difference Between Readiness, Liveness, and Business Health?](#23-what-is-the-difference-between-readiness-liveness-and-business-health)
+- [24. How Should Distributed Tracing Context Propagate?](#24-how-should-distributed-tracing-context-propagate)
+- [25. How Would You Safely Deprecate an Endpoint Used by Unknown Consumers?](#25-how-would-you-safely-deprecate-an-endpoint-used-by-unknown-consumers)
+- [26. How Do You Balance Fine-Grained APIs Against Chatty Network Behavior?](#26-how-do-you-balance-fine-grained-apis-against-chatty-network-behavior)
+- [27. Design an API for Creating an Order, Reserving Inventory, and Taking Payment](#27-design-an-api-for-creating-an-order-reserving-inventory-and-taking-payment)
+- [28. How Would You Review an API Specification Across Multiple Teams?](#28-how-would-you-review-an-api-specification-across-multiple-teams)
+- [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
+
+<!-- /toc -->
+
 ---
 
 ## 1. What Makes an API Resource-Oriented Rather Than RPC-Oriented?

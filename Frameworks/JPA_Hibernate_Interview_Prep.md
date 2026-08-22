@@ -4,6 +4,43 @@
 
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining what the persistence context actually does under the hood and where its abstractions leak, not reciting annotation names.
 
+<!-- toc -->
+## Table of Contents
+
+- [1. Explain the Entity Lifecycle States](#1-explain-the-entity-lifecycle-states)
+- [2. What Is the Persistence Context, and What Guarantees Does It Provide?](#2-what-is-the-persistence-context-and-what-guarantees-does-it-provide)
+- [3. How Does Dirty Checking Work?](#3-how-does-dirty-checking-work)
+- [4. When Does Hibernate Flush Changes?](#4-when-does-hibernate-flush-changes)
+- [5. What Is the Difference Between `flush()` and Transaction Commit?](#5-what-is-the-difference-between-flush-and-transaction-commit)
+- [6. Explain First-Level and Second-Level Caches](#6-explain-first-level-and-second-level-caches)
+- [7. What Causes the N+1 Query Problem?](#7-what-causes-the-n1-query-problem)
+- [8. Compare Join Fetching, Entity Graphs, Batch Fetching, and DTO Projections](#8-compare-join-fetching-entity-graphs-batch-fetching-and-dto-projections)
+- [9. Why Can Join-Fetching Multiple Collections Produce Duplicates or Excessive Result Sets?](#9-why-can-join-fetching-multiple-collections-produce-duplicates-or-excessive-result-sets)
+- [10. Compare Lazy and Eager Loading. Why Is Changing Everything to Eager Loading Dangerous?](#10-compare-lazy-and-eager-loading-why-is-changing-everything-to-eager-loading-dangerous)
+- [11. What Is `LazyInitializationException`, and What Design Problem Does It Usually Reveal?](#11-what-is-lazyinitializationexception-and-what-design-problem-does-it-usually-reveal)
+- [12. Why Is Open Session in View Controversial?](#12-why-is-open-session-in-view-controversial)
+- [13. Compare `persist`, `merge`, and Repository `save`](#13-compare-persist-merge-and-repository-save)
+- [14. Why Can `merge` Produce Unexpected Behavior?](#14-why-can-merge-produce-unexpected-behavior)
+- [15. Compare `IDENTITY`, `SEQUENCE`, and Application-Generated IDs](#15-compare-identity-sequence-and-application-generated-ids)
+- [16. How Do ID-Generation Strategies Affect Batching?](#16-how-do-id-generation-strategies-affect-batching)
+- [17. Explain Owning and Inverse Sides of Relationships](#17-explain-owning-and-inverse-sides-of-relationships)
+- [18. What Problems Arise From Incorrect `equals` and `hashCode` Implementations on Entities?](#18-what-problems-arise-from-incorrect-equals-and-hashcode-implementations-on-entities)
+- [19. How Do Cascade Operations Differ From `orphanRemoval`?](#19-how-do-cascade-operations-differ-from-orphanremoval)
+- [20. How Does Optimistic Locking Work?](#20-how-does-optimistic-locking-work)
+- [21. When Should Pessimistic Locking Be Used?](#21-when-should-pessimistic-locking-be-used)
+- [22. What Happens When Bulk JPQL Updates Bypass the Persistence Context?](#22-what-happens-when-bulk-jpql-updates-bypass-the-persistence-context)
+- [23. How Would You Process Millions of Records Without Exhausting Memory?](#23-how-would-you-process-millions-of-records-without-exhausting-memory)
+- [24. How Do JDBC Batching and Ordered Inserts Improve Throughput?](#24-how-do-jdbc-batching-and-ordered-inserts-improve-throughput)
+- [25. How Would You Diagnose a Query That Is Fast in SQL Tooling But Slow Through Hibernate?](#25-how-would-you-diagnose-a-query-that-is-fast-in-sql-tooling-but-slow-through-hibernate)
+- [26. When Should You Use Native SQL or JDBC Instead of JPA?](#26-when-should-you-use-native-sql-or-jdbc-instead-of-jpa)
+- [27. How Do Database Indexes Interact With Generated Hibernate Queries?](#27-how-do-database-indexes-interact-with-generated-hibernate-queries)
+- [28. How Would You Safely Migrate a Heavily Used Entity Relationship?](#28-how-would-you-safely-migrate-a-heavily-used-entity-relationship)
+- [29. How Do You Avoid Leaking Persistence Models Into API Contracts?](#29-how-do-you-avoid-leaking-persistence-models-into-api-contracts)
+- [30. Describe a Production Hibernate Performance Incident and Its Resolution](#30-describe-a-production-hibernate-performance-incident-and-its-resolution)
+- [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
+
+<!-- /toc -->
+
 ---
 
 ## 1. Explain the Entity Lifecycle States

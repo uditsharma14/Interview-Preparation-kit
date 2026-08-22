@@ -4,6 +4,38 @@
 
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining *why* the framework is built the way it is and what breaks when its assumptions are violated, not reciting annotation names.
 
+<!-- toc -->
+## Table of Contents
+
+- [1. What Happens Internally When `SpringApplication.run()` Executes?](#1-what-happens-internally-when-springapplicationrun-executes)
+- [2. How Does Component Scanning Discover and Register Beans?](#2-how-does-component-scanning-discover-and-register-beans)
+- [3. Explain Bean Definition Registration, Instantiation, Dependency Injection, Post-Processing, and Initialization](#3-explain-bean-definition-registration-instantiation-dependency-injection-post-processing-and-initialization)
+- [4. How Does Spring Resolve Dependencies When Multiple Beans Have the Same Type?](#4-how-does-spring-resolve-dependencies-when-multiple-beans-have-the-same-type)
+- [5. What Is the Role of `BeanFactoryPostProcessor` Versus `BeanPostProcessor`?](#5-what-is-the-role-of-beanfactorypostprocessor-versus-beanpostprocessor)
+- [6. How Does Spring Boot Auto-Configuration Work?](#6-how-does-spring-boot-auto-configuration-work)
+- [7. How Do `@ConditionalOnClass`, `@ConditionalOnMissingBean`, and Related Conditions Work?](#7-how-do-conditionalonclass-conditionalonmissingbean-and-related-conditions-work)
+- [8. How Would You Debug Why an Auto-Configuration Was or Was Not Applied?](#8-how-would-you-debug-why-an-auto-configuration-was-or-was-not-applied)
+- [9. How Does Externalized Configuration Precedence Work?](#9-how-does-externalized-configuration-precedence-work)
+- [10. What Problems Can Arise From Broad Component Scanning?](#10-what-problems-can-arise-from-broad-component-scanning)
+- [11. Why Does Spring Frequently Use Proxies?](#11-why-does-spring-frequently-use-proxies)
+- [12. Compare JDK Dynamic Proxies With Subclass-Based Proxies](#12-compare-jdk-dynamic-proxies-with-subclass-based-proxies)
+- [13. Why Can Self-Invocation Break `@Transactional`, `@Cacheable`, `@Async`, and Method Security?](#13-why-can-self-invocation-break-transactional-cacheable-async-and-method-security)
+- [14. What Limitations Do Final Classes and Methods Create for Proxy-Based Features?](#14-what-limitations-do-final-classes-and-methods-create-for-proxy-based-features)
+- [15. Explain Singleton Bean Thread Safety. Does Spring Make Singleton Beans Thread-Safe?](#15-explain-singleton-bean-thread-safety-does-spring-make-singleton-beans-thread-safe)
+- [16. How Do Circular Dependencies Occur, and Why Are They Usually a Design Smell?](#16-how-do-circular-dependencies-occur-and-why-are-they-usually-a-design-smell)
+- [17. Explain the Spring Boot Startup Lifecycle and Application Events](#17-explain-the-spring-boot-startup-lifecycle-and-application-events)
+- [18. How Would You Reduce Startup Time and Memory Consumption?](#18-how-would-you-reduce-startup-time-and-memory-consumption)
+- [19. How Do Graceful Shutdown and Request Draining Work?](#19-how-do-graceful-shutdown-and-request-draining-work)
+- [20. How Would You Design Custom Spring Boot Auto-Configuration for an Internal Platform Library?](#20-how-would-you-design-custom-spring-boot-auto-configuration-for-an-internal-platform-library)
+- [21. How Do Actuator Health Contributors Differ From Readiness and Liveness Probes?](#21-how-do-actuator-health-contributors-differ-from-readiness-and-liveness-probes)
+- [22. What Should Happen When a Downstream Dependency Is Unavailable During Startup?](#22-what-should-happen-when-a-downstream-dependency-is-unavailable-during-startup)
+- [23. How Would You Prevent One Slow Initialization Task From Delaying the Whole Application?](#23-how-would-you-prevent-one-slow-initialization-task-from-delaying-the-whole-application)
+- [24. Explain Servlet, Reactive, and Virtual-Thread Execution Models in Spring Applications](#24-explain-servlet-reactive-and-virtual-thread-execution-models-in-spring-applications)
+- [25. How Would You Diagnose an Application-Context Startup Failure in Production?](#25-how-would-you-diagnose-an-application-context-startup-failure-in-production)
+- [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
+
+<!-- /toc -->
+
 ---
 
 ## 1. What Happens Internally When `SpringApplication.run()` Executes?

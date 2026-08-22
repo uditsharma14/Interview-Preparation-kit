@@ -4,6 +4,31 @@
 
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code/command snippet** you could reference or run to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar isn't naming JVM flags, it's explaining what evidence you'd gather before touching them and what the failure actually looks like in production.
 
+<!-- toc -->
+## Table of Contents
+
+- [1. Explain the JVM Memory Areas and What Is Stored in Each](#1-explain-the-jvm-memory-areas-and-what-is-stored-in-each)
+- [2. What Is the Difference Between Heap Exhaustion, Metaspace Exhaustion, and Native-Memory Exhaustion?](#2-what-is-the-difference-between-heap-exhaustion-metaspace-exhaustion-and-native-memory-exhaustion)
+- [3. How Does JIT Compilation Optimize Frequently Executed Code?](#3-how-does-jit-compilation-optimize-frequently-executed-code)
+- [4. What Are Escape Analysis, Scalar Replacement, and Lock Elimination?](#4-what-are-escape-analysis-scalar-replacement-and-lock-elimination)
+- [5. Compare Strong, Soft, Weak, and Phantom References](#5-compare-strong-soft-weak-and-phantom-references)
+- [6. Compare G1, ZGC, and Shenandoah. How Would You Select a Collector?](#6-compare-g1-zgc-and-shenandoah-how-would-you-select-a-collector)
+- [7. Explain Young, Mixed, and Full Collections in G1](#7-explain-young-mixed-and-full-collections-in-g1)
+- [8. What Causes Stop-the-World Pauses Even With a Low-Pause Collector?](#8-what-causes-stop-the-world-pauses-even-with-a-low-pause-collector)
+- [9. How Do Allocation Rate, Object Lifetime, and Promotion Pressure Affect GC?](#9-how-do-allocation-rate-object-lifetime-and-promotion-pressure-affect-gc)
+- [10. How Would You Diagnose Increasing Latency Associated With GC?](#10-how-would-you-diagnose-increasing-latency-associated-with-gc)
+- [11. Which Evidence Would You Collect Before Changing JVM Flags?](#11-which-evidence-would-you-collect-before-changing-jvm-flags)
+- [12. How Would You Investigate a Memory Leak Using Heap Dumps and Dominator Trees?](#12-how-would-you-investigate-a-memory-leak-using-heap-dumps-and-dominator-trees)
+- [13. What Does "Retained Heap" Mean?](#13-what-does-retained-heap-mean)
+- [14. Why Can the Container Kill a Java Process Even When Heap Usage Is Below `-Xmx`?](#14-why-can-the-container-kill-a-java-process-even-when-heap-usage-is-below--xmx)
+- [15. How Do Thread Stacks, Direct Buffers, Memory-Mapped Files, and JNI Contribute to Native Memory?](#15-how-do-thread-stacks-direct-buffers-memory-mapped-files-and-jni-contribute-to-native-memory)
+- [16. How Should JVM Settings Account for Kubernetes Memory Limits?](#16-how-should-jvm-settings-account-for-kubernetes-memory-limits)
+- [17. Why Is Manually Calling `System.gc()` Generally Problematic?](#17-why-is-manually-calling-systemgc-generally-problematic)
+- [18. Describe a Real JVM or GC Incident and How You Would Run Its Postmortem](#18-describe-a-real-jvm-or-gc-incident-and-how-you-would-run-its-postmortem)
+- [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
+
+<!-- /toc -->
+
 ---
 
 ## 1. Explain the JVM Memory Areas and What Is Stored in Each

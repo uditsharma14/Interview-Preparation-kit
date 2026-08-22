@@ -4,6 +4,43 @@
 
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining the actual security model and its failure modes, not naming annotations.
 
+<!-- toc -->
+## Table of Contents
+
+- [1. Explain the Spring Security Filter Chain From Request Entry to Authorization](#1-explain-the-spring-security-filter-chain-from-request-entry-to-authorization)
+- [2. How Are Authentication and Authorization Different?](#2-how-are-authentication-and-authorization-different)
+- [3. Explain `SecurityContext`, `Authentication`, `GrantedAuthority`, and `AuthenticationProvider`](#3-explain-securitycontext-authentication-grantedauthority-and-authenticationprovider)
+- [4. How Does Spring Choose Among Multiple `SecurityFilterChain` Beans?](#4-how-does-spring-choose-among-multiple-securityfilterchain-beans)
+- [5. What Is the Difference Between Request-Level and Method-Level Authorization?](#5-what-is-the-difference-between-request-level-and-method-level-authorization)
+- [6. Why Does Method-Security Self-Invocation Cause Problems?](#6-why-does-method-security-self-invocation-cause-problems)
+- [7. When Should CSRF Protection Be Enabled or Disabled?](#7-when-should-csrf-protection-be-enabled-or-disabled)
+- [8. Compare CORS and CSRF. Why Does Configuring One Not Solve the Other?](#8-compare-cors-and-csrf-why-does-configuring-one-not-solve-the-other)
+- [9. Compare Session-Based Authentication and Bearer-Token Authentication](#9-compare-session-based-authentication-and-bearer-token-authentication)
+- [10. Explain OAuth 2.0 Authorization-Code Flow With PKCE](#10-explain-oauth-20-authorization-code-flow-with-pkce)
+- [11. Why Is the Resource-Owner Password Flow Deprecated?](#11-why-is-the-resource-owner-password-flow-deprecated)
+- [12. What Are the Roles of the Resource Owner, Client, Authorization Server, and Resource Server?](#12-what-are-the-roles-of-the-resource-owner-client-authorization-server-and-resource-server)
+- [13. Compare Access Tokens, Refresh Tokens, and ID Tokens](#13-compare-access-tokens-refresh-tokens-and-id-tokens)
+- [14. What Is the Difference Between OAuth 2.0 and OpenID Connect?](#14-what-is-the-difference-between-oauth-20-and-openid-connect)
+- [15. Compare Opaque Tokens and JWT Access Tokens](#15-compare-opaque-tokens-and-jwt-access-tokens)
+- [16. How Does a Resource Server Validate a JWT?](#16-how-does-a-resource-server-validate-a-jwt)
+- [17. How Should Services Handle Signing-Key Rotation?](#17-how-should-services-handle-signing-key-rotation)
+- [18. What Are `iss`, `aud`, `exp`, `nbf`, `jti`, and `kid` Used For?](#18-what-are-iss-aud-exp-nbf-jti-and-kid-used-for)
+- [19. Why Is Revoking a JWT Difficult? What Strategies Are Available?](#19-why-is-revoking-a-jwt-difficult-what-strategies-are-available)
+- [20. Where Should Tokens Be Stored in a Browser Application?](#20-where-should-tokens-be-stored-in-a-browser-application)
+- [21. How Do Refresh-Token Rotation and Reuse Detection Work?](#21-how-do-refresh-token-rotation-and-reuse-detection-work)
+- [22. How Would You Secure Service-to-Service Communication?](#22-how-would-you-secure-service-to-service-communication)
+- [23. How Would You Model Scopes, Roles, Permissions, and Tenant Boundaries?](#23-how-would-you-model-scopes-roles-permissions-and-tenant-boundaries)
+- [24. How Do You Prevent Broken Object-Level Authorization?](#24-how-do-you-prevent-broken-object-level-authorization)
+- [25. How Should Authentication Context Propagate Through Asynchronous Processing?](#25-how-should-authentication-context-propagate-through-asynchronous-processing)
+- [26. How Would You Design Authorization for Kafka Consumers Where There Is No HTTP Request?](#26-how-would-you-design-authorization-for-kafka-consumers-where-there-is-no-http-request)
+- [27. How Do You Prevent Confused-Deputy Problems in Downstream Service Calls?](#27-how-do-you-prevent-confused-deputy-problems-in-downstream-service-calls)
+- [28. What Security Information Is Safe to Log?](#28-what-security-information-is-safe-to-log)
+- [29. How Would You Investigate Intermittent `401` Versus `403` Responses?](#29-how-would-you-investigate-intermittent-401-versus-403-responses)
+- [30. Design an Authentication and Authorization Architecture for a Multi-Tenant Platform](#30-design-an-authentication-and-authorization-architecture-for-a-multi-tenant-platform)
+- [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
+
+<!-- /toc -->
+
 ---
 
 ## 1. Explain the Spring Security Filter Chain From Request Entry to Authorization

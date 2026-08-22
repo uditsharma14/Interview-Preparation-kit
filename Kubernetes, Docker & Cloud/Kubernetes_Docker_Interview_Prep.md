@@ -4,6 +4,54 @@
 
 How to use this: each question has an **Answer** written the way it would actually be said out loud in an interview, a **Code** snippet you could sketch on a whiteboard or run in a terminal, and — for the mid and staff-level questions especially — a **Follow-up** section covering failure modes and trade-offs. Questions are grouped by level (Docker Basic → Staff, then Kubernetes Basic → Staff) so you can calibrate depth to the interview you're prepping for; the later sections assume the earlier ones as background and don't re-explain them.
 
+<!-- toc -->
+## Table of Contents
+
+- [Docker — Basic](#docker--basic)
+  - [1. What Is a Container, and How Does It Actually Differ From a VM?](#1-what-is-a-container-and-how-does-it-actually-differ-from-a-vm)
+  - [2. What Is the Difference Between a Docker Image and a Container?](#2-what-is-the-difference-between-a-docker-image-and-a-container)
+  - [3. Explain the Dockerfile Build Process and Layer Caching](#3-explain-the-dockerfile-build-process-and-layer-caching)
+  - [4. What's the Difference Between `CMD` and `ENTRYPOINT`?](#4-whats-the-difference-between-cmd-and-entrypoint)
+  - [5. Explain Docker's Core Networking Modes (Bridge, Host, None)](#5-explain-dockers-core-networking-modes-bridge-host-none)
+  - [6. What Is a Docker Volume, and Why Not Just Write to the Container's Filesystem?](#6-what-is-a-docker-volume-and-why-not-just-write-to-the-containers-filesystem)
+- [Docker — Intermediate](#docker--intermediate)
+  - [7. How Do Multi-Stage Builds Reduce Image Size and Attack Surface?](#7-how-do-multi-stage-builds-reduce-image-size-and-attack-surface)
+  - [8. What Linux Kernel Primitives Actually Implement Container Isolation?](#8-what-linux-kernel-primitives-actually-implement-container-isolation)
+  - [9. How Would You Systematically Reduce a Docker Image's Size and Attack Surface?](#9-how-would-you-systematically-reduce-a-docker-images-size-and-attack-surface)
+  - [10. Why Does a Containerized Process Sometimes Not Respond to `SIGTERM` the Way You'd Expect, and What Is `--init` For?](#10-why-does-a-containerized-process-sometimes-not-respond-to-sigterm-the-way-youd-expect-and-what-is---init-for)
+- [Docker — Staff Level](#docker--staff-level)
+  - [11. How Do You Manage Secrets in Docker Without Baking Them Into the Image?](#11-how-do-you-manage-secrets-in-docker-without-baking-them-into-the-image)
+  - [12. How Would You Secure a Container Image Supply Chain End to End?](#12-how-would-you-secure-a-container-image-supply-chain-end-to-end)
+  - [13. What Are the Real Security Boundaries of a Container Versus a VM, and When Is That Boundary Insufficient?](#13-what-are-the-real-security-boundaries-of-a-container-versus-a-vm-and-when-is-that-boundary-insufficient)
+- [Kubernetes — Basic](#kubernetes--basic)
+  - [14. What Is a Pod, and Why Does Kubernetes Never Schedule a Bare Container Directly?](#14-what-is-a-pod-and-why-does-kubernetes-never-schedule-a-bare-container-directly)
+  - [15. Explain the Relationship Between a Deployment, a ReplicaSet, and Pods](#15-explain-the-relationship-between-a-deployment-a-replicaset-and-pods)
+  - [16. What Is a Service, and How Does It Differ From an Ingress?](#16-what-is-a-service-and-how-does-it-differ-from-an-ingress)
+  - [17. What Is the Difference Between a ConfigMap and a Secret?](#17-what-is-the-difference-between-a-configmap-and-a-secret)
+  - [18. Explain Declarative vs. Imperative Management in `kubectl`](#18-explain-declarative-vs-imperative-management-in-kubectl)
+- [Kubernetes — Intermediate](#kubernetes--intermediate)
+  - [19. Explain the Kubernetes Control Plane Components and What Each One Actually Does](#19-explain-the-kubernetes-control-plane-components-and-what-each-one-actually-does)
+  - [20. What Is the Kubelet, and How Does the Container Runtime Interface (CRI) Fit In?](#20-what-is-the-kubelet-and-how-does-the-container-runtime-interface-cri-fit-in)
+  - [21. Explain Readiness, Liveness, and Startup Probes — and What Happens If You Configure Them Wrong](#21-explain-readiness-liveness-and-startup-probes--and-what-happens-if-you-configure-them-wrong)
+  - [22. How Does Kubernetes Decide Which Node to Schedule a Pod On?](#22-how-does-kubernetes-decide-which-node-to-schedule-a-pod-on)
+  - [23. Explain How a Deployment Performs a Rolling Update, and How a Rollback Actually Works](#23-explain-how-a-deployment-performs-a-rolling-update-and-how-a-rollback-actually-works)
+  - [24. How Does Kubernetes Networking Actually Work End to End?](#24-how-does-kubernetes-networking-actually-work-end-to-end)
+  - [25. When Do You Need a StatefulSet Instead of a Deployment?](#25-when-do-you-need-a-statefulset-instead-of-a-deployment)
+  - [26. Explain Resource Requests/Limits and Kubernetes' QoS Classes](#26-explain-resource-requestslimits-and-kubernetes-qos-classes)
+  - [27. How Does the Horizontal Pod Autoscaler Work?](#27-how-does-the-horizontal-pod-autoscaler-work)
+- [Kubernetes — Staff Level](#kubernetes--staff-level)
+  - [28. How Would You Design Multi-Tenancy on a Shared Kubernetes Cluster?](#28-how-would-you-design-multi-tenancy-on-a-shared-kubernetes-cluster)
+  - [29. A Pod Is Stuck in `CrashLoopBackOff` / `Pending` / `ImagePullBackOff` — Walk Through Your Diagnosis](#29-a-pod-is-stuck-in-crashloopbackoff--pending--imagepullbackoff--walk-through-your-diagnosis)
+  - [30. Why Is `etcd` the Piece of the Cluster You Should Worry About Most, Operationally?](#30-why-is-etcd-the-piece-of-the-cluster-you-should-worry-about-most-operationally)
+  - [31. How Do You Actually Achieve Zero-Downtime Deployments on Kubernetes?](#31-how-do-you-actually-achieve-zero-downtime-deployments-on-kubernetes)
+  - [32. How Would You Secure a Kubernetes Cluster End to End?](#32-how-would-you-secure-a-kubernetes-cluster-end-to-end)
+  - [33. How Does a Service Mesh Relate to What Kubernetes Already Provides — and When Do You Actually Need One?](#33-how-does-a-service-mesh-relate-to-what-kubernetes-already-provides--and-when-do-you-actually-need-one)
+  - [34. How Would You Approach Kubernetes Cluster Capacity Planning and Cost Optimization?](#34-how-would-you-approach-kubernetes-cluster-capacity-planning-and-cost-optimization)
+  - [35. Describe a Production Kubernetes Incident and How You'd Diagnose It](#35-describe-a-production-kubernetes-incident-and-how-youd-diagnose-it)
+- [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
+
+<!-- /toc -->
+
 ---
 
 ## Docker — Basic

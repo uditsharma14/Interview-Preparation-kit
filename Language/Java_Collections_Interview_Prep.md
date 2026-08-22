@@ -4,6 +4,28 @@
 
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because the mid-level and staff-level bar for the *same* question isn't the depth of vocabulary, it's whether you can talk about what happens when it breaks in production.
 
+<!-- toc -->
+## Table of Contents
+
+- [1. How Does `HashMap` Work Internally — Collisions, Resizing, Treeification, Equality?](#1-how-does-hashmap-work-internally--collisions-resizing-treeification-equality)
+- [2. What Can Go Wrong If a Mutable Object Is Used as a `HashMap` Key?](#2-what-can-go-wrong-if-a-mutable-object-is-used-as-a-hashmap-key)
+- [3. When Would You Use `ConcurrentHashMap` Instead of a Synchronized Map?](#3-when-would-you-use-concurrenthashmap-instead-of-a-synchronized-map)
+- [4. Are Compound Operations on `ConcurrentHashMap` Thread-Safe? `get`-then-`put` vs. `computeIfAbsent`](#4-are-compound-operations-on-concurrenthashmap-thread-safe-get-then-put-vs-computeifabsent)
+- [5. How Would You Design an In-Memory Structure Supporting High Write Concurrency and Snapshot Reads?](#5-how-would-you-design-an-in-memory-structure-supporting-high-write-concurrency-and-snapshot-reads)
+- [6. Compare `ArrayList`, `LinkedList`, `ArrayDeque`, and `CopyOnWriteArrayList`](#6-compare-arraylist-linkedlist-arraydeque-and-copyonwritearraylist)
+- [7. When Is `CopyOnWriteArrayList` a Good Choice, and When Is It Disastrous?](#7-when-is-copyonwritearraylist-a-good-choice-and-when-is-it-disastrous)
+- [8. How Do Weakly Consistent Iterators Differ From Fail-Fast Iterators?](#8-how-do-weakly-consistent-iterators-differ-from-fail-fast-iterators)
+- [9. What Are the Memory and Performance Costs of Boxed Collections?](#9-what-are-the-memory-and-performance-costs-of-boxed-collections)
+- [10. How Would You Diagnose a Collection That Continuously Grows in Production?](#10-how-would-you-diagnose-a-collection-that-continuously-grows-in-production)
+- [11. How Would You Build an LRU Cache Using `LinkedHashMap`?](#11-how-would-you-build-an-lru-cache-using-linkedhashmap)
+- [12. `TreeMap`/`TreeSet` — How Does Ordering Work, and What Breaks If `compareTo` Is Inconsistent With `equals`?](#12-treemaptreeset--how-does-ordering-work-and-what-breaks-if-compareto-is-inconsistent-with-equals)
+- [13. What Is `WeakHashMap`, and When Would You Actually Reach for It?](#13-what-is-weakhashmap-and-when-would-you-actually-reach-for-it)
+- [14. `Arrays.asList()`, `List.of()`, and `Collections.unmodifiableList()` — What Are the Actual Mutability Differences?](#14-arraysaslist-listof-and-collectionsunmodifiablelist--what-are-the-actual-mutability-differences)
+- [15. How Does `PriorityQueue` Work Internally, and What Are Its Complexity Trade-Offs?](#15-how-does-priorityqueue-work-internally-and-what-are-its-complexity-trade-offs)
+- [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
+
+<!-- /toc -->
+
 ---
 
 ## 1. How Does `HashMap` Work Internally — Collisions, Resizing, Treeification, Equality?

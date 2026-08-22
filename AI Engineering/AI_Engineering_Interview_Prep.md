@@ -4,6 +4,40 @@
 
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining production failure modes (hallucination, cost blowups, prompt injection, retrieval degradation) and trade-offs, not reciting API syntax. This file assumes the reader already knows general backend engineering (the rest of this kit) and focuses specifically on what's different about building with LLMs — it cross-references the REST API Design, Redis, and Transactions files for patterns (retries, idempotency, caching, circuit breakers) that apply directly to LLM-backed systems without needing to be reinvented.
 
+<!-- toc -->
+## Table of Contents
+
+- [1. How Do You Choose Between a Hosted LLM API and a Self-Hosted/Open-Weight Model?](#1-how-do-you-choose-between-a-hosted-llm-api-and-a-self-hostedopen-weight-model)
+- [2. How Do Context Window Size and Tokenization Actually Affect Architecture Decisions?](#2-how-do-context-window-size-and-tokenization-actually-affect-architecture-decisions)
+- [3. Compare Prompting, Fine-Tuning, and RAG — When Is Each the Right Tool?](#3-compare-prompting-fine-tuning-and-rag--when-is-each-the-right-tool)
+- [4. What Are the Actual Reliable Prompt-Engineering Techniques Versus Folklore?](#4-what-are-the-actual-reliable-prompt-engineering-techniques-versus-folklore)
+- [5. How Do You Get Reliable Structured Output (JSON) From an LLM in Production?](#5-how-do-you-get-reliable-structured-output-json-from-an-llm-in-production)
+- [6. How Do You Design a System Prompt for a Production Application?](#6-how-do-you-design-a-system-prompt-for-a-production-application)
+- [7. Explain How a RAG Pipeline Works End-to-End](#7-explain-how-a-rag-pipeline-works-end-to-end)
+- [8. How Do You Choose a Chunking Strategy for RAG?](#8-how-do-you-choose-a-chunking-strategy-for-rag)
+- [9. Compare Embedding-Based Retrieval With Keyword/BM25 Search, and Explain Hybrid Search](#9-compare-embedding-based-retrieval-with-keywordbm25-search-and-explain-hybrid-search)
+- [10. What Causes RAG Retrieval Quality to Degrade, and How Do You Diagnose It?](#10-what-causes-rag-retrieval-quality-to-degrade-and-how-do-you-diagnose-it)
+- [11. What Is Re-Ranking, and When Do You Need It in a RAG Pipeline?](#11-what-is-re-ranking-and-when-do-you-need-it-in-a-rag-pipeline)
+- [12. How Do You Handle RAG Over Data That Updates Frequently?](#12-how-do-you-handle-rag-over-data-that-updates-frequently)
+- [13. What Is an "Agent" in the LLM Sense, and How Does It Differ From a Single Prompt-Response Call?](#13-what-is-an-agent-in-the-llm-sense-and-how-does-it-differ-from-a-single-prompt-response-call)
+- [14. How Does Function/Tool Calling Work Under the Hood?](#14-how-does-functiontool-calling-work-under-the-hood)
+- [15. How Do You Design Tools for an LLM Agent to Minimize Misuse and Failure?](#15-how-do-you-design-tools-for-an-llm-agent-to-minimize-misuse-and-failure)
+- [16. How Do You Prevent an Agent From Looping Indefinitely or Taking Destructive Actions?](#16-how-do-you-prevent-an-agent-from-looping-indefinitely-or-taking-destructive-actions)
+- [17. What Is the ReAct Pattern, and How Does It Relate to Modern Agent Frameworks?](#17-what-is-the-react-pattern-and-how-does-it-relate-to-modern-agent-frameworks)
+- [18. When Is Multi-Agent Orchestration Actually Worth the Added Complexity?](#18-when-is-multi-agent-orchestration-actually-worth-the-added-complexity)
+- [19. How Do You Evaluate an LLM-Powered Feature Before and After Shipping?](#19-how-do-you-evaluate-an-llm-powered-feature-before-and-after-shipping)
+- [20. What Is "LLM-as-Judge," and What Are Its Pitfalls?](#20-what-is-llm-as-judge-and-what-are-its-pitfalls)
+- [21. How Do You Detect and Mitigate Hallucination in a Production System?](#21-how-do-you-detect-and-mitigate-hallucination-in-a-production-system)
+- [22. How Do You Build a Regression Test Suite for Prompts That Will Keep Changing?](#22-how-do-you-build-a-regression-test-suite-for-prompts-that-will-keep-changing)
+- [23. How Do You Handle Prompt Injection and Other LLM-Specific Security Risks?](#23-how-do-you-handle-prompt-injection-and-other-llm-specific-security-risks)
+- [24. How Do You Manage Cost and Latency in a Production LLM System?](#24-how-do-you-manage-cost-and-latency-in-a-production-llm-system)
+- [25. How Do You Handle PII and Data Privacy When Using a Third-Party LLM API?](#25-how-do-you-handle-pii-and-data-privacy-when-using-a-third-party-llm-api)
+- [26. How Would You Version Prompts So Changes Don't Silently Break Production Behavior?](#26-how-would-you-version-prompts-so-changes-dont-silently-break-production-behavior)
+- [27. Describe a Production Incident Involving an LLM Feature and How You'd Diagnose It](#27-describe-a-production-incident-involving-an-llm-feature-and-how-youd-diagnose-it)
+- [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
+
+<!-- /toc -->
+
 ---
 
 ## 1. How Do You Choose Between a Hosted LLM API and a Self-Hosted/Open-Weight Model?

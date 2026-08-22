@@ -37,3 +37,15 @@ MD032: false
 # The "compact" table-pipe-spacing rule is newer/stricter than the padded
 # GFM table style already used consistently throughout this repo.
 MD060: false
+
+# markdownlint's own MD051 anchor-fragment validator has verified false
+# positives on a couple of TOC entries in this repo (headings combining an
+# inline-code span with a "/" or em dash, e.g. "...CrashLoopBackOff` /
+# `Pending` / `ImagePullBackOff` — ..."). Cross-checked directly against
+# github-slugger (the actual library GitHub's renderer uses) via `node -e
+# "require('github-slugger')..."`, which confirms this repo's generated
+# anchors are correct and matches scripts/check_internal_links.py's
+# slugify() exactly — that script (wired into CI) is the authoritative
+# anchor check for this repo; MD051 is disabled to avoid chasing its
+# false positives rather than because anchor correctness doesn't matter.
+MD051: false

@@ -4,6 +4,38 @@
 
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **diagram/sketch** you could draw on a whiteboard to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining trade-offs and failure modes, not naming patterns. This file assumes familiarity with the Transactions category (sagas, two-phase commit), the REST API Design file (BFF, idempotency, versioning), and the Redis/Kafka files (circuit breakers, message keys) — it cross-references them rather than repeating them, and focuses on the structural, whole-system architecture questions those files don't cover.
 
+<!-- toc -->
+## Table of Contents
+
+- [1. How Do You Decide Microservices Versus a Monolith for a New System?](#1-how-do-you-decide-microservices-versus-a-monolith-for-a-new-system)
+- [2. How Do You Decompose a System Into Microservices — By Business Capability or by Subdomain (DDD)?](#2-how-do-you-decompose-a-system-into-microservices--by-business-capability-or-by-subdomain-ddd)
+- [3. What Is a Bounded Context, and Why Does It Matter for Service Boundaries?](#3-what-is-a-bounded-context-and-why-does-it-matter-for-service-boundaries)
+- [4. What Is an Anti-Corruption Layer, and When Do You Need One?](#4-what-is-an-anti-corruption-layer-and-when-do-you-need-one)
+- [5. Explain the Strangler Fig Pattern for Migrating a Monolith to Microservices](#5-explain-the-strangler-fig-pattern-for-migrating-a-monolith-to-microservices)
+- [6. What Problems Does a Shared Database Between Microservices Cause, and How Does Database-Per-Service Address Them?](#6-what-problems-does-a-shared-database-between-microservices-cause-and-how-does-database-per-service-address-them)
+- [7. How Do You Handle Queries That Need Data From Multiple Services — API Composition Versus CQRS?](#7-how-do-you-handle-queries-that-need-data-from-multiple-services--api-composition-versus-cqrs)
+- [8. Compare Synchronous (REST/gRPC) and Asynchronous (Event-Driven) Communication Between Services](#8-compare-synchronous-restgrpc-and-asynchronous-event-driven-communication-between-services)
+- [9. What Is the API Gateway Pattern, and What Problems Does It Solve/Introduce?](#9-what-is-the-api-gateway-pattern-and-what-problems-does-it-solveintroduce)
+- [10. Explain the Backend-for-Frontend (BFF) Pattern](#10-explain-the-backend-for-frontend-bff-pattern)
+- [11. What Is the Sidecar Pattern, and How Does It Relate to a Service Mesh?](#11-what-is-the-sidecar-pattern-and-how-does-it-relate-to-a-service-mesh)
+- [12. What Is a Service Mesh, and What Does It Solve Versus What's Often Oversold?](#12-what-is-a-service-mesh-and-what-does-it-solve-versus-whats-often-oversold)
+- [13. Explain the Ambassador and Adapter Patterns](#13-explain-the-ambassador-and-adapter-patterns)
+- [14. How Does Service Discovery Work — Client-Side Versus Server-Side?](#14-how-does-service-discovery-work--client-side-versus-server-side)
+- [15. Explain Circuit Breaker, Bulkhead, and Retry as a Combined Resilience Strategy](#15-explain-circuit-breaker-bulkhead-and-retry-as-a-combined-resilience-strategy)
+- [16. Explain CQRS and When It's Worth the Added Complexity](#16-explain-cqrs-and-when-its-worth-the-added-complexity)
+- [17. Explain Event Sourcing and Its Trade-Offs Versus Traditional CRUD Persistence](#17-explain-event-sourcing-and-its-trade-offs-versus-traditional-crud-persistence)
+- [18. How Do CQRS and Event Sourcing Relate (and Why Are They Often Conflated)?](#18-how-do-cqrs-and-event-sourcing-relate-and-why-are-they-often-conflated)
+- [19. What Is a Read Model / Materialized View, and How Do You Keep It in Sync?](#19-what-is-a-read-model--materialized-view-and-how-do-you-keep-it-in-sync)
+- [20. Explain the CAP Theorem in Practical Microservices Terms](#20-explain-the-cap-theorem-in-practical-microservices-terms)
+- [21. Compare Layered, Hexagonal (Ports & Adapters), and Clean Architecture](#21-compare-layered-hexagonal-ports--adapters-and-clean-architecture)
+- [22. Compare Orchestration-Based and Choreography-Based Integration Across a Whole System](#22-compare-orchestration-based-and-choreography-based-integration-across-a-whole-system)
+- [23. What Is Consumer-Driven Contract Testing, and Why Does It Matter for Independently-Deployed Services?](#23-what-is-consumer-driven-contract-testing-and-why-does-it-matter-for-independently-deployed-services)
+- [24. What Is a Distributed Monolith, and How Does an Architecture End Up There by Accident?](#24-what-is-a-distributed-monolith-and-how-does-an-architecture-end-up-there-by-accident)
+- [25. How Would You Decide Between a Monorepo and Polyrepo for Microservices?](#25-how-would-you-decide-between-a-monorepo-and-polyrepo-for-microservices)
+- [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
+
+<!-- /toc -->
+
 ---
 
 ## 1. How Do You Decide Microservices Versus a Monolith for a New System?
