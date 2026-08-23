@@ -52,7 +52,7 @@ The guides build on each other — each one's header states its own prerequisite
 | Guide | Level | Notes |
 |---|---|---|
 | [Java Collections](Language/Java_Collections_Interview_Prep.md) | Senior → Staff | Starts at core-Java fundamentals, escalates to production leak diagnosis. |
-| [Java Concurrency](Language/Java_Concurrency_Interview_Prep.md) | Staff | Assumes Collections. |
+| [Java Concurrency](Language/Java_Concurrency_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. The Intermediate section onward assumes Collections. |
 | [Java JVM & GC](Language/Java_JVM_GC_Interview_Prep.md) | Staff | Assumes Collections and Concurrency for some sections. |
 | [Spring Boot Internals](Frameworks/Spring_Boot_Internals_Interview_Prep.md) | Staff | Assumes basic Spring (`@Component`/`@Autowired`). |
 | [Spring Security & OAuth2](Frameworks/Spring_Security_OAuth2_Interview_Prep.md) | Staff | Assumes Spring Boot Internals. |
@@ -67,7 +67,7 @@ The guides build on each other — each one's header states its own prerequisite
 | [AI Engineering](AI%20Engineering/AI_Engineering_Interview_Prep.md) | Staff | Assumes general backend engineering; fastest-moving guide in the repo — check its "last verified" date. |
 | [Tech Leadership](Tech%20Leadership/Engineering_Leadership_Interview_Prep.md) | Staff | Not technology-specific; no technical prerequisite, but most useful after the technical guides. |
 
-Most of this kit is genuinely Staff-scoped by design — see [Who this is for](#who-this-is-for) above for where the *entry points* (Java Collections, Kubernetes' Basic tier) are more accessible.
+Most of this kit is genuinely Staff-scoped by design — see [Who this is for](#who-this-is-for) above for where the *entry points* (Java Collections, Java Concurrency's Basic tier, Kubernetes' Basic tier) are more accessible.
 
 ## Quick-revision path
 
@@ -96,7 +96,7 @@ Organized by kind of content, not by role — use the tables above to figure out
 Pure Java runtime/language topics — no framework involved.
 
 - **[Java Collections Interview Prep](Language/Java_Collections_Interview_Prep.md)** — `HashMap`/`TreeMap`/`LinkedHashMap` internals, concurrent collections, boxed-collection costs, and production leak diagnosis.
-- **[Java Concurrency Interview Prep](Language/Java_Concurrency_Interview_Prep.md)** — Visibility/atomicity/ordering, locks, virtual threads, executors, `ForkJoinPool`, the ABA problem, and structured concurrency.
+- **[Java Concurrency Interview Prep](Language/Java_Concurrency_Interview_Prep.md)** — Graduated Basic → Staff: threads, `synchronized`, and deadlock basics through `ExecutorService`/coordination primitives to visibility/atomicity/ordering, lock comparisons, virtual threads, `ForkJoinPool`, the ABA problem, and structured concurrency.
 - **[Java JVM & GC Interview Prep](Language/Java_JVM_GC_Interview_Prep.md)** — Memory areas, JIT/escape analysis, reference types, G1/ZGC/Shenandoah, container OOM-kills, and native memory.
 
 ### Frameworks
