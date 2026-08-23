@@ -2,11 +2,11 @@
 
 *Deep-dive, mid-to-staff-level interview prep — written to be said out loud, not skimmed.*
 
-[![Docs check](https://github.com/uditsharma14/Interview-Preparation-kit/actions/workflows/docs-check.yml/badge.svg)](https://github.com/uditsharma14/Interview-Preparation-kit/actions/workflows/docs-check.yml)
+[![Docs check](https://github.com/uditsharma14/Interview-Preparation-kit/actions/workflows/docs-check.yml/badge.svg)](https://github.com/uditsharma14/Interview-Preparation-kit/actions/workflows/docs-check.yml) — every push and PR runs markdown linting, internal-link/anchor validation, and external-citation link-checking automatically ([`.github/workflows/docs-check.yml`](.github/workflows/docs-check.yml)); a monthly scheduled run catches link rot that happens independent of any edit.
 
-Each topic is a set of Q&A entries: the answer phrased the way it would actually be said out loud in an interview, backed by a code snippet, and a pointer to where staff-level follow-up questions tend to go.
+Most interview prep falls into one of two failure modes: too shallow (a one-line flashcard answer that falls apart the moment an interviewer asks "why," or "what breaks at scale"), or too scattered (a folder of half-finished notes, bookmarked blog posts, and old Stack Overflow tabs with no coherent throughline). This kit tries to be neither — **16 in-depth guides, 500+ Q&A entries, and a 200-term glossary**, each guide written as a set of Q&A pairs: the answer phrased the way it would actually be said out loud in an interview, backed by a code snippet, and a pointer to where staff-level follow-up questions tend to go. Several of the language/framework guides are explicitly graduated from Basic through Staff, so the same guide works whether you're building the fundamentals for the first time or refreshing the deep end the night before a Staff-level loop.
 
-This repository optimizes for **accuracy over question count**. Every guide has undergone an initial audit against primary sources — Oracle/OpenJDK specs, Spring/Hibernate/Kafka/Redis/Kubernetes documentation, IETF RFCs. See [`AUDIT.md`](AUDIT.md) for the review status of each guide and [`CONTRIBUTING.md`](CONTRIBUTING.md) for the citation/accuracy policy new material has to meet. Version-sensitive and production-specific claims should still be verified against the linked documentation before you repeat them in an interview — and if you find one that's wrong or stale, that's exactly what `AUDIT.md` and the contribution policy exist to fix.
+This repository optimizes for **accuracy over question count**. Every guide has undergone an initial audit against primary sources — Oracle/OpenJDK specs, Spring/Hibernate/Kafka/Redis/Kubernetes documentation, IETF RFCs. See [`AUDIT.md`](AUDIT.md) for the review status of each guide and every finding (fixed or still open), and [`CONTRIBUTING.md`](CONTRIBUTING.md) for the citation/accuracy policy new material has to meet. Version-sensitive and production-specific claims should still be verified against the linked documentation before you repeat them in an interview — and if you find one that's wrong or stale, that's exactly what `AUDIT.md` and the contribution policy exist to fix.
 
 ## Contents
 
@@ -22,7 +22,7 @@ This repository optimizes for **accuracy over question count**. Every guide has 
 
 ## Who this is for
 
-Current interview loops for **Full Stack**, **Forward Deployed**, and **Staff** engineering roles overlap a lot but weight things differently. Here's what's covered today versus still a gap, per role, so you know where to spend time:
+Current interview loops for **Full Stack**, **Forward Deployed**, and **Staff** engineering roles overlap a lot but weight things differently — these three are the loops this kit was actually built against, chosen because they cover the widest realistic spread (a Full Stack loop leans toward breadth and applied fundamentals, a Forward Deployed loop leans toward ambiguity and delivery under real-world constraints, and a Staff loop leans toward depth and architectural judgment). Here's what's covered today versus still a gap, per role, so you know where to spend time:
 
 | Role | What their loop leans on | Covered here | Still a gap |
 |---|---|---|---|
@@ -165,14 +165,14 @@ External articles, videos, and engineering-blog write-ups — not this repo's ow
 
 ## How each question is structured
 
-Every question in every guide follows the same shape:
+Every question in every guide follows the same shape — deliberately, so once you're used to the pattern in one guide, every other guide reads the same way:
 
-1. **Answer** — a conversational, interview-ready explanation, phrased the way it would actually be said out loud, roughly 30–90 seconds if spoken.
-2. **Code** — a snippet, config, SQL, sketch, or decision framework/template to back the explanation up (compilable code where practical; clearly labeled pseudocode/conceptual where not).
-3. **Follow-up** — the deeper probe that separates a mid-level answer from a Staff-level one: failure modes, trade-offs, what breaks at scale.
-4. **Source** — the authoritative reference(s) for the important claims made in that question.
+1. **Answer** — a conversational, interview-ready explanation, phrased the way it would actually be said out loud, roughly 30–90 seconds if spoken. This is the part you should be able to recite cold.
+2. **Code** — a snippet, config, SQL, sketch, or decision framework/template to back the explanation up (compilable code where practical; clearly labeled pseudocode/conceptual where not). Useful both as a whiteboard prop and as a way to sanity-check that the Answer's claims actually hold up in real code.
+3. **Follow-up** — the deeper probe that separates a mid-level answer from a Staff-level one: failure modes, trade-offs, what breaks at scale. This is where an interviewer's "okay, but what if..." actually goes, so it's worth reading even for questions you already feel solid on.
+4. **Source** — the authoritative reference(s) for the important claims made in that question, so you're never just trusting this kit's paraphrase.
 
-A rollout to a more granular five-part structure (Core answer / Staff-level extension / Example / Follow-up questions / Sources, keeping every core answer within a 30–90-second spoken length) is in progress — see [`AUDIT.md`](AUDIT.md) for which guides have migrated so far.
+A rollout to a more granular five-part structure (Core answer / Staff-level extension / Example / Follow-up questions / Sources — same underlying content, but with the deeper trade-off material explicitly pulled out of the core spoken answer rather than folded into one long paragraph) is in progress guide by guide — see [`AUDIT.md`](AUDIT.md) for which guides have migrated so far and which still use the four-part shape above.
 
 ## Accuracy and contribution policy
 
