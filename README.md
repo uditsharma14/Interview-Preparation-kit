@@ -98,6 +98,7 @@ Organized by kind of content, not by role — use the tables above to figure out
 Networking, HTTP, encryption, and general CS/software terminology — Basic-only, no framework or language involved. The foundational layer every other guide assumes without re-explaining it.
 
 - **[Computer Science Fundamentals Interview Prep](Computer%20Science%20Fundamentals/Computer_Science_Fundamentals_Interview_Prep.md)** — Networking (TCP vs. UDP, DNS, IP/ports, URI/URL/URN), HTTP (statelessness, HTTP/1.1 vs. 2 vs. 3, status codes, headers vs. body), encryption/security (symmetric vs. asymmetric, hashing, TLS handshake, certificates/CAs), data structures & algorithms (stack/queue, tree vs. graph, recursion, Big-O), programming languages & OOP (the four pillars, compiled vs. interpreted, static vs. dynamic typing), operating systems (kernel, virtual memory/paging, CPU caching), databases (SQL vs. NoSQL, normalization, indexes), and software engineering practices (version control, unit/integration/E2E testing).
+- **[Computer Science Glossary](Computer%20Science%20Fundamentals/Computer_Science_Glossary.md)** — a fast, 2–3-line-per-term reference covering 200 core CS/software-engineering terms (a full CS-degree-style vocabulary sweep), grouped by theme rather than alphabetically. Not a substitute for the interview-answer guides — it's the "what does this word mean" layer beneath them, with pointers into the guides that cover any given term in real depth.
 
 ### Language
 

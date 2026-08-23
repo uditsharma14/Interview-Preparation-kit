@@ -24,6 +24,12 @@ New guide, added 2026-08-23 — not a rewrite/graduation of existing content lik
 
 **Guide status: Reviewed. 28/28 questions reviewed, TOC added, version-baseline header present. Basic-only by design — see `README.md`'s "Difficulty by guide" table.**
 
+### Computer Science Fundamentals/Computer_Science_Glossary.md
+
+New file, added 2026-08-23 — a genuinely different content type from every other file in this repo: a 200-term quick-reference glossary (user-supplied term list, organized into 12 themed sections mirroring the interview-prep guide's own groupings), 2–3 lines per term, not full interview-answer format. No code, no Follow-up, no per-term citation — deliberately, since these are well-established, uncontroversial definitions (what a stack is, what ACID stands for), not the kind of version-scoped or implementation-specific claim the rest of this repo's citation policy is aimed at. Roughly 90 of the 200 terms carry a `See:` pointer into whichever guide covers that term with real interview depth (the Computer Science Fundamentals guide itself, Java Concurrency, Java JVM & GC, Transactions, REST API Design, Spring Security & OAuth2, Redis & Caching, Kafka, Microservices & Architecture Patterns, Docker & Kubernetes) — every one of those internal links was verified to resolve via `scripts/check_internal_links.py`. All 200 terms from the user-supplied list were confirmed present via a programmatic diff before publishing.
+
+**Guide status: Reviewed. 200/200 terms present (verified programmatically), internal links verified, TOC added, version-baseline header present. Not a Q&A guide — excluded from the "Difficulty by guide" table in `README.md` on that basis, same as the Further Reading list and the System Design Interview Question Bank.**
+
 ### Language/Java_Collections_Interview_Prep.md
 
 | Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
@@ -209,6 +215,7 @@ Isolation levels and their PostgreSQL-specific behavior (Q2–3), MVCC (Q4), Spr
 | Guide | Status |
 |---|---|
 | Computer Science Fundamentals/Computer_Science_Fundamentals_Interview_Prep.md | Reviewed |
+| Computer Science Fundamentals/Computer_Science_Glossary.md | Reviewed |
 | Language/Java_Collections_Interview_Prep.md | Reviewed |
 | Language/Java_Concurrency_Interview_Prep.md | Reviewed |
 | Language/Java_JVM_GC_Interview_Prep.md | Reviewed |
