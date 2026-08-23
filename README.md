@@ -38,6 +38,7 @@ AI/LLM-application questions have become common across all three loops in the la
 
 The guides build on each other — each one's header states its own prerequisites, but if you're going through the whole kit rather than a single topic, this order minimizes backtracking:
 
+0. **[Computer Science Fundamentals](Computer%20Science%20Fundamentals/Computer_Science_Fundamentals_Interview_Prep.md)** — genuinely optional if HTTP, TCP/UDP, DNS, encryption, and Big-O are already second nature; every other guide assumes this vocabulary without re-explaining it, so it's the right place to start if any of those terms aren't fully solid.
 1. **[Java Collections](Language/Java_Collections_Interview_Prep.md) → [Java Concurrency](Language/Java_Concurrency_Interview_Prep.md) → [Java JVM & GC](Language/Java_JVM_GC_Interview_Prep.md)** — language fundamentals everything else assumes.
 2. **[Spring Boot Internals](Frameworks/Spring_Boot_Internals_Interview_Prep.md) → [Spring Security & OAuth2](Frameworks/Spring_Security_OAuth2_Interview_Prep.md) → [JPA & Hibernate](Frameworks/JPA_Hibernate_Interview_Prep.md)** — the framework layer most of the code examples elsewhere in the kit use.
 3. **[Transactions](System%20Design/Transactions_Interview_Prep.md) → [Kafka](System%20Design/Kafka_Interview_Prep.md) → [Redis & Caching](System%20Design/Redis_Caching_Interview_Prep.md) → [REST API Design](System%20Design/REST_API_Design_Interview_Prep.md)** — Transactions first: its dual-write-problem and outbox-pattern framing gets reused directly by the Kafka and Redis guides.
@@ -51,6 +52,7 @@ The guides build on each other — each one's header states its own prerequisite
 
 | Guide | Level | Notes |
 |---|---|---|
+| [Computer Science Fundamentals](Computer%20Science%20Fundamentals/Computer_Science_Fundamentals_Interview_Prep.md) | **Basic (only)** | No Staff tier — this guide deliberately stays foundational (HTTP, TCP/UDP, DNS, encryption, Big-O) and points into the other guides for depth on each topic. |
 | [Java Collections](Language/Java_Collections_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. The Intermediate section onward assumes `equals()`/`hashCode()` basics; escalates to production leak diagnosis. |
 | [Java Concurrency](Language/Java_Concurrency_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. The Intermediate section onward assumes Collections. |
 | [Java JVM & GC](Language/Java_JVM_GC_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. The Staff-level section assumes Collections and Concurrency for some parts. |
@@ -67,7 +69,7 @@ The guides build on each other — each one's header states its own prerequisite
 | [AI Engineering](AI%20Engineering/AI_Engineering_Interview_Prep.md) | Staff | Assumes general backend engineering; fastest-moving guide in the repo — check its "last verified" date. |
 | [Tech Leadership](Tech%20Leadership/Engineering_Leadership_Interview_Prep.md) | Staff | Not technology-specific; no technical prerequisite, but most useful after the technical guides. |
 
-Most of this kit is genuinely Staff-scoped by design — see [Who this is for](#who-this-is-for) above for where the *entry points* (the Basic tiers of Java Collections, Java Concurrency, Java JVM & GC, Spring Boot Internals, Spring Security & OAuth2, and JPA & Hibernate; Kubernetes' Basic tier) are more accessible.
+Most of this kit is genuinely Staff-scoped by design — see [Who this is for](#who-this-is-for) above for where the *entry points* (Computer Science Fundamentals in full; the Basic tiers of Java Collections, Java Concurrency, Java JVM & GC, Spring Boot Internals, Spring Security & OAuth2, and JPA & Hibernate; Kubernetes' Basic tier) are more accessible.
 
 ## Quick-revision path
 
@@ -90,6 +92,12 @@ Weeks of runway, not days? Go in the [recommended study order](#recommended-stud
 ## Guides by topic
 
 Organized by kind of content, not by role — use the tables above to figure out which folders and difficulty levels matter most for the loop you're prepping for.
+
+### Computer Science Fundamentals
+
+Networking, HTTP, encryption, and general CS/software terminology — Basic-only, no framework or language involved. The foundational layer every other guide assumes without re-explaining it.
+
+- **[Computer Science Fundamentals Interview Prep](Computer%20Science%20Fundamentals/Computer_Science_Fundamentals_Interview_Prep.md)** — TCP vs. UDP, DNS resolution, IP addresses and ports, URI/URL/URN, HTTP and statelessness, HTTP/1.1 vs. HTTP/2 vs. HTTP/3, status code categories, headers vs. body, symmetric vs. asymmetric encryption, encryption vs. hashing, the TLS handshake, digital certificates and CAs, Big-O notation, SQL vs. NoSQL, and API vs. web service.
 
 ### Language
 
