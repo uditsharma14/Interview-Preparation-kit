@@ -1,39 +1,56 @@
-# Software Testing — Interview Prep, Basic to Staff Level (with Code & Sources)
+# Software Testing — Interview Prep for SDET & QA Roles, Basic to Staff Level (with Code & Sources)
 
-> **Target level:** Basic → Staff (graduated — see below) · **Baseline:** JUnit 6.x (Jupiter programming model — annotations covered here are unchanged from JUnit 5, but JUnit 6 requires Java 17+ and is the current major version) · Mockito 5.x · Spring Framework 6.x/Spring Boot 3.4+ testing support (`@MockitoBean`, the current annotation — the older `@MockBean` was deprecated in Spring Boot 3.4) · Testcontainers · **Last verified:** 2026-08-23 · **Prerequisites:** [Java Collections](../Language/Java_Collections_Interview_Prep.md) for the Basic section; [Spring Boot Internals](../Frameworks/Spring_Boot_Internals_Interview_Prep.md) helpful from the Intermediate section onward, [JPA & Hibernate](../Frameworks/JPA_Hibernate_Interview_Prep.md) helpful for the `@DataJpaTest`/Testcontainers questions
+> **Target level:** Basic → Staff (graduated — see below) · **Baseline:** ISTQB Certified Tester Foundation Level (CTFL) v4.0.1 terminology for testing fundamentals · JUnit 6.x (Jupiter programming model — unchanged from JUnit 5, but JUnit 6 requires Java 17+ and is the current major version) · Mockito 5.x · Spring Framework 6.x/Spring Boot 3.4+ testing support (`@MockitoBean`, the current annotation — the older `@MockBean` was deprecated in Spring Boot 3.4) · Testcontainers · Selenium 4.x WebDriver · REST Assured · Cucumber/Gherkin · Apache JMeter/Gatling · **Last verified:** 2026-08-23 · **Prerequisites:** none for the testing-fundamentals and types-of-testing questions at the start of the Basic section; [Java Collections](../Language/Java_Collections_Interview_Prep.md) becomes relevant once the guide moves into JUnit/Mockito, [Spring Boot Internals](../Frameworks/Spring_Boot_Internals_Interview_Prep.md) helpful from the Intermediate section onward, [JPA & Hibernate](../Frameworks/JPA_Hibernate_Interview_Prep.md) helpful for the `@DataJpaTest`/Testcontainers questions
 
-How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar isn't naming annotations, it's explaining how you'd actually test something genuinely hard to test (an external dependency, async code, a flaky suite) and why. Questions are grouped by level (Basic → Intermediate → Staff, with Staff specifically organized as scenario-based questions) so you can calibrate depth to the interview you're prepping for; the later sections assume the earlier ones as background and don't re-explain them.
+How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar isn't naming annotations or tools, it's explaining testing terminology precisely, choosing the right test type/tool for the job, and reasoning through something genuinely hard to test (an external dependency, async code, a flaky UI suite, a performance target) and why. The guide starts with QA/SDET testing fundamentals and types of testing (no code required), moves into Java/Spring-specific testing mechanics (JUnit, Mockito, Spring Boot test slices), then SDET automation tooling (Selenium, API testing, BDD/Cucumber, the test pyramid), and finishes with Staff-level scenario-based questions. The later sections assume the earlier ones as background and don't re-explain them.
 
 <!-- toc -->
 ## Table of Contents
 
 - [Basic](#basic)
-  - [1. What Is JUnit, and What Do `@Test`, `@BeforeEach`, and `@AfterEach` Do?](#1-what-is-junit-and-what-do-test-beforeeach-and-aftereach-do)
-  - [2. What's the Difference Between an Assertion Failure and an Exception in a Test?](#2-whats-the-difference-between-an-assertion-failure-and-an-exception-in-a-test)
-  - [3. What Is the AAA (Arrange-Act-Assert) Pattern?](#3-what-is-the-aaa-arrange-act-assert-pattern)
-  - [4. What's the Difference Between a Mock, a Stub, and a Spy?](#4-whats-the-difference-between-a-mock-a-stub-and-a-spy)
-  - [5. What Is Mockito, and How Do You Create and Use a Basic Mock?](#5-what-is-mockito-and-how-do-you-create-and-use-a-basic-mock)
-  - [6. What's the Difference Between `@Mock` and `@InjectMocks`?](#6-whats-the-difference-between-mock-and-injectmocks)
-  - [7. What Makes a Good Test Name, and Why Does It Matter?](#7-what-makes-a-good-test-name-and-why-does-it-matter)
-  - [8. What Is Test Coverage, and Why Isn't 100% Coverage the Goal?](#8-what-is-test-coverage-and-why-isnt-100-coverage-the-goal)
+  - [1. What Is Software Testing, and What's the Difference Between Verification and Validation?](#1-what-is-software-testing-and-whats-the-difference-between-verification-and-validation)
+  - [2. What Is the Software Testing Life Cycle (STLC)?](#2-what-is-the-software-testing-life-cycle-stlc)
+  - [3. What's the Difference Between a Test Plan, a Test Strategy, and a Test Case?](#3-whats-the-difference-between-a-test-plan-a-test-strategy-and-a-test-case)
+  - [4. What's the Difference Between Functional and Non-Functional Testing?](#4-whats-the-difference-between-functional-and-non-functional-testing)
+  - [5. What's the Difference Between Black-Box, White-Box, and Gray-Box Testing?](#5-whats-the-difference-between-black-box-white-box-and-gray-box-testing)
+  - [6. What's the Difference Between Smoke Testing, Sanity Testing, and Regression Testing?](#6-whats-the-difference-between-smoke-testing-sanity-testing-and-regression-testing)
+  - [7. What's the Difference Between Manual Testing and Test Automation, and When Would You Automate a Test?](#7-whats-the-difference-between-manual-testing-and-test-automation-and-when-would-you-automate-a-test)
+  - [8. What Is the Defect Life Cycle, and What's the Difference Between Severity and Priority?](#8-what-is-the-defect-life-cycle-and-whats-the-difference-between-severity-and-priority)
+  - [9. What Is JUnit, and What Do `@Test`, `@BeforeEach`, and `@AfterEach` Do?](#9-what-is-junit-and-what-do-test-beforeeach-and-aftereach-do)
+  - [10. What's the Difference Between an Assertion Failure and an Exception in a Test?](#10-whats-the-difference-between-an-assertion-failure-and-an-exception-in-a-test)
+  - [11. What Is the AAA (Arrange-Act-Assert) Pattern?](#11-what-is-the-aaa-arrange-act-assert-pattern)
+  - [12. What's the Difference Between a Mock, a Stub, and a Spy?](#12-whats-the-difference-between-a-mock-a-stub-and-a-spy)
+  - [13. What Is Mockito, and How Do You Create and Use a Basic Mock?](#13-what-is-mockito-and-how-do-you-create-and-use-a-basic-mock)
+  - [14. What's the Difference Between `@Mock` and `@InjectMocks`?](#14-whats-the-difference-between-mock-and-injectmocks)
+  - [15. What Makes a Good Test Name, and Why Does It Matter?](#15-what-makes-a-good-test-name-and-why-does-it-matter)
+  - [16. What Is Test Coverage, and Why Isn't 100% Coverage the Goal?](#16-what-is-test-coverage-and-why-isnt-100-coverage-the-goal)
 - [Intermediate](#intermediate)
-  - [9. What Are `@ParameterizedTest`, `@ValueSource`, and `@CsvSource`, and When Would You Use Them?](#9-what-are-parameterizedtest-valuesource-and-csvsource-and-when-would-you-use-them)
-  - [10. How Do You Test That a Method Throws the Expected Exception?](#10-how-do-you-test-that-a-method-throws-the-expected-exception)
-  - [11. What's the Difference Between `@SpringBootTest`, `@WebMvcTest`, and `@DataJpaTest`?](#11-whats-the-difference-between-springboottest-webmvctest-and-datajpatest)
-  - [12. What Is `MockMvc`, and How Do You Use It to Test a REST Controller?](#12-what-is-mockmvc-and-how-do-you-use-it-to-test-a-rest-controller)
-  - [13. What's the Difference Between `@Mock` and `@MockitoBean`?](#13-whats-the-difference-between-mock-and-mockitobean)
-  - [14. Why Should Tests Be Independent of Each Other, and What Breaks That Independence?](#14-why-should-tests-be-independent-of-each-other-and-what-breaks-that-independence)
-  - [15. What Is Testcontainers, and What Problem Does It Solve?](#15-what-is-testcontainers-and-what-problem-does-it-solve)
+  - [17. What Are `@ParameterizedTest`, `@ValueSource`, and `@CsvSource`, and When Would You Use Them?](#17-what-are-parameterizedtest-valuesource-and-csvsource-and-when-would-you-use-them)
+  - [18. How Do You Test That a Method Throws the Expected Exception?](#18-how-do-you-test-that-a-method-throws-the-expected-exception)
+  - [19. What's the Difference Between `@SpringBootTest`, `@WebMvcTest`, and `@DataJpaTest`?](#19-whats-the-difference-between-springboottest-webmvctest-and-datajpatest)
+  - [20. What Is `MockMvc`, and How Do You Use It to Test a REST Controller?](#20-what-is-mockmvc-and-how-do-you-use-it-to-test-a-rest-controller)
+  - [21. What's the Difference Between `@Mock` and `@MockitoBean`?](#21-whats-the-difference-between-mock-and-mockitobean)
+  - [22. Why Should Tests Be Independent of Each Other, and What Breaks That Independence?](#22-why-should-tests-be-independent-of-each-other-and-what-breaks-that-independence)
+  - [23. What Is Testcontainers, and What Problem Does It Solve?](#23-what-is-testcontainers-and-what-problem-does-it-solve)
+  - [24. What Is API Testing, and What Does a Typical REST API Test Verify?](#24-what-is-api-testing-and-what-does-a-typical-rest-api-test-verify)
+  - [25. What Is Selenium WebDriver, and How Does It Locate and Interact with Elements?](#25-what-is-selenium-webdriver-and-how-does-it-locate-and-interact-with-elements)
+  - [26. What Is the Page Object Model (POM), and Why Is It Used in UI Automation?](#26-what-is-the-page-object-model-pom-and-why-is-it-used-in-ui-automation)
+  - [27. What Is BDD, and What Role Does Gherkin/Cucumber Play in It?](#27-what-is-bdd-and-what-role-does-gherkincucumber-play-in-it)
+  - [28. What's the Difference Between Data-Driven Testing and Keyword-Driven Testing?](#28-whats-the-difference-between-data-driven-testing-and-keyword-driven-testing)
+  - [29. What Is the Test Automation Pyramid, and Why Does It Recommend Fewer UI Tests Than Unit Tests?](#29-what-is-the-test-automation-pyramid-and-why-does-it-recommend-fewer-ui-tests-than-unit-tests)
 - [Staff Level — Scenario-Based Testing](#staff-level--scenario-based-testing)
-  - [16. How Would You Test a Service That Calls an External Payment Gateway?](#16-how-would-you-test-a-service-that-calls-an-external-payment-gateway)
-  - [17. How Would You Test an `@Async` Method or a Scheduled Task?](#17-how-would-you-test-an-async-method-or-a-scheduled-task)
-  - [18. How Would You Test a Kafka Producer/Consumer?](#18-how-would-you-test-a-kafka-producerconsumer)
-  - [19. How Would You Diagnose and Fix a Flaky Test?](#19-how-would-you-diagnose-and-fix-a-flaky-test)
-  - [20. How Would You Test Code That Depends on the Current Time?](#20-how-would-you-test-code-that-depends-on-the-current-time)
-  - [21. How Would You Manage Test Data for Integration Tests Against a Real Database?](#21-how-would-you-manage-test-data-for-integration-tests-against-a-real-database)
-  - [22. How Would You Decide Between Mocking a Dependency and Using Testcontainers for It?](#22-how-would-you-decide-between-mocking-a-dependency-and-using-testcontainers-for-it)
-  - [23. How Would You Design a Test Strategy for a Legacy Codebase With No Existing Tests?](#23-how-would-you-design-a-test-strategy-for-a-legacy-codebase-with-no-existing-tests)
-  - [24. How Should Test Suites Be Structured and Run in CI to Avoid Becoming a Bottleneck?](#24-how-should-test-suites-be-structured-and-run-in-ci-to-avoid-becoming-a-bottleneck)
+  - [30. How Would You Test a Service That Calls an External Payment Gateway?](#30-how-would-you-test-a-service-that-calls-an-external-payment-gateway)
+  - [31. How Would You Test an `@Async` Method or a Scheduled Task?](#31-how-would-you-test-an-async-method-or-a-scheduled-task)
+  - [32. How Would You Test a Kafka Producer/Consumer?](#32-how-would-you-test-a-kafka-producerconsumer)
+  - [33. How Would You Diagnose and Fix a Flaky Test?](#33-how-would-you-diagnose-and-fix-a-flaky-test)
+  - [34. How Would You Test Code That Depends on the Current Time?](#34-how-would-you-test-code-that-depends-on-the-current-time)
+  - [35. How Would You Manage Test Data for Integration Tests Against a Real Database?](#35-how-would-you-manage-test-data-for-integration-tests-against-a-real-database)
+  - [36. How Would You Decide Between Mocking a Dependency and Using Testcontainers for It?](#36-how-would-you-decide-between-mocking-a-dependency-and-using-testcontainers-for-it)
+  - [37. How Would You Design a Test Strategy for a Legacy Codebase With No Existing Tests?](#37-how-would-you-design-a-test-strategy-for-a-legacy-codebase-with-no-existing-tests)
+  - [38. How Should Test Suites Be Structured and Run in CI to Avoid Becoming a Bottleneck?](#38-how-should-test-suites-be-structured-and-run-in-ci-to-avoid-becoming-a-bottleneck)
+  - [39. How Would You Design a Test Automation Framework from Scratch for a New Product?](#39-how-would-you-design-a-test-automation-framework-from-scratch-for-a-new-product)
+  - [40. How Would You Diagnose a Flaky UI/Selenium Test, as Opposed to a Flaky Unit Test?](#40-how-would-you-diagnose-a-flaky-uiselenium-test-as-opposed-to-a-flaky-unit-test)
+  - [41. How Would You Approach Performance/Load Testing for a New API?](#41-how-would-you-approach-performanceload-testing-for-a-new-api)
 - [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
 
 <!-- /toc -->
@@ -42,7 +59,257 @@ How to use this: each question has **the answer the way I'd actually say it out 
 
 ## Basic
 
-### 1. What Is JUnit, and What Do `@Test`, `@BeforeEach`, and `@AfterEach` Do?
+### 1. What Is Software Testing, and What's the Difference Between Verification and Validation?
+
+**Answer:**
+
+"Software testing is the process of evaluating a system or its components to find out whether it satisfies specified requirements, and to identify defects before the software reaches production — it's simultaneously an information-gathering activity (how good or bad is this build) and a risk-reduction activity (catch this bug before a customer does). Two closely related but genuinely distinct concepts sit underneath that definition: **verification** asks 'are we building the product right?' — confirming, through review, inspection, or testing, that a work product (a design doc, a piece of code, a build) meets its specified requirements at each stage of development. **Validation** asks 'are we building the right product?' — confirming that the finished system actually meets the real-world needs of its stakeholders, which a work product can satisfy on paper (verified against a spec) while still being validated as wrong, because the spec itself didn't capture what users actually needed.
+
+A concrete way to keep them apart: a code review confirming a login form matches its design spec is verification; a user testing that same login form and finding it genuinely confusing to use, even though it matches the spec exactly, is a validation failure — the software does what was specified, but not what was actually needed."
+
+**Code:**
+
+```text
+VERIFICATION — "Are we building the product right?"
+  - Code review against a design document
+  - Unit tests checking a function against its specification
+  - Static analysis confirming coding standards are followed
+
+VALIDATION — "Are we building the right product?"
+  - User acceptance testing (UAT) with real stakeholders
+  - Beta testing with actual end users
+  - A demo where a product owner confirms the feature solves the real problem
+```
+
+**Follow-up:**
+
+I'd bring up why this distinction matters in practice beyond terminology: a project can pass every verification check (100% of specified requirements implemented and tested correctly) and still fail in the market, because the specification itself was validated too late or not at all — this is exactly the failure mode agile practices (short iterations, frequent stakeholder demos) are designed to catch early, by folding validation into every sprint rather than deferring it to a single UAT phase at the very end of a waterfall-style project.
+
+**Source:** [ISTQB Certified Tester Foundation Level (CTFL) Syllabus v4.0.1](https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf)
+
+---
+
+### 2. What Is the Software Testing Life Cycle (STLC)?
+
+**Answer:**
+
+"STLC is the structured sequence of phases a testing effort moves through for a given release or feature — commonly broken into: **requirement analysis** (understanding what needs to be tested, from a testability standpoint), **test planning** (defining scope, approach, resources, schedule — producing the test plan), **test case development** (writing the actual test cases and test data), **test environment setup** (provisioning the environment the tests will run against), **test execution** (running the tests and logging results/defects), and **test cycle closure** (evaluating exit criteria, summarizing results, capturing lessons learned). ISTQB's own foundation syllabus describes this same sequence somewhat more granularly as the 'test process' — test planning, monitoring and control, analysis, design, implementation, execution, and completion — the underlying activities are the same regardless of which exact label a given company or textbook uses.
+
+In practice, these phases are rarely a strict, one-way waterfall even inside an agile project — test analysis and design often start well before a feature is code-complete (test cases can be written directly from acceptance criteria during sprint planning), and test execution happens continuously as code lands rather than as one big phase at the end."
+
+**Code:**
+
+```text
+STLC phases (ISTQB's "test process" activities in parentheses):
+
+1. Requirement Analysis         (-> Test Analysis)
+2. Test Planning                (-> Test Planning)
+3. Test Case Development        (-> Test Design + Test Implementation)
+4. Test Environment Setup       (-> Test Implementation)
+5. Test Execution               (-> Test Execution)
+6. Test Cycle Closure           (-> Test Completion)
+
+Running throughout: Test Monitoring and Control (tracking progress against the plan)
+```
+
+**Follow-up:**
+
+I'd mention entry and exit criteria as the practical mechanism that makes this more than a checklist — each phase, most importantly test execution, should have explicit, agreed-upon entry criteria (is the build actually stable enough to start testing) and exit criteria (what defect-severity or coverage threshold has to be met before calling testing "done" for this cycle) — without those, "testing is complete" becomes a subjective, argued-about judgment call rather than something the team agreed on in advance.
+
+**Source:** [ISTQB Certified Tester Foundation Level (CTFL) Syllabus v4.0.1](https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf)
+
+---
+
+### 3. What's the Difference Between a Test Plan, a Test Strategy, and a Test Case?
+
+**Answer:**
+
+"These three sit at different altitudes. A **test strategy** is the highest-level, most durable of the three — an organization- or program-level document describing the general approach to testing across multiple projects (which test levels will be used, what the default automation approach is, how risk is generally assessed) — it changes rarely and isn't tied to any one release. A **test plan** is project- or release-specific — a document describing the scope, approach, resources, and schedule of testing for *this* specific effort: what's in scope, what test design techniques will be used, who's doing what, what the test environment looks like, and the entry/exit criteria for this particular cycle. A **test case** is the most granular of the three — a single, concrete set of preconditions, input values, execution steps, and expected results, written to exercise one specific behavior or requirement.
+
+The relationship is roughly hierarchical: the test strategy sets the ground rules an organization's test plans generally follow; each test plan then scopes and schedules the testing for one specific release; and the actual test cases are what get written and executed within that plan."
+
+**Code:**
+
+```text
+Test Strategy   (organization-wide, long-lived)
+  -> "We target 70% unit / 20% integration / 10% E2E automated coverage across all projects.
+      Manual exploratory testing runs before every major release."
+
+  Test Plan     (this release, this project)
+    -> "For the v2.4 checkout release: in scope is the new payment flow;
+        out of scope is the existing shipping calculator (unchanged).
+        Entry criteria: staging deploy green. Exit criteria: 0 open Critical/High defects."
+
+    Test Case   (one specific, executable check)
+      -> "Given a cart with 1 item and a valid coupon code,
+          when the user applies the coupon,
+          then the discounted total should be shown before checkout."
+```
+
+**Follow-up:**
+
+I'd flag the practical failure mode this distinction helps avoid: teams that never write an explicit test strategy end up re-deciding the same foundational questions (how much should we automate, what's our default regression scope) on every single project, inconsistently — a lightweight, living test strategy is what lets each individual test plan stay short and mostly just fill in the project-specific details rather than re-litigating strategy from scratch every time.
+
+**Source:** [ISTQB Certified Tester Foundation Level (CTFL) Syllabus v4.0.1](https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf)
+
+---
+
+### 4. What's the Difference Between Functional and Non-Functional Testing?
+
+**Answer:**
+
+"**Functional testing** verifies *what* the system does — does it correctly implement the behavior described in its requirements, specifications, or use cases (does clicking 'submit' actually place the order, does an invalid coupon code get correctly rejected). It's fundamentally about correctness of behavior, and it's most naturally evaluated as a black-box technique (covered next in this guide) — testing what goes in and what comes out, without needing to know how the system does it internally. **Non-functional testing** verifies *how well* the system does it — attributes of the system that aren't about any single specific behavior, like performance (how fast, under what load), security (can it be compromised), usability (how easy is it to use correctly), reliability (does it stay up), and portability (does it work across environments).
+
+A system can pass every functional test — every feature does exactly what it's supposed to — and still be genuinely unusable in production if it fails on the non-functional side: correct behavior that takes 30 seconds to respond, or correct behavior that's trivially exploitable, isn't actually shippable, which is exactly why both categories need deliberate test coverage rather than treating 'does the feature work' as the only bar."
+
+**Code:**
+
+```text
+FUNCTIONAL — "does it do the right thing?"
+  - Does the login form correctly reject a wrong password?
+  - Does the checkout flow correctly apply a valid discount code?
+
+NON-FUNCTIONAL — "does it do it well enough?"
+  - Performance: does the search endpoint respond in under 200ms at p99?
+  - Security: can an authenticated user access another user's order by guessing an ID?
+  - Usability: can a first-time user complete checkout without external help?
+  - Reliability: does the service recover cleanly from a dependency timing out?
+```
+
+**Follow-up:**
+
+I'd tie this to how it shapes test planning practically: functional test cases tend to map fairly directly onto individual requirements or acceptance criteria and are the natural target for automation early on, while non-functional testing (load testing, security testing, usability testing) often needs dedicated tooling and specialized skill, sometimes a separate specialist (a performance engineer, a security tester) — a team that only ever measures "percentage of requirements covered by tests" is implicitly measuring functional coverage alone, and can miss a system that's functionally correct but operationally unfit to ship.
+
+**Source:** [ISTQB Certified Tester Foundation Level (CTFL) Syllabus v4.0.1](https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf)
+
+---
+
+### 5. What's the Difference Between Black-Box, White-Box, and Gray-Box Testing?
+
+**Answer:**
+
+"These describe how much internal knowledge of the system the person designing the test has, and how that knowledge is (or isn't) used. **Black-box testing** derives test cases purely from external specification — requirements, specs, user-facing behavior — with zero reference to the system's internal code structure; the tester treats the system as a closed box, only caring about inputs and outputs. **White-box testing** goes the opposite direction: test cases are derived from the system's actual internal structure — its code paths, branches, conditions — with the explicit goal of exercising specific lines, branches, or paths a black-box approach might never happen to hit (this is where structural, coverage-guided test design, covered from the coverage-metric angle earlier in this guide, actually comes from). **Gray-box testing** sits between the two: the tester has *some* internal knowledge (the database schema, the API's internal architecture, how two services communicate) and uses it to design smarter black-box-style tests, without going as far as testing individual code branches directly.
+
+In practice, most SDET/QA test-case design leans black-box (testing against requirements and API contracts, independent of implementation), while developers writing unit tests are naturally doing white-box testing (they know exactly which branches their own code has), and integration testing across service boundaries is often genuinely gray-box (knowing the API contract and rough architecture, without needing to read every line of the other service's code)."
+
+**Code:**
+
+```text
+BLACK-BOX  — tester knows: the spec/requirements only
+  -> "Given these inputs, the spec says I should get this output" — test written with zero code access
+
+WHITE-BOX  — tester knows: the actual source code
+  -> "This method has an if/else — I need one test case per branch to get full branch coverage"
+
+GRAY-BOX   — tester knows: some internals (schema, API contract, architecture) but not full source
+  -> "I know this endpoint writes to two tables — I'll verify both got updated, without reading the handler code"
+```
+
+**Follow-up:**
+
+I'd mention that this isn't a strict either/or in practice — a mature test suite deliberately uses all three at different layers: white-box unit tests (owned by developers, exercising every branch), black-box API/functional tests (owned by SDETs, exercising the contract), and gray-box integration tests bridging services — and being able to name which category a given test in a suite actually falls into is a genuinely useful diagnostic when a test suite feels like it has redundant or misplaced coverage.
+
+**Source:** [ISTQB Certified Tester Foundation Level (CTFL) Syllabus v4.0.1](https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf)
+
+---
+
+### 6. What's the Difference Between Smoke Testing, Sanity Testing, and Regression Testing?
+
+**Answer:**
+
+"All three run *after* some change, but at different scope and depth. **Smoke testing** is a broad, shallow check run against a brand-new build — a small set of tests covering the system's most critical, must-work functionality (can a user log in, does the homepage load, does checkout complete at all) — its only job is to answer 'is this build stable enough to bother testing further,' not to find subtle bugs. **Sanity testing** is narrower and deeper than smoke testing, but scoped specifically to a *recent, specific change* — after a bug fix or a small feature change, sanity testing verifies that the specific area affected now works as expected, without re-running the full regression suite. **Regression testing** is the broadest of the three — re-running previously-passing tests, ideally the automated suite, after a change, specifically to catch unintended side effects the change may have introduced in *unrelated* areas of the system that nobody was deliberately trying to change.
+
+A useful way to keep the three straight: smoke asks 'is this build even worth testing,' sanity asks 'did this specific fix actually work,' and regression asks 'did fixing that break something else.'"
+
+**Code:**
+
+```text
+SMOKE      — new build, broad + shallow: "is this build stable enough to test further at all?"
+  -> login works, homepage loads, checkout completes end-to-end (once, happy path only)
+
+SANITY     — after a specific fix, narrow + deep: "did THIS fix actually work?"
+  -> the exact bug that was reported is now verified fixed, plus its immediate surrounding behavior
+
+REGRESSION — after any change, broad: "did this change break something UNRELATED?"
+  -> re-run the full previously-passing suite (or a representative subset) across the whole system
+```
+
+**Follow-up:**
+
+I'd bring up automation as the practical lever that makes this distinction operational rather than theoretical: smoke and regression suites are the natural candidates for full automation, run on every build or every PR, since they're meant to be run constantly and cheaply, while sanity checks are often still done manually in the moments right after a fix, since they're one-off and narrowly scoped to something that just changed — a team's CI pipeline structure, covered from the Java/Spring testing angle later in this guide, usually mirrors this exact split.
+
+**Source:** [ISTQB Certified Tester Foundation Level (CTFL) Syllabus v4.0.1](https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf)
+
+---
+
+### 7. What's the Difference Between Manual Testing and Test Automation, and When Would You Automate a Test?
+
+**Answer:**
+
+"Manual testing is a human executing test steps and judging the result directly, without a script running the check; test automation is a script or tool executing those same steps and asserting the result programmatically, without a human needed for each run. Automation's advantage is repeatability and speed at scale — an automated regression suite can re-run thousands of checks in minutes, every single build, at essentially zero marginal human cost per run — but it comes with real upfront cost (writing and maintaining the automation) and a real blind spot: automation only ever checks exactly what it was told to check, so it's structurally bad at catching the kind of surprising, unanticipated issue a human actually *notices* while using the product.
+
+The practical decision rule I'd use: automate a test when it's going to be run repeatedly — regression, smoke, anything re-run on every build — and its expected result is stable and well-defined; keep it manual, or more precisely, use **exploratory testing** (a test approach where a skilled tester simultaneously designs and executes tests based on their own judgment and what they learn as they go, rather than following a pre-written script) — for one-off checks, genuinely subjective usability judgment, and specifically for finding the kind of bug nobody thought to write an automated check for in the first place."
+
+**Code:**
+
+```text
+GOOD candidate for automation:
+  - Regression suite run on every PR (same checks, run hundreds of times)
+  - Smoke tests run after every deploy
+  - Data-heavy boundary-value test cases (many input/output pairs, stable expected results)
+
+GOOD candidate for manual / exploratory testing:
+  - A brand-new feature nobody has used yet — no established "expected result" to automate against
+  - Subjective usability judgment ("does this actually feel confusing to a first-time user?")
+  - A one-off investigation of a specific bug report, before a fix even exists to write a regression test against
+```
+
+**Follow-up:**
+
+I'd mention the common mistake this framing helps avoid: treating "100% automated" as an inherently good target — a team that automates a test that only ever runs once, or automates a check whose expected result changes constantly (making the automation itself high-maintenance), often spends more effort maintaining that automation than the manual check would ever have cost; the right question isn't "can this be automated" but "will this be run often enough, with a stable enough expected result, that automating it actually pays back the upfront cost."
+
+**Source:** [ISTQB Certified Tester Foundation Level (CTFL) Syllabus v4.0.1](https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf)
+
+---
+
+### 8. What Is the Defect Life Cycle, and What's the Difference Between Severity and Priority?
+
+**Answer:**
+
+"The defect (bug) life cycle is the sequence of states a reported defect moves through from discovery to resolution — typically: **New** (just logged), **Assigned** (a developer is on it), **Open/In Progress** (being actively worked), **Fixed** (a fix has been implemented), **Retest** (QA verifies the fix), then either **Closed** (verified fixed) or **Reopened** (the fix didn't actually resolve it, cycling back). Some teams also have a **Rejected**/**Duplicate**/**Deferred** branch for defects that turn out not to be bugs, are already tracked elsewhere, or are consciously postponed.
+
+**Severity** and **priority** are the two dimensions used to triage a defect within that life cycle, and they answer genuinely different questions. **Severity** measures *technical impact* — how badly does this defect affect the system's functionality, does it crash the whole app or is it a cosmetic misalignment — and is typically assessed by whoever finds or verifies the defect (QA). **Priority** measures *business urgency* — how soon does this need to be fixed, relative to everything else in the backlog — and is typically set by product or business stakeholders. The two don't always move together: a typo in a rarely-seen legal disclaimer is low severity but can be high priority (a legal/compliance deadline); a crash in a rarely-used admin-only debug feature can be high severity but low priority, since barely anyone hits it."
+
+**Code:**
+
+```text
+Defect life cycle:
+  New -> Assigned -> Open/In Progress -> Fixed -> Retest -> Closed
+                                                          -> Reopened (back to Open/In Progress)
+  (also: Rejected / Duplicate / Deferred, branching off "New")
+
+Severity vs. Priority — genuinely independent axes:
+
+                    HIGH PRIORITY              LOW PRIORITY
+  HIGH SEVERITY   "Checkout is down"        "Crash in an unused
+                   (fix now)                  admin-only tool"
+                                              (fix eventually)
+
+  LOW SEVERITY    "Wrong year in the        "Button is 2px
+                   footer copyright"          misaligned on
+                   (fix now — legal ask)      a rarely-used page"
+                                              (low priority, low severity)
+```
+
+**Follow-up:**
+
+I'd bring up why keeping these genuinely separate matters practically: a bug tracker that conflates severity and priority into one field pressures whoever's triaging to guess at business urgency while also judging technical impact, and the two disagreements get silently merged into one number — keeping them as two explicit fields lets QA report severity honestly, based purely on what the defect does to the system, while product or business independently decides priority, based on what's actually urgent right now, and the disagreement between the two — a high-severity, low-priority bug sitting in the backlog — becomes a visible, deliberate decision rather than a hidden one.
+
+**Source:** [ISTQB Certified Tester Foundation Level (CTFL) Syllabus v4.0.1](https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf)
+
+---
+
+### 9. What Is JUnit, and What Do `@Test`, `@BeforeEach`, and `@AfterEach` Do?
 
 **Answer:**
 
@@ -88,7 +355,7 @@ I'd mention `@BeforeAll`/`@AfterAll` as the class-level counterparts (run once f
 
 ---
 
-### 2. What's the Difference Between an Assertion Failure and an Exception in a Test?
+### 10. What's the Difference Between an Assertion Failure and an Exception in a Test?
 
 **Answer:**
 
@@ -120,7 +387,7 @@ I'd mention that this distinction matters practically when triaging a batch of C
 
 ---
 
-### 3. What Is the AAA (Arrange-Act-Assert) Pattern?
+### 11. What Is the AAA (Arrange-Act-Assert) Pattern?
 
 **Answer:**
 
@@ -154,7 +421,7 @@ I'd flag the most common violation of this pattern worth watching for in code re
 
 ---
 
-### 4. What's the Difference Between a Mock, a Stub, and a Spy?
+### 12. What's the Difference Between a Mock, a Stub, and a Spy?
 
 **Answer:**
 
@@ -187,7 +454,7 @@ I'd bring up the practical guidance for choosing between them: reach for a stub/
 
 ---
 
-### 5. What Is Mockito, and How Do You Create and Use a Basic Mock?
+### 13. What Is Mockito, and How Do You Create and Use a Basic Mock?
 
 **Answer:**
 
@@ -221,7 +488,7 @@ I'd mention that an *unstubbed* mock method call doesn't throw an error — it r
 
 ---
 
-### 6. What's the Difference Between `@Mock` and `@InjectMocks`?
+### 14. What's the Difference Between `@Mock` and `@InjectMocks`?
 
 **Answer:**
 
@@ -261,7 +528,7 @@ I'd flag that `@InjectMocks` has a real, if mild, downside worth being aware of:
 
 ---
 
-### 7. What Makes a Good Test Name, and Why Does It Matter?
+### 15. What Makes a Good Test Name, and Why Does It Matter?
 
 **Answer:**
 
@@ -289,7 +556,7 @@ I'd mention JUnit's `@DisplayName` annotation as a complementary tool worth know
 
 ---
 
-### 8. What Is Test Coverage, and Why Isn't 100% Coverage the Goal?
+### 16. What Is Test Coverage, and Why Isn't 100% Coverage the Goal?
 
 **Answer:**
 
@@ -325,7 +592,7 @@ I'd give the practical framing: use coverage as a *floor-finding* tool (identify
 
 ## Intermediate
 
-### 9. What Are `@ParameterizedTest`, `@ValueSource`, and `@CsvSource`, and When Would You Use Them?
+### 17. What Are `@ParameterizedTest`, `@ValueSource`, and `@CsvSource`, and When Would You Use Them?
 
 **Answer:**
 
@@ -362,7 +629,7 @@ I'd mention `@MethodSource` as the escape hatch once test data gets too complex 
 
 ---
 
-### 10. How Do You Test That a Method Throws the Expected Exception?
+### 18. How Do You Test That a Method Throws the Expected Exception?
 
 **Answer:**
 
@@ -393,7 +660,7 @@ I'd bring up the precision benefit directly with a concrete failure mode it prev
 
 ---
 
-### 11. What's the Difference Between `@SpringBootTest`, `@WebMvcTest`, and `@DataJpaTest`?
+### 19. What's the Difference Between `@SpringBootTest`, `@WebMvcTest`, and `@DataJpaTest`?
 
 **Answer:**
 
@@ -430,7 +697,7 @@ I'd mention the practical trade-off worth stating explicitly: `@DataJpaTest`'s d
 
 ---
 
-### 12. What Is `MockMvc`, and How Do You Use It to Test a REST Controller?
+### 20. What Is `MockMvc`, and How Do You Use It to Test a REST Controller?
 
 **Answer:**
 
@@ -475,7 +742,7 @@ I'd mention that `MockMvc`'s "no real HTTP server" trade-off has one genuine, no
 
 ---
 
-### 13. What's the Difference Between `@Mock` and `@MockitoBean`?
+### 21. What's the Difference Between `@Mock` and `@MockitoBean`?
 
 **Answer:**
 
@@ -510,13 +777,13 @@ I'd flag the practical trigger for choosing between them directly: if the test n
 
 ---
 
-### 14. Why Should Tests Be Independent of Each Other, and What Breaks That Independence?
+### 22. Why Should Tests Be Independent of Each Other, and What Breaks That Independence?
 
 **Answer:**
 
 "Test independence means any single test's outcome (pass or fail) doesn't depend on whether some *other* test ran before it, or in what order tests happen to execute — each test should be runnable completely on its own and produce the same result regardless of what ran before it. This matters for two concrete, practical reasons: test frameworks don't guarantee a specific execution order by default (and even when they do, relying on it is fragile), and independence is exactly what makes **parallel test execution** possible at all — tests that secretly depend on shared, mutated state can't be safely run concurrently, since one test's mutation can race with or corrupt another's expectations.
 
-The most common ways independence breaks: a shared, mutable `static` field that one test modifies and a later test implicitly depends on; a shared database row/table that one test's data setup or cleanup affects; or a test relying on file-system state left behind by a previous test. `@BeforeEach` resetting state to a known baseline (covered in Question 1) is the standard defense against the first category; careful, per-test data setup/teardown is the defense against the other two."
+The most common ways independence breaks: a shared, mutable `static` field that one test modifies and a later test implicitly depends on; a shared database row/table that one test's data setup or cleanup affects; or a test relying on file-system state left behind by a previous test. `@BeforeEach` resetting state to a known baseline (covered in the JUnit annotations question earlier in this guide) is the standard defense against the first category; careful, per-test data setup/teardown is the defense against the other two."
 
 **Code:**
 
@@ -555,7 +822,7 @@ I'd tie this directly to test-suite performance at scale: a large, slow test sui
 
 ---
 
-### 15. What Is Testcontainers, and What Problem Does It Solve?
+### 23. What Is Testcontainers, and What Problem Does It Solve?
 
 **Answer:**
 
@@ -600,9 +867,276 @@ I'd mention container reuse/lifecycle management as the practical performance le
 
 ---
 
+### 24. What Is API Testing, and What Does a Typical REST API Test Verify?
+
+**Answer:**
+
+"API testing verifies a service's behavior directly at the API layer — sending real (or realistically simulated) HTTP requests and asserting on the response — without going through a UI at all. It sits below UI-driven end-to-end testing and above pure unit testing in the test pyramid (covered later in this guide): faster and more stable than driving a browser, but still exercising the real, deployed contract a client actually depends on, not just an internal method call. A typical REST API test verifies several things at once: the **status code** (200 for success, 404 for not found, 400 for a bad request), the **response body's shape and values** (does the JSON contain the right fields, with the right values and types), **response headers** (content type, caching headers, rate-limit headers), and, for state-changing requests, that the **side effect actually happened** (a subsequent GET reflects the change the POST or PUT made).
+
+Tools like REST Assured (Java, a fluent given/when/then syntax purpose-built for HTTP assertions) or Postman (a GUI-first tool, also scriptable and CI-runnable via Newman) are the standard way to write these tests outside of Spring's own `MockMvc` (covered earlier in this guide) — the key difference from `MockMvc` being that a REST Assured or Postman test typically hits a *real, running* service over the network, verifying the full stack including the actual HTTP server, not just Spring's in-process request-dispatch machinery."
+
+**Code:**
+
+```java
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
+
+@Test
+void getOrder_existingId_returns200WithCorrectBody() {
+    given()
+        .baseUri("https://api.example.com")
+        .header("Authorization", "Bearer " + testToken)
+    .when()
+        .get("/orders/123")
+    .then()
+        .statusCode(200)
+        .body("sku", equalTo("SKU-1"))
+        .body("quantity", equalTo(2))
+        .header("Content-Type", equalTo("application/json"));
+}
+
+@Test
+void createOrder_validPayload_persistsAndIsRetrievable() {
+    String orderId =
+        given().contentType("application/json").body(newOrderJson)
+        .when().post("/orders")
+        .then().statusCode(201).extract().path("id");
+
+    // verify the side effect actually happened, not just that POST returned 201
+    given().when().get("/orders/" + orderId)
+           .then().statusCode(200).body("sku", equalTo("SKU-1"));
+}
+```
+
+**Follow-up:**
+
+I'd mention API testing's specific value for an SDET role beyond just being faster than UI tests: since it tests directly against the contract a mobile app, a web frontend, and any third-party integration all independently depend on, a broken API test catches a breaking change *before* any of those consumers do — which is exactly why API test suites are often the highest-leverage layer of automation for a service with multiple client types, catching contract breakage a UI-only test suite covering just one client would miss entirely.
+
+**Source:** [REST Assured — Official Documentation](https://rest-assured.io/)
+
+---
+
+### 25. What Is Selenium WebDriver, and How Does It Locate and Interact with Elements?
+
+**Answer:**
+
+"Selenium WebDriver is the core browser-automation API within the Selenium project — it lets a test drive a real browser programmatically (clicking, typing, navigating, reading page content) by talking to the browser's own native automation interface, via each browser's WebDriver implementation like ChromeDriver, rather than simulating input at the OS level. The fundamental workflow is: **locate** an element on the page, then **interact** with it. Locating is done via a `By` strategy — `By.id`, `By.cssSelector`, `By.xpath`, `By.className`, and others — each trading off robustness (does this locator still work after a minor UI change) against specificity (can it uniquely identify the one element you actually want). Once located, WebDriver exposes interaction methods on the returned `WebElement` — `.click()`, `.sendKeys()`, `.getText()`, `.isDisplayed()` — that drive the browser exactly as a real user's mouse and keyboard would.
+
+The general locator-strategy guidance: prefer `id` when the application provides stable ones, since it's fastest and least brittle; fall back to CSS selectors for anything without a stable ID; and treat XPath as a last resort for cases CSS genuinely can't express, like selecting an element by its visible text, since XPath expressions tend to be the most brittle against markup changes and the slowest to evaluate."
+
+**Code:**
+
+```java
+WebDriver driver = new ChromeDriver();
+driver.get("https://example.com/login");
+
+// LOCATE, then INTERACT — the fundamental WebDriver pattern
+WebElement usernameField = driver.findElement(By.id("username"));
+WebElement passwordField = driver.findElement(By.cssSelector("input[name='password']"));
+WebElement loginButton  = driver.findElement(By.xpath("//button[text()='Log In']"));
+
+usernameField.sendKeys("test-user");
+passwordField.sendKeys("test-password");
+loginButton.click();
+
+WebElement welcomeBanner = driver.findElement(By.className("welcome-banner"));
+assertTrue(welcomeBanner.isDisplayed());
+assertEquals("Welcome, test-user", welcomeBanner.getText());
+
+driver.quit(); // always release the browser session, even on failure (typically in @AfterEach)
+```
+
+**Follow-up:**
+
+I'd flag explicit waits as the thing that separates a reliable Selenium suite from a flaky one: a page's elements often aren't present the instant `driver.get()` returns, since JavaScript may still be rendering or an API call may still be in flight, so calling `findElement` immediately can throw `NoSuchElementException` intermittently — `WebDriverWait` combined with `ExpectedConditions.visibilityOfElementLocated(...)` polls for the element to actually be ready instead of guessing at a fixed delay, the same underlying anti-pattern — a hard-coded sleep versus polling for a real condition — covered from the flaky-test angle later in this guide.
+
+**Source:** [Selenium — Official Documentation, WebDriver Locators](https://www.selenium.dev/documentation/webdriver/elements/locators/)
+
+---
+
+### 26. What Is the Page Object Model (POM), and Why Is It Used in UI Automation?
+
+**Answer:**
+
+"The Page Object Model is a design pattern for UI test automation where each page, or significant component, of the application under test gets its own class — a 'page object' — encapsulating that page's locators and the actions a test can perform on it, behind a clean method-level API. Instead of a test directly calling `driver.findElement(By.id("username")).sendKeys(...)`, it calls a method like `loginPage.loginAs(username, password)`, with the page object internally owning the locator details.
+
+The value is almost entirely about maintainability: a UI's markup changes far more often than its actual user-facing behavior does — a CSS class gets renamed during a redesign, an element gets wrapped in a new container — without POM, that single markup change means hunting down and fixing every test that happens to reference that locator directly; with POM, it means updating the locator in exactly one place, the page object, and every test that uses that page object is automatically fixed. It also makes tests themselves read more like a description of user intent, 'log in, then verify the order confirmation shows,' rather than a sequence of low-level driver calls, which is a real readability win independent of the maintenance benefit."
+
+**Code:**
+
+```java
+// Page Object — owns locators and actions for ONE page
+class LoginPage {
+    private final WebDriver driver;
+    private final By usernameField = By.id("username");
+    private final By passwordField = By.cssSelector("input[name='password']");
+    private final By loginButton = By.xpath("//button[text()='Log In']");
+
+    LoginPage(WebDriver driver) { this.driver = driver; }
+
+    HomePage loginAs(String username, String password) {
+        driver.findElement(usernameField).sendKeys(username);
+        driver.findElement(passwordField).sendKeys(password);
+        driver.findElement(loginButton).click();
+        return new HomePage(driver); // returns the NEXT page — models real navigation
+    }
+}
+
+// The test itself reads like user intent, with ZERO locator details in it
+@Test
+void login_validCredentials_showsWelcomeBanner() {
+    LoginPage loginPage = new LoginPage(driver);
+    HomePage homePage = loginPage.loginAs("test-user", "test-password");
+
+    assertTrue(homePage.isWelcomeBannerDisplayed());
+    // if the username field's locator ever changes, ONLY LoginPage needs updating — not this test
+}
+```
+
+**Follow-up:**
+
+I'd bring up the natural extension of this pattern worth mentioning at a Staff/SDET level: a shared **base page** class or interface for behavior common to every page (waiting for the page to finish loading, checking for a global error banner) avoids duplicating that logic across every individual page object, and chaining page-object methods that return the *next* page object, as `loginAs()` does above by returning `HomePage`, keeps a multi-step user flow readable as a single fluent chain in the test, rather than a flat sequence of unrelated driver calls.
+
+**Source:** [Selenium — Official Documentation, Page Object Models](https://www.selenium.dev/documentation/test_practices/encouraged/page_object_models/)
+
+---
+
+### 27. What Is BDD, and What Role Does Gherkin/Cucumber Play in It?
+
+**Answer:**
+
+"Behavior-Driven Development (BDD) is a practice where a feature's expected behavior is described collaboratively, up front, in a structured, plain-language format that both technical and non-technical stakeholders — product, QA, engineering — can read and agree on. The goal is closing the gap between what the business actually wants and what gets built and tested, by making the shared specification itself executable as a test, rather than letting requirements and tests drift apart as separate artifacts. Gherkin is the specific structured language BDD scenarios are written in, using the `Given`/`When`/`Then` keywords — the same Arrange-Act-Assert idea covered earlier in this guide, just phrased for a business audience rather than a developer one — to describe a precondition, an action, and an expected outcome. Cucumber is the tool that makes a Gherkin scenario *executable*: it parses the `.feature` file and matches each line to a 'step definition,' actual code that performs the real action or assertion, so the same plain-language scenario a product manager reads is literally what runs as the automated test.
+
+This matters specifically for an SDET role because it shifts test-case authorship left and makes it collaborative — a well-run BDD process has acceptance criteria written as Gherkin scenarios *before* a feature is built, agreed on by product, QA, and engineering together, which then become the actual automated regression tests once step definitions are wired up — rather than QA reverse-engineering test cases from a finished feature after the fact."
+
+**Code:**
+
+```gherkin
+# login.feature — written in plain language, readable by product/QA/engineering alike
+Feature: User login
+
+  Scenario: Successful login with valid credentials
+    Given a registered user with username "test-user" and password "test-password"
+    When the user submits the login form with those credentials
+    Then the user should see the welcome banner
+    And the user should be redirected to the home page
+```
+
+```java
+// Step definitions — the ACTUAL code Cucumber runs for each Gherkin line above
+public class LoginSteps {
+    private final WebDriver driver;
+    private LoginPage loginPage;
+    private HomePage homePage;
+
+    @Given("a registered user with username {string} and password {string}")
+    public void aRegisteredUser(String username, String password) {
+        testDataSetup.createUser(username, password);
+        loginPage = new LoginPage(driver); // reuses the Page Object Model from earlier in this guide
+    }
+
+    @When("the user submits the login form with those credentials")
+    public void submitsLoginForm() {
+        homePage = loginPage.loginAs(username, password);
+    }
+
+    @Then("the user should see the welcome banner")
+    public void seesWelcomeBanner() {
+        assertTrue(homePage.isWelcomeBannerDisplayed());
+    }
+}
+```
+
+**Follow-up:**
+
+I'd mention the common failure mode worth naming directly: BDD's value comes specifically from the *collaboration* around writing scenarios together, not from the Gherkin syntax itself — a team that has engineers write Gherkin scenarios alone, after the feature is already built, purely as a syntax wrapper around what would've been a normal automated test anyway, gets all of Gherkin's verbosity with none of BDD's actual benefit, which is shared, agreed-upon acceptance criteria written before the code; that's a real, common critique of BDD adoptions worth being able to speak to directly in an interview.
+
+**Source:** [Cucumber — Official Gherkin Reference](https://cucumber.io/docs/gherkin/)
+
+---
+
+### 28. What's the Difference Between Data-Driven Testing and Keyword-Driven Testing?
+
+**Answer:**
+
+"Both are automation techniques for separating *what varies between test runs* from the automation script itself, but they separate different things. **Data-driven testing** separates the *test data* from a fixed control script — the same script runs repeatedly, once per row in a table, spreadsheet, or CSV of inputs and expected results (this is the same underlying idea as `@CsvSource`/`@ParameterizedTest`, covered earlier in this guide, just applied at a larger, often non-code-based scale — a QA-maintained spreadsheet rather than a hard-coded annotation). **Keyword-driven testing** goes a step further and separates the *test logic itself*, not just the data, into a data file: each row specifies a keyword, such as `Login`, `ClickButton`, or `VerifyText`, representing a reusable action, and a supporting 'keyword interpreter' script maps each keyword to actual automation code, letting someone build entire test cases by combining keywords in a spreadsheet, without writing code for each new test case at all.
+
+The practical trade-off: data-driven testing is simpler to build and maintain but still requires someone who can write or modify the control script for genuinely new test *logic*, not just new data; keyword-driven testing has a steeper upfront framework-building cost, since someone has to build and maintain the keyword interpreter and its full keyword library, but it pays that back by letting non-programmers — manual QA, business analysts — author new test cases directly, entirely within the keyword vocabulary, once the framework exists."
+
+**Code:**
+
+```text
+DATA-DRIVEN — same fixed script, varying data:
+
+  username,   password,   expectedResult
+  test-user,  correct-pw, success
+  test-user,  wrong-pw,   failure
+  ,           correct-pw, failure   <- missing username
+
+  (ONE control script: "attempt login with this row's data, assert this row's expected result")
+
+KEYWORD-DRIVEN — varying data AND varying logic, expressed as keywords:
+
+  Keyword           | Target               | Value
+  OpenBrowser        | https://example.com  |
+  EnterText          | usernameField         | test-user
+  EnterText          | passwordField          | correct-pw
+  ClickElement         | loginButton            |
+  VerifyTextVisible     | welcomeBanner           | Welcome, test-user
+
+  (an interpreter script maps EACH keyword — OpenBrowser, EnterText, ClickElement, VerifyTextVisible —
+   to real WebDriver code; a new test case is just a new sequence of existing keywords)
+```
+
+**Follow-up:**
+
+I'd tie this to a practical staff-level framework-design decision: building a keyword-driven layer is a real, deliberate investment that only pays off when a team genuinely has non-programmers who need to author test cases independently and at real volume — for a team of SDETs who are all comfortable writing code directly, a well-organized data-driven approach, or just well-factored code with the Page Object Model covered earlier in this guide, usually delivers most of the same reuse benefit with far less framework-maintenance overhead than a full keyword-driven interpreter layer.
+
+**Source:** [ISTQB Certified Tester Foundation Level (CTFL) Syllabus v4.0.1](https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf)
+
+---
+
+### 29. What Is the Test Automation Pyramid, and Why Does It Recommend Fewer UI Tests Than Unit Tests?
+
+**Answer:**
+
+"The test pyramid is a model, popularized by Mike Cohn and widely cited via Martin Fowler's write-up of it, for how a healthy automated test suite's *proportions* should look across layers: many fast, cheap, focused unit tests at the base; a smaller number of integration and API tests, covered earlier in this guide, in the middle; and a small number of slow, broad, UI-driven end-to-end tests at the top. The shape isn't arbitrary — it directly reflects each layer's actual cost, speed, and stability trade-off: a unit test runs in milliseconds, needs no external dependencies, and fails with a precise, easy-to-diagnose signal pointing at exactly the broken code; a UI test drives a real browser through a real, or near-real, full stack, which is inherently slower, more expensive to run at scale, and structurally more prone to flakiness — timing, rendering, environment differences — and when a UI test fails, it's often much harder to tell *which* layer of the stack actually broke.
+
+The practical implication for an SDET/QA automation strategy: push as much coverage as reasonably possible down to the unit and API layers, where it's fast and stable, and reserve UI automation specifically for the things that can only genuinely be verified by actually driving the UI, a handful of true end-to-end critical-path journeys — an 'inverted pyramid,' or 'ice cream cone,' anti-pattern, where a team has mostly UI tests and few unit tests, is a well-known, common failure mode that produces a slow, flaky, expensive-to-maintain suite for the amount of actual confidence it provides."
+
+**Code:**
+
+```text
+                    /\
+                   /  \      UI / End-to-End tests  — FEW, slow, broad, most flake-prone
+                  /----\
+                 /      \    Integration / API tests — SOME, covered earlier in this guide
+                /--------\
+               /          \  Unit tests             — MANY, fast, cheap, precise failure signal
+              /____________\
+
+Anti-pattern — the "ice cream cone" (inverted pyramid):
+              ______________
+              \            /  MANY slow, flaky UI tests
+               \----------/
+                \        /    some integration tests
+                 \------/
+                  \    /      FEW unit tests
+                   \  /
+                    \/
+```
+
+**Follow-up:**
+
+I'd mention that the pyramid is a *shape guideline*, not a rigid ratio to enforce mechanically — the right proportions genuinely differ by system, since a UI-heavy consumer product legitimately needs more UI coverage than a pure backend API, but the underlying principle, push a check down to the cheapest, fastest, most stable layer that can actually verify it, holds regardless of the exact ratio, and it's the same underlying reasoning covered from the mocking-vs-Testcontainers angle later in this guide.
+
+**Source:** [Martin Fowler — TestPyramid](https://martinfowler.com/bliki/TestPyramid.html)
+
+---
+
 ## Staff Level — Scenario-Based Testing
 
-### 16. How Would You Test a Service That Calls an External Payment Gateway?
+### 30. How Would You Test a Service That Calls an External Payment Gateway?
 
 **Answer:**
 
@@ -642,7 +1176,7 @@ I'd bring up **contract testing** as the more scalable answer once this pattern 
 
 ---
 
-### 17. How Would You Test an `@Async` Method or a Scheduled Task?
+### 31. How Would You Test an `@Async` Method or a Scheduled Task?
 
 **Answer:**
 
@@ -688,7 +1222,7 @@ I'd mention Awaitility as the right tool for the genuinely harder case — an as
 
 ---
 
-### 18. How Would You Test a Kafka Producer/Consumer?
+### 32. How Would You Test a Kafka Producer/Consumer?
 
 **Answer:**
 
@@ -734,7 +1268,7 @@ I'd flag ordering and partition-assignment specifics as the thing that's genuine
 
 ---
 
-### 19. How Would You Diagnose and Fix a Flaky Test?
+### 33. How Would You Diagnose and Fix a Flaky Test?
 
 **Answer:**
 
@@ -768,7 +1302,7 @@ I'd bring up the organizational discipline this points at, beyond the individual
 
 ---
 
-### 20. How Would You Test Code That Depends on the Current Time?
+### 34. How Would You Test Code That Depends on the Current Time?
 
 **Answer:**
 
@@ -815,7 +1349,7 @@ I'd mention that this same dependency-injection principle generalizes well beyon
 
 ---
 
-### 21. How Would You Manage Test Data for Integration Tests Against a Real Database?
+### 35. How Would You Manage Test Data for Integration Tests Against a Real Database?
 
 **Answer:**
 
@@ -854,7 +1388,7 @@ I'd bring up test data **builders**/factory methods as the practical tool for ke
 
 ---
 
-### 22. How Would You Decide Between Mocking a Dependency and Using Testcontainers for It?
+### 36. How Would You Decide Between Mocking a Dependency and Using Testcontainers for It?
 
 **Answer:**
 
@@ -882,7 +1416,7 @@ I'd give the concrete anti-pattern worth naming directly: mocking a database rep
 
 ---
 
-### 23. How Would You Design a Test Strategy for a Legacy Codebase With No Existing Tests?
+### 37. How Would You Design a Test Strategy for a Legacy Codebase With No Existing Tests?
 
 **Answer:**
 
@@ -914,7 +1448,7 @@ I'd bring up the "seam" concept (from Michael Feathers' *Working Effectively wit
 
 ---
 
-### 24. How Should Test Suites Be Structured and Run in CI to Avoid Becoming a Bottleneck?
+### 38. How Should Test Suites Be Structured and Run in CI to Avoid Becoming a Bottleneck?
 
 **Answer:**
 
@@ -942,6 +1476,135 @@ wait
 I'd bring up flaky-test quarantine as the practical policy worth having explicitly, tying directly back to the flaky-test question earlier in this guide: a known-flaky test should be tagged and *excluded* from the blocking gate (so it doesn't erode trust in CI by failing PRs for unrelated reasons) while remaining tracked and owned for an actual fix — the failure mode to avoid is either extreme: leaving a flaky test blocking merges (which trains people to ignore CI failures and re-run reflexively) or quietly deleting/disabling it forever with no tracking (which silently loses whatever real coverage it provided).
 
 **Source:** [Google Testing Blog — Test Sizes (Small/Medium/Large as a tiering model)](https://testing.googleblog.com/2010/12/test-sizes.html)
+
+---
+
+### 39. How Would You Design a Test Automation Framework from Scratch for a New Product?
+
+**Answer:**
+
+"I'd start from the test pyramid, covered earlier in this guide, as the shape I'm designing toward, then work through the concrete decisions layer by layer rather than starting with tooling choices. First, **structure and layering**: separate the framework into distinct, independently-runnable layers — unit, API, UI — each with its own execution-speed expectations and its own place in CI, covered from the Java/Spring angle later in this guide. Second, **the core abstractions**: a Page Object Model layer for UI, covered earlier in this guide, so locators live in one place, a dedicated API client layer wrapping REST Assured/HTTP calls so endpoint details aren't duplicated across every test, and shared test-data builders so tests aren't hand-constructing complex objects field by field. Third, **environment and data management**: how does a test get a clean, known environment and known data to run against — Testcontainers, covered from the Java/Spring angle earlier in this guide, for backing services, and a deliberate test-data strategy, seeded fixtures or an API-driven setup step, rather than relying on whatever happens to already be in a shared environment.
+
+I'd deliberately *not* try to build the full framework upfront before writing any real tests — I'd build the thinnest possible version of each layer against the first few real test cases, then extend the framework as genuinely new needs show up, the same incremental-seam-finding discipline covered in the legacy-codebase test strategy question later in this guide, just applied to greenfield framework design instead of retrofitting one onto existing code."
+
+**Code:**
+
+```text
+Framework structure, by layer:
+
+  /tests
+    /unit           — fast, no external deps, run on every commit
+    /api             — REST Assured-based, run against a deployed test environment
+    /ui               — Selenium + Page Object Model, run last, smallest count
+
+  /framework
+    /pages            — Page Object Model classes (one per UI page/component)
+    /api-clients       — one client class per API resource, wrapping REST Assured calls
+    /test-data          — builder classes with sensible defaults (anOrder().withSku("SKU-1").build())
+    /config              — environment configuration (base URLs, credentials, per-environment overrides)
+
+  Decision checklist, in order:
+    1. What are the FIRST 5-10 real test cases we actually need? Build only what THEY need.
+    2. How do tests get a clean environment/data? (Testcontainers for services, builders for data)
+    3. How do these layers plug into CI? (tiered stages, covered later in this guide)
+    4. What's the reporting/triage story when something fails? (screenshots on UI failure, structured logs)
+```
+
+**Follow-up:**
+
+I'd bring up reporting and triage-ability as the thing that's easy to underinvest in early and expensive to retrofit later: a UI test failure with no screenshot, no page source dump, and no clear failure message forces whoever's triaging to reproduce the failure locally just to understand what broke — building in automatic failure artifacts, a screenshot, the browser console log, a clear assertion message naming what was expected versus actual, from the very first test, rather than after the suite is already large, is a cheap decision early and a genuinely expensive one to add retroactively across hundreds of existing tests.
+
+**Source:** [Selenium — Official Documentation, Test Practices](https://www.selenium.dev/documentation/test_practices/encouraged/page_object_models/)
+
+---
+
+### 40. How Would You Diagnose a Flaky UI/Selenium Test, as Opposed to a Flaky Unit Test?
+
+**Answer:**
+
+"The general flaky-test diagnostic discipline covered earlier in this guide still applies — reproduce reliably, look for a timing, shared-state, or order-dependence cause — but UI automation has its own specific, additional failure modes worth checking first, since they're disproportionately common there compared to unit-test flakiness. The most common by far: **synchronization** — the test interacted with, or asserted on, an element before the page actually finished rendering or loading it, which is exactly what explicit waits, covered from the Selenium-basics angle earlier in this guide, exist to prevent; a suite still using fixed `Thread.sleep()` calls instead of `WebDriverWait`/`ExpectedConditions` is almost always going to be flaky under any real load or CI-runner slowness. Second: **environment or state pollution** — a previous test left the browser in an unexpected state, a modal still open, a cookie or session not cleared, which is the UI-specific version of the shared-state-independence problem covered earlier in this guide, just manifesting through browser/session state instead of application/database state. Third: **environment differences** — a test that passes locally but fails in CI, or vice versa, because of a different browser version, screen resolution, or headless-versus-headed rendering difference, which unit tests essentially never have to deal with at all.
+
+For genuinely hard-to-reproduce cases, I'd lean on the failure artifacts mentioned in the framework-design question earlier in this guide, a screenshot and page source captured automatically at the moment of failure, rather than trying to reproduce a UI-specific race condition purely by re-running the test locally, since local runs are often on a different machine, browser, or network profile than the CI environment where the flakiness actually showed up."
+
+**Code:**
+
+```java
+// The anti-pattern — a fixed sleep, guessing at "long enough":
+driver.findElement(By.id("submit")).click();
+Thread.sleep(2000); // flaky — sometimes not enough time, always wastes time when it IS enough
+WebElement confirmation = driver.findElement(By.className("confirmation"));
+
+// The fix — explicit wait, polling for the actual condition:
+driver.findElement(By.id("submit")).click();
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+WebElement confirmation = wait.until(
+    ExpectedConditions.visibilityOfElementLocated(By.className("confirmation"))
+);
+
+// Capturing failure artifacts automatically — invaluable for diagnosing failures
+// that only reproduce in CI, not locally:
+@AfterEach
+void captureArtifactsOnFailure(TestInfo testInfo) {
+    if (testFailed) {
+        File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+        // save alongside test report, named after testInfo.getDisplayName()
+    }
+}
+```
+
+**Follow-up:**
+
+I'd mention headless-versus-headed rendering differences specifically as a subtle, easy-to-miss category worth naming: a test suite run headless in CI can genuinely behave differently from the same suite run headed locally — element visibility calculations, viewport size defaults, some CSS/JS behavior tied to actual rendering — so when a test only fails in CI and never locally, checking whether the local reproduction is actually running in the same headless mode as CI is a fast, easy check to rule out before assuming the flakiness is something more subtle like a genuine race condition.
+
+**Source:** [Google Testing Blog — Flaky Tests at Google and How We Mitigate Them](https://testing.googleblog.com/2016/05/flaky-tests-at-google-and-how-we.html)
+
+---
+
+### 41. How Would You Approach Performance/Load Testing for a New API?
+
+**Answer:**
+
+"I'd start by getting explicit, quantified requirements before writing a single load test — 'is it fast enough' isn't answerable without knowing the target throughput in requests per second, acceptable latency, often expressed as p50/p95/p99 rather than just an average, since averages hide the tail latency users actually notice, and the expected concurrent-user scale — since without those numbers, a load test has no actual pass/fail criteria. With targets defined, I'd distinguish the different test types deliberately rather than running one generic 'load test': **load testing** verifies behavior at expected, realistic peak traffic; **stress testing** pushes well beyond that peak specifically to find the system's actual breaking point and how it fails, gracefully with backpressure and clear errors, or catastrophically; **soak testing** runs a sustained, moderate load over a long duration specifically to catch slow degradation, such as a memory leak or a connection pool slowly exhausting, that a short test wouldn't surface.
+
+Tool-wise, Apache JMeter, GUI-driven or scriptable and broadly language-agnostic since it works at the HTTP-protocol level, and Gatling, Scala-based and code-first, often preferred when load tests need to live alongside the codebase in version control, are the two most common choices for this — either works; the tool matters far less than having quantified targets and testing all three of load, stress, and soak, not just one 'happy path at expected traffic' scenario."
+
+**Code:**
+
+```text
+Performance testing types, each answering a different question:
+
+  LOAD TEST   — "Does it meet its SLA at EXPECTED peak traffic?"
+    -> ramp to target RPS, hold for a representative duration, verify p95/p99 latency stays within SLA
+
+  STRESS TEST — "Where does it actually BREAK, and how gracefully?"
+    -> ramp well past expected peak until errors/latency spike; verify it degrades gracefully
+       (clear 503s with backpressure) rather than catastrophically (cascading failure, data corruption)
+
+  SOAK TEST   — "Does it degrade over TIME under sustained load?"
+    -> moderate, realistic load held for hours, watching for memory growth, connection pool exhaustion,
+       or slowly increasing latency that a short test would never catch
+```
+
+```groovy
+// Gatling — a load-test scenario, code-first
+class OrderApiSimulation extends Simulation {
+  val httpProtocol = http.baseUrl("https://api.example.com")
+
+  val scn = scenario("Get Order")
+    .exec(http("get_order").get("/orders/123").check(status.is(200)))
+
+  setUp(
+    scn.inject(rampUsersPerSec(10) to 200 during (2 minutes)) // ramp to target load
+  ).protocols(httpProtocol)
+   .assertions(global.responseTime.percentile3.lt(300)) // p95 under 300ms — the actual SLA target
+}
+```
+
+**Follow-up:**
+
+I'd bring up test-environment fidelity as the caveat worth stating explicitly in a staff-level answer: a load test run against an undersized staging environment — fewer instances, a smaller database, no CDN in front — can produce numbers that don't actually predict production behavior at all, either falsely reassuring, since staging happens to handle the load fine because traffic is artificially low elsewhere, or falsely alarming, since staging chokes at a load production's larger fleet would handle easily — for genuinely high-stakes launches, running load tests against a production-like environment, or carefully against a controlled slice of real production traffic, is worth the extra setup cost specifically to avoid that gap between what was tested and what actually ships.
+
+**Source:** [Apache JMeter — Official Documentation](https://jmeter.apache.org/)
 
 ---
 
@@ -973,3 +1636,10 @@ I'd bring up flaky-test quarantine as the practical policy worth having explicit
 | Google Testing Blog — Flaky Tests at Google | https://testing.googleblog.com/2016/05/flaky-tests-at-google-and-how-we.html |
 | Google Testing Blog — Test Sizes | https://testing.googleblog.com/2010/12/test-sizes.html |
 | Michael Feathers — *Working Effectively with Legacy Code* | https://www.oreilly.com/library/view/working-effectively-with/0131177052/ |
+| ISTQB Certified Tester Foundation Level (CTFL) Syllabus v4.0.1 | https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf |
+| REST Assured — Official Documentation | https://rest-assured.io/ |
+| Selenium — Official Documentation, WebDriver Locators | https://www.selenium.dev/documentation/webdriver/elements/locators/ |
+| Selenium — Official Documentation, Page Object Models | https://www.selenium.dev/documentation/test_practices/encouraged/page_object_models/ |
+| Cucumber — Official Gherkin Reference | https://cucumber.io/docs/gherkin/ |
+| Martin Fowler — TestPyramid | https://martinfowler.com/bliki/TestPyramid.html |
+| Apache JMeter — Official Documentation | https://jmeter.apache.org/ |

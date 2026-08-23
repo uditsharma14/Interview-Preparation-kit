@@ -1,6 +1,6 @@
 # System Design & AI Engineering Reading List
 
-> A curated list of external articles, videos, and engineering-blog write-ups — not this repo's own Q&A guides. These are pointers for background reading and case-study depth; none of the accuracy/citation policy in [`CONTRIBUTING.md`](../CONTRIBUTING.md) applies to third-party content, and links here aren't checked against the same "primary source" bar as a guide's own `Source:` lines. **Last added:** 2026-08-22.
+> A curated list of external articles, videos, and engineering-blog write-ups — not InterviewSmith's own Q&A guides. These are pointers for background reading and case-study depth; none of the accuracy/citation policy in [`CONTRIBUTING.md`](../CONTRIBUTING.md) applies to third-party content, and links here aren't checked against the same "primary source" bar as a guide's own `Source:` lines. **Last added:** 2026-08-22.
 
 Use this alongside the deep-dive guides in [System Design](../System%20Design/) and [AI Engineering](../AI%20Engineering/) — those guides teach the concepts in interview-answer form; this list is where to go for extra depth, real-world write-ups from the companies that built these systems, or a different explanation if a guide's isn't clicking.
 

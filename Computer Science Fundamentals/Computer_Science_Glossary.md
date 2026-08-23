@@ -2,7 +2,7 @@
 
 > **Purpose:** a fast, scannable glossary of 200 core CS/software-engineering terms — 2–3 lines each, not full interview answers. **Last verified:** 2026-08-23.
 
-How to use this: this is deliberately a **glossary, not a guide** — no code, no Follow-up, no per-term citation, just a quick, accurate definition to jog your memory or fill a gap before an interview. Where a term already has real interview-depth treatment elsewhere in this kit, the entry ends with a *See:* pointer — follow it for the version-scoped, staff-level version of the same topic. Terms are grouped by theme in roughly the order a CS curriculum introduces them, not alphabetically, since related terms are easier to hold in your head together.
+How to use this: this is deliberately a **glossary, not a guide** — no code, no Follow-up, no per-term citation, just a quick, accurate definition to jog your memory or fill a gap before an interview. Where a term already has real interview-depth treatment elsewhere in InterviewSmith, the entry ends with a *See:* pointer — follow it for the version-scoped, staff-level version of the same topic. Terms are grouped by theme in roughly the order a CS curriculum introduces them, not alphabetically, since related terms are easier to hold in your head together.
 
 <!-- toc -->
 ## Table of Contents

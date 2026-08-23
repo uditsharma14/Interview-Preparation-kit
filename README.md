@@ -1,12 +1,21 @@
-# Interview Preparation Kit
+<p align="center">
+  <img src="assets/logo.png" alt="InterviewSmith" width="440">
+</p>
 
-*Deep-dive, mid-to-staff-level interview prep — written to be said out loud, not skimmed.*
+<h1 align="center">InterviewSmith</h1>
+<p align="center"><em>The deep-dive, mid-to-staff-level interview prep kit — written to be said out loud, not skimmed.</em></p>
+<p align="center">
+  <a href="https://github.com/uditsharma14/Interview-Preparation-kit/actions/workflows/docs-check.yml"><img src="https://github.com/uditsharma14/Interview-Preparation-kit/actions/workflows/docs-check.yml/badge.svg" alt="Docs check"></a>
+  <img alt="Guides" src="https://img.shields.io/badge/guides-17-orange">
+  <img alt="Q&A entries" src="https://img.shields.io/badge/Q%26A%20entries-550%2B-orange">
+  <img alt="License" src="https://img.shields.io/badge/license-all--rights--reserved-lightgrey">
+</p>
 
-[![Docs check](https://github.com/uditsharma14/Interview-Preparation-kit/actions/workflows/docs-check.yml/badge.svg)](https://github.com/uditsharma14/Interview-Preparation-kit/actions/workflows/docs-check.yml) — every push and PR runs markdown linting, internal-link/anchor validation, and external-citation link-checking automatically ([`.github/workflows/docs-check.yml`](.github/workflows/docs-check.yml)); a monthly scheduled run catches link rot that happens independent of any edit.
+Every push and PR runs markdown linting, internal-link/anchor validation, and external-citation link-checking automatically ([`.github/workflows/docs-check.yml`](.github/workflows/docs-check.yml)); a monthly scheduled run catches link rot that happens independent of any edit.
 
-Most interview prep falls into one of two failure modes: too shallow (a one-line flashcard answer that falls apart the moment an interviewer asks "why," or "what breaks at scale"), or too scattered (a folder of half-finished notes, bookmarked blog posts, and old Stack Overflow tabs with no coherent throughline). This kit tries to be neither — **17 in-depth guides, 530+ Q&A entries, and a 200-term glossary**, each guide written as a set of Q&A pairs: the answer phrased the way it would actually be said out loud in an interview, backed by a code snippet, and a pointer to where staff-level follow-up questions tend to go. Several of the language/framework guides are explicitly graduated from Basic through Staff, so the same guide works whether you're building the fundamentals for the first time or refreshing the deep end the night before a Staff-level loop.
+You don't walk into a Staff-level loop and get asked to define a `HashMap`. You get asked why it breaks under concurrent writes, what happens when the load factor tips, and what you'd actually do about it at 2 a.m. Most interview prep can't survive that follow-up — a one-line flashcard answer collapses the moment someone asks "why," and a folder of half-finished notes and old Stack Overflow tabs has no throughline to begin with. InterviewSmith is built to survive the follow-up: **17 in-depth guides, 550+ Q&A entries, and a 200-term glossary**, each question answered the way you'd actually say it out loud, backed by a runnable code snippet, and closed out with exactly where a Staff-level interviewer pushes next. Several of the language/framework guides are explicitly graduated from Basic through Staff, so the same guide works whether you're building the fundamentals for the first time or forging the deep end the night before a Staff-level loop.
 
-This repository optimizes for **accuracy over question count**. Every guide has undergone an initial audit against primary sources — Oracle/OpenJDK specs, Spring/Hibernate/Kafka/Redis/Kubernetes documentation, IETF RFCs. See [`AUDIT.md`](AUDIT.md) for the review status of each guide and every finding (fixed or still open), and [`CONTRIBUTING.md`](CONTRIBUTING.md) for the citation/accuracy policy new material has to meet. Version-sensitive and production-specific claims should still be verified against the linked documentation before you repeat them in an interview — and if you find one that's wrong or stale, that's exactly what `AUDIT.md` and the contribution policy exist to fix.
+InterviewSmith optimizes for **accuracy over question count**. Every guide has undergone an initial audit against primary sources — Oracle/OpenJDK specs, Spring/Hibernate/Kafka/Redis/Kubernetes documentation, IETF RFCs. See [`AUDIT.md`](AUDIT.md) for the review status of each guide and every finding (fixed or still open), and [`CONTRIBUTING.md`](CONTRIBUTING.md) for the citation/accuracy policy new material has to meet. Version-sensitive and production-specific claims should still be verified against the linked documentation before you repeat them in an interview — and if you find one that's wrong or stale, that's exactly what `AUDIT.md` and the contribution policy exist to fix.
 
 ## Contents
 
@@ -22,7 +31,7 @@ This repository optimizes for **accuracy over question count**. Every guide has 
 
 ## Who this is for
 
-Current interview loops for **Full Stack**, **Forward Deployed**, and **Staff** engineering roles overlap a lot but weight things differently — these three are the loops this kit was actually built against, chosen because they cover the widest realistic spread (a Full Stack loop leans toward breadth and applied fundamentals, a Forward Deployed loop leans toward ambiguity and delivery under real-world constraints, and a Staff loop leans toward depth and architectural judgment). Here's what's covered today versus still a gap, per role, so you know where to spend time:
+Current interview loops for **Full Stack**, **Forward Deployed**, and **Staff** engineering roles overlap a lot but weight things differently — these three are the loops InterviewSmith was actually built against, chosen because they cover the widest realistic spread (a Full Stack loop leans toward breadth and applied fundamentals, a Forward Deployed loop leans toward ambiguity and delivery under real-world constraints, and a Staff loop leans toward depth and architectural judgment). Here's what's covered today versus still a gap, per role, so you know where to spend time:
 
 | Role | What their loop leans on | Covered here | Still a gap |
 |---|---|---|---|
@@ -40,8 +49,8 @@ The guides build on each other — each one's header states its own prerequisite
 
 0. **[Computer Science Fundamentals](Computer%20Science%20Fundamentals/Computer_Science_Fundamentals_Interview_Prep.md)** — genuinely optional if HTTP, TCP/UDP, DNS, encryption, and Big-O are already second nature; every other guide assumes this vocabulary without re-explaining it, so it's the right place to start if any of those terms aren't fully solid.
 1. **[Java Collections](Language/Java_Collections_Interview_Prep.md) → [Java Concurrency](Language/Java_Concurrency_Interview_Prep.md) → [Java JVM & GC](Language/Java_JVM_GC_Interview_Prep.md)** — language fundamentals everything else assumes.
-2. **[Spring Boot Internals](Frameworks/Spring_Boot_Internals_Interview_Prep.md) → [Spring Security & OAuth2](Frameworks/Spring_Security_OAuth2_Interview_Prep.md) → [JPA & Hibernate](Frameworks/JPA_Hibernate_Interview_Prep.md)** — the framework layer most of the code examples elsewhere in the kit use.
-3. **[Software Testing](Testing/Software_Testing_Interview_Prep.md)** — assumes Spring Boot Internals (and JPA & Hibernate for the `@DataJpaTest`/Testcontainers questions); read right after the Frameworks guides while `@SpringBootTest`/`@WebMvcTest` context is fresh.
+2. **[Spring Boot Internals](Frameworks/Spring_Boot_Internals_Interview_Prep.md) → [Spring Security & OAuth2](Frameworks/Spring_Security_OAuth2_Interview_Prep.md) → [JPA & Hibernate](Frameworks/JPA_Hibernate_Interview_Prep.md)** — the framework layer most of the code examples elsewhere in InterviewSmith use.
+3. **[Software Testing](Testing/Software_Testing_Interview_Prep.md)** — its Basic section (testing fundamentals, types of testing, defect life cycle) needs no prerequisite and could be read anytime; from the JUnit/Mockito content onward it assumes Spring Boot Internals (and JPA & Hibernate for the `@DataJpaTest`/Testcontainers questions), so it's placed here to read right after the Frameworks guides while `@SpringBootTest`/`@WebMvcTest` context is fresh.
 4. **[Transactions](System%20Design/Transactions_Interview_Prep.md) → [Kafka](System%20Design/Kafka_Interview_Prep.md) → [Redis & Caching](System%20Design/Redis_Caching_Interview_Prep.md) → [REST API Design](System%20Design/REST_API_Design_Interview_Prep.md)** — Transactions first: its dual-write-problem and outbox-pattern framing gets reused directly by the Kafka and Redis guides.
 5. **[Microservices & Architecture Patterns](Microservices%20%26%20Architecture%20Patterns/Microservices_Architecture_Patterns_Interview_Prep.md)** — assumes the Transactions (sagas, 2PC), REST API Design, and Redis/Kafka guides above.
 6. **[Cross-Stack Design Scenarios](System%20Design/Cross_Stack_Design_Scenarios_Interview_Prep.md)** — deliberately last among the technical guides; every scenario draws on several of the guides above at once, the way a real Staff-level system-design round actually does.
@@ -60,7 +69,7 @@ The guides build on each other — each one's header states its own prerequisite
 | [Spring Boot Internals](Frameworks/Spring_Boot_Internals_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. The Intermediate section onward assumes the Basic section's `@Component`/`@Autowired` familiarity. |
 | [Spring Security & OAuth2](Frameworks/Spring_Security_OAuth2_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. Assumes Spring Boot Internals for the Basic section. |
 | [JPA & Hibernate](Frameworks/JPA_Hibernate_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. Assumes Spring Boot Internals and basic SQL for the Basic section. |
-| [Software Testing](Testing/Software_Testing_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff (scenario-based). Assumes Spring Boot Internals; the Intermediate/Staff sections lean on JPA & Hibernate for the `@DataJpaTest`/Testcontainers questions. |
+| [Software Testing](Testing/Software_Testing_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff (scenario-based). The Basic section opens with testing fundamentals/types of testing (no prerequisite) before moving into JUnit/Mockito, which assumes Spring Boot Internals; the Intermediate section also covers SDET automation tooling (Selenium, API testing, BDD/Cucumber), and the Staff section leans on JPA & Hibernate for the `@DataJpaTest`/Testcontainers questions. |
 | [Transactions](System%20Design/Transactions_Interview_Prep.md) | Staff | Assumes basic SQL. |
 | [Kafka](System%20Design/Kafka_Interview_Prep.md) | Staff | Assumes basic messaging/pub-sub concepts. |
 | [Redis & Caching](System%20Design/Redis_Caching_Interview_Prep.md) | Staff | Assumes basic Redis commands. |
@@ -71,7 +80,7 @@ The guides build on each other — each one's header states its own prerequisite
 | [AI Engineering](AI%20Engineering/AI_Engineering_Interview_Prep.md) | Staff | Assumes general backend engineering; fastest-moving guide in the repo — check its "last verified" date. |
 | [Tech Leadership](Tech%20Leadership/Engineering_Leadership_Interview_Prep.md) | Staff | Not technology-specific; no technical prerequisite, but most useful after the technical guides. |
 
-Most of this kit is genuinely Staff-scoped by design — see [Who this is for](#who-this-is-for) above for where the *entry points* (Computer Science Fundamentals in full; the Basic tiers of Java Collections, Java Concurrency, Java JVM & GC, Spring Boot Internals, Spring Security & OAuth2, JPA & Hibernate, and Software Testing; Kubernetes' Basic tier) are more accessible.
+Most of InterviewSmith is genuinely Staff-scoped by design — see [Who this is for](#who-this-is-for) above for where the *entry points* (Computer Science Fundamentals in full; the Basic tiers of Java Collections, Java Concurrency, Java JVM & GC, Spring Boot Internals, Spring Security & OAuth2, JPA & Hibernate, and Software Testing; Kubernetes' Basic tier) are more accessible.
 
 ## Quick-revision path
 
@@ -122,7 +131,7 @@ Spring and JPA/Hibernate — how the framework itself works under the hood.
 
 Testing-framework mechanics and scenario-based testing strategy, organized as its own graduated guide rather than folded into the Frameworks section.
 
-- **[Software Testing Interview Prep](Testing/Software_Testing_Interview_Prep.md)** — Graduated Basic → Staff: JUnit annotations, assertions, the AAA pattern, and mock/stub/spy basics through `@ParameterizedTest`, `@SpringBootTest`/`@WebMvcTest`/`@DataJpaTest`, `MockMvc`, and Testcontainers, to Staff-level scenario-based questions — testing an external payment gateway, `@Async`/scheduled tasks, Kafka producers/consumers, diagnosing flaky tests, time-dependent code, and structuring test suites in CI.
+- **[Software Testing Interview Prep](Testing/Software_Testing_Interview_Prep.md)** — Graduated Basic → Staff, written for SDET and QA roles as much as backend engineers: testing fundamentals and terminology (verification vs. validation, STLC, test plan/strategy/case, functional vs. non-functional, black/white/gray-box, smoke/sanity/regression, manual vs. automation, the defect life cycle and severity vs. priority) and JUnit/Mockito basics, through `@ParameterizedTest`, Spring Boot test slices, `MockMvc`, Testcontainers, and SDET automation tooling — API testing, Selenium WebDriver, the Page Object Model, BDD/Cucumber, data- vs. keyword-driven testing, and the test automation pyramid — to Staff-level scenario-based questions covering an external payment gateway, `@Async`/scheduled tasks, Kafka producers/consumers, flaky tests (both unit and UI/Selenium), time-dependent code, designing an automation framework from scratch, performance/load testing, and structuring test suites in CI.
 
 ### System Design
 
@@ -167,7 +176,7 @@ Lead/Staff-level judgment, influence, and organizational impact — not technolo
 
 ### Further Reading
 
-External articles, videos, and engineering-blog write-ups — not this repo's own Q&A guides, and not held to the same primary-source citation bar (see the note at the top of the list itself).
+External articles, videos, and engineering-blog write-ups — not InterviewSmith's own Q&A guides, and not held to the same primary-source citation bar (see the note at the top of the list itself).
 
 - **[System Design & AI Engineering Reading List](Further%20Reading/System_Design_and_AI_Reading_List.md)** — System design deep-dive articles, 26 classic system-design write-ups by category (rate limiters, key-value stores, chat systems, payments, and more), AI agent video courses, AI engineering core concepts, real-world system design case studies from 16 companies' engineering blogs, and 20 foundational system design concepts.
 
@@ -178,13 +187,13 @@ Every question in every guide follows the same shape — deliberately, so once y
 1. **Answer** — a conversational, interview-ready explanation, phrased the way it would actually be said out loud, roughly 30–90 seconds if spoken. This is the part you should be able to recite cold.
 2. **Code** — a snippet, config, SQL, sketch, or decision framework/template to back the explanation up (compilable code where practical; clearly labeled pseudocode/conceptual where not). Useful both as a whiteboard prop and as a way to sanity-check that the Answer's claims actually hold up in real code.
 3. **Follow-up** — the deeper probe that separates a mid-level answer from a Staff-level one: failure modes, trade-offs, what breaks at scale. This is where an interviewer's "okay, but what if..." actually goes, so it's worth reading even for questions you already feel solid on.
-4. **Source** — the authoritative reference(s) for the important claims made in that question, so you're never just trusting this kit's paraphrase.
+4. **Source** — the authoritative reference(s) for the important claims made in that question, so you're never just trusting InterviewSmith's paraphrase.
 
 A rollout to a more granular five-part structure (Core answer / Staff-level extension / Example / Follow-up questions / Sources — same underlying content, but with the deeper trade-off material explicitly pulled out of the core spoken answer rather than folded into one long paragraph) is in progress guide by guide — see [`AUDIT.md`](AUDIT.md) for which guides have migrated so far and which still use the four-part shape above.
 
 ## Accuracy and contribution policy
 
-This kit is deliberately not optimizing for question count. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full policy — in short: primary sources over memory, version-scoped claims, no unscoped "always"/"never"/"guaranteed"/"exactly once," no fabricated production experience, and no AI-conversation artifacts. [`AUDIT.md`](AUDIT.md) tracks the review status of every guide and every known issue found so far, fixed or still open.
+InterviewSmith is deliberately not optimizing for question count. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full policy — in short: primary sources over memory, version-scoped claims, no unscoped "always"/"never"/"guaranteed"/"exactly once," no fabricated production experience, and no AI-conversation artifacts. [`AUDIT.md`](AUDIT.md) tracks the review status of every guide and every known issue found so far, fixed or still open.
 
 ## License
 

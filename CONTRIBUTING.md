@@ -1,13 +1,13 @@
 # Contributing
 
-This repository's value is its accuracy. A wrong answer memorized before a
+InterviewSmith's value is its accuracy. A wrong answer memorized before a
 Staff-level interview is worse than no answer — it gets confidently repeated
 in the room. Everything below exists to keep that from happening.
 
 ## Before you submit anything
 
 Read `AUDIT.md` first. It tracks the verification status of every guide and
-the known-issues list this repo has already been through one full pass to
+the known-issues list InterviewSmith has already been through one full pass to
 fix. If you're proposing a change to a guide marked "Verified" there, say
 which finding you're addressing (or that you found a new one) so the audit
 log stays accurate.
@@ -23,7 +23,7 @@ log stays accurate.
    bottom of the file in a way that could apply to anything. Every question
    ends with a `**Source:**` line; if you add a claim that needs one, add or
    extend that line.
-3. **Prefer primary sources.** In order of preference for this repo's usual
+3. **Prefer primary sources.** In order of preference for InterviewSmith's usual
    topics:
    - Oracle/OpenJDK specifications, Javadocs, and JEPs
    - Spring, Spring Boot, Spring Security, and Hibernate/Jakarta Persistence
@@ -99,7 +99,7 @@ cross-referencing an existing question over re-explaining the same
 mechanism twice. If you find a duplicate while reviewing, consolidate it and
 note the consolidation in your commit message.
 
-This repository is not trying to have the largest possible number of
+InterviewSmith is not trying to have the largest possible number of
 questions. A question that doesn't help evaluate Staff-level judgment —
 pure trivia, a rephrasing of an existing question, or something that
 doesn't come up in real loops — is a candidate for removal, not padding.
@@ -108,7 +108,7 @@ doesn't come up in real loops — is a candidate for removal, not padding.
 
 Small, topic-scoped commits with a message that says what was wrong, what's
 correct now, and (for a factual fix) what source verified it — see the git
-log for the pattern this repo already follows, e.g.:
+log for the pattern InterviewSmith already follows, e.g.:
 
 ```text
 fix(kafka): clarify idempotent-producer scope (per-partition, not single-partition-only)
@@ -134,7 +134,7 @@ one.
 
 ## Licensing
 
-This repository does not yet have a license file. Until the owner chooses
+InterviewSmith does not yet have a license file. Until the owner chooses
 one, treat all content as "all rights reserved" by default — don't
 redistribute it elsewhere or assume permissive reuse. See the README's
 License section for the options recommended to the owner.

@@ -38,6 +38,18 @@ MD032: false
 # GFM table style already used consistently throughout this repo.
 MD060: false
 
+# The README's centered logo/badge banner needs a handful of layout tags
+# (raw markdown image syntax can't be centered or sized). Scoped to just
+# those elements rather than disabling the rule outright, so a stray <div>
+# or <script> dropped into a guide by mistake still gets flagged.
+MD033:
+  allowed_elements:
+    - p
+    - img
+    - h1
+    - a
+    - em
+
 # markdownlint's own MD051 anchor-fragment validator has verified false
 # positives on a couple of TOC entries in this repo (headings combining an
 # inline-code span with a "/" or em dash, e.g. "...CrashLoopBackOff` /

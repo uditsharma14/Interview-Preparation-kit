@@ -1,8 +1,8 @@
 # Cross-Stack Staff-Level Design Scenarios — Interview Prep (with Code & Sources)
 
-> **Target level:** Staff · **Baseline:** inherits the baseline of whichever guide each scenario draws on (Java, Spring Boot, Spring Security, JPA, Transactions, Redis, Kafka, REST API Design — see each file's own header) · **Last verified:** 2026-08-22 · **Prerequisites:** the rest of this kit — these scenarios deliberately assume it
+> **Target level:** Staff · **Baseline:** inherits the baseline of whichever guide each scenario draws on (Java, Spring Boot, Spring Security, JPA, Transactions, Redis, Kafka, REST API Design — see each file's own header) · **Last verified:** 2026-08-22 · **Prerequisites:** the rest of InterviewSmith — these scenarios deliberately assume it
 
-How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **sketch/diagram or checklist** you could draw on a whiteboard to back it up, and **where the follow-up goes if you're in a Staff-level loop** — these scenarios deliberately span the other files in this kit (Java, Spring, Security, JPA, Transactions, Redis, Kafka, REST API Design), because that's exactly how they show up in a real Staff-level interview: as one messy, cross-cutting problem, not a single-topic question.
+How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **sketch/diagram or checklist** you could draw on a whiteboard to back it up, and **where the follow-up goes if you're in a Staff-level loop** — these scenarios deliberately span the other files in InterviewSmith (Java, Spring, Security, JPA, Transactions, Redis, Kafka, REST API Design), because that's exactly how they show up in a real Staff-level interview: as one messy, cross-cutting problem, not a single-topic question.
 
 <!-- toc -->
 ## Table of Contents

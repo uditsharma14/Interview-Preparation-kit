@@ -1,8 +1,8 @@
 # Computer Science Fundamentals — Interview Prep (Basic Level, with Code & Sources)
 
-> **Target level:** Basic (foundational — no graduation to Staff in this guide; see "How to use this" below) · **Baseline:** HTTP semantics per RFC 9110, TLS 1.3 per RFC 8446, DNS per RFC 1035 · **Last verified:** 2026-08-23 · **Prerequisites:** none — this is the foundational layer the rest of this kit assumes
+> **Target level:** Basic (foundational — no graduation to Staff in this guide; see "How to use this" below) · **Baseline:** HTTP semantics per RFC 9110, TLS 1.3 per RFC 8446, DNS per RFC 1035 · **Last verified:** 2026-08-23 · **Prerequisites:** none — this is the foundational layer the rest of InterviewSmith assumes
 
-How to use this: unlike most guides in this kit, this one is deliberately **Basic-only** — networking, security, and general CS terminology genuinely foundational enough that every other guide here assumes it without re-explaining it. If a term in another guide (TLS, symmetric encryption, TCP, Big-O) isn't landing, it's worth checking here first. Each question has **the answer the way I'd actually say it out loud**, a **code/diagram snippet** to back it up, and a **Follow-up** pointing to where the *real* depth on that topic lives elsewhere in this kit — this guide intentionally stays shallow so those other guides don't have to re-teach the basics every time.
+How to use this: unlike most guides in InterviewSmith, this one is deliberately **Basic-only** — networking, security, and general CS terminology genuinely foundational enough that every other guide here assumes it without re-explaining it. If a term in another guide (TLS, symmetric encryption, TCP, Big-O) isn't landing, it's worth checking here first. Each question has **the answer the way I'd actually say it out loud**, a **code/diagram snippet** to back it up, and a **Follow-up** pointing to where the *real* depth on that topic lives elsewhere in InterviewSmith — this guide intentionally stays shallow so those other guides don't have to re-teach the basics every time.
 
 <!-- toc -->
 ## Table of Contents
@@ -77,7 +77,7 @@ UDP: -> datagram 1 (delivered)
 
 **Follow-up:**
 
-I'd mention that most application-layer protocols this kit covers are built on TCP — HTTP, and therefore essentially every REST API and web request in the [REST API Design guide](../System%20Design/REST_API_Design_Interview_Prep.md), rides on TCP specifically because losing or reordering part of an API response would be unacceptable. UDP shows up more in specialized cases: DNS (covered next) uses UDP for its typically-small queries (falling back to TCP for larger responses), and QUIC — the transport HTTP/3 is built on, covered later in this guide — is UDP-based despite HTTP/3 still needing reliability, because QUIC reimplements reliability *itself* on top of UDP rather than using TCP, specifically to fix a TCP limitation covered in the HTTP/3 question.
+I'd mention that most application-layer protocols InterviewSmith covers are built on TCP — HTTP, and therefore essentially every REST API and web request in the [REST API Design guide](../System%20Design/REST_API_Design_Interview_Prep.md), rides on TCP specifically because losing or reordering part of an API response would be unacceptable. UDP shows up more in specialized cases: DNS (covered next) uses UDP for its typically-small queries (falling back to TCP for larger responses), and QUIC — the transport HTTP/3 is built on, covered later in this guide — is UDP-based despite HTTP/3 still needing reliability, because QUIC reimplements reliability *itself* on top of UDP rather than using TCP, specifically to fix a TCP limitation covered in the HTTP/3 question.
 
 **Source:** [RFC 9293 — Transmission Control Protocol (TCP)](https://datatracker.ietf.org/doc/html/rfc9293), [RFC 768 — User Datagram Protocol](https://datatracker.ietf.org/doc/html/rfc768)
 
@@ -286,7 +286,7 @@ Content-Length: 47                            <- HEADER: "the body is 47 bytes"
 
 **Follow-up:**
 
-I'd mention that headers are exactly where a lot of the mechanisms covered elsewhere in this kit actually live — idempotency keys, rate-limit signals (`RateLimit-Remaining`), `ETag`/`If-Match` for optimistic concurrency, `Deprecation`/`Sunset` for API lifecycle management, all covered in depth in the [REST API Design guide](../System%20Design/REST_API_Design_Interview_Prep.md) — headers are the standard, HTTP-native place to carry structured metadata that intermediaries (caches, gateways, proxies) can act on without needing to parse and understand the request/response body at all.
+I'd mention that headers are exactly where a lot of the mechanisms covered elsewhere in InterviewSmith actually live — idempotency keys, rate-limit signals (`RateLimit-Remaining`), `ETag`/`If-Match` for optimistic concurrency, `Deprecation`/`Sunset` for API lifecycle management, all covered in depth in the [REST API Design guide](../System%20Design/REST_API_Design_Interview_Prep.md) — headers are the standard, HTTP-native place to carry structured metadata that intermediaries (caches, gateways, proxies) can act on without needing to parse and understand the request/response body at all.
 
 **Source:** [RFC 9110 §6 — Message Content](https://datatracker.ietf.org/doc/html/rfc9110#section-6), [RFC 9110 §5 — Field Values (Headers)](https://datatracker.ietf.org/doc/html/rfc9110#section-5)
 
@@ -450,7 +450,7 @@ for (Item a : items) {
 
 **Follow-up:**
 
-I'd connect this directly to concrete examples elsewhere in this kit rather than leaving it purely abstract — the [Java Collections guide](../Language/Java_Collections_Interview_Prep.md) covers exactly this kind of trade-off repeatedly and concretely (`ArrayList.get()` is O(1), `LinkedList.get()` is O(n); `HashMap` operations are O(1) average, `TreeMap` operations are O(log n)) — and I'd mention that Big-O specifically describes the *worst case* (or sometimes average case, depending on context) asymptotic behavior, not a guarantee about any single specific run, which is why two algorithms with the same Big-O complexity can still have meaningfully different real-world performance due to constant factors Big-O deliberately ignores.
+I'd connect this directly to concrete examples elsewhere in InterviewSmith rather than leaving it purely abstract — the [Java Collections guide](../Language/Java_Collections_Interview_Prep.md) covers exactly this kind of trade-off repeatedly and concretely (`ArrayList.get()` is O(1), `LinkedList.get()` is O(n); `HashMap` operations are O(1) average, `TreeMap` operations are O(log n)) — and I'd mention that Big-O specifically describes the *worst case* (or sometimes average case, depending on context) asymptotic behavior, not a guarantee about any single specific run, which is why two algorithms with the same Big-O complexity can still have meaningfully different real-world performance due to constant factors Big-O deliberately ignores.
 
 **Source:** [MIT OpenCourseWare — Introduction to Algorithms, Asymptotic Notation](https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/)
 
@@ -555,7 +555,7 @@ I'd flag "stack" specifically as overloaded terminology worth being precise abou
 
 "Both are data structures built from **nodes** connected by **edges**, but a tree is a specific, more constrained kind of graph. A **tree** has exactly one root node, every other node has exactly one parent, there's exactly one path between any two nodes, and — critically — it has no cycles (you can't follow edges and end up back where you started). A **graph** is the more general structure: nodes can connect to any number of other nodes in any pattern, cycles are allowed, and there's no requirement of a single root or a unique path between any two nodes at all.
 
-Put differently: every tree is technically a graph (a constrained, cycle-free, single-rooted one), but most graphs are not trees. Trees show up constantly in this kit — `TreeMap`/`TreeSet`'s red-black tree (covered in the [Java Collections guide](../Language/Java_Collections_Interview_Prep.md)), a database's B-tree index (covered later in this guide) — while graphs model genuinely many-to-many relationships: a social network's connections, a service-dependency map in a microservices architecture, or the entity-relationship graph a `@ManyToMany` mapping represents (covered in the [JPA & Hibernate guide](../Frameworks/JPA_Hibernate_Interview_Prep.md))."
+Put differently: every tree is technically a graph (a constrained, cycle-free, single-rooted one), but most graphs are not trees. Trees show up constantly in InterviewSmith — `TreeMap`/`TreeSet`'s red-black tree (covered in the [Java Collections guide](../Language/Java_Collections_Interview_Prep.md)), a database's B-tree index (covered later in this guide) — while graphs model genuinely many-to-many relationships: a social network's connections, a service-dependency map in a microservices architecture, or the entity-relationship graph a `@ManyToMany` mapping represents (covered in the [JPA & Hibernate guide](../Frameworks/JPA_Hibernate_Interview_Prep.md))."
 
 **Code:**
 
@@ -653,7 +653,7 @@ s.area(); // calls Circle's area() — determined by the ACTUAL object type, not
 
 **Follow-up:**
 
-I'd connect this directly to where these pillars show up throughout the rest of this kit rather than leaving them purely theoretical: Spring's dependency injection (covered in the [Spring Boot Internals guide](../Frameworks/Spring_Boot_Internals_Interview_Prep.md)) leans heavily on polymorphism and abstraction — injecting a class against an *interface* type, with the concrete implementation swappable, is exactly the "program to the abstraction, not the implementation" principle these pillars enable; and `equals()`/`hashCode()` overriding, covered in the [Java Collections guide](../Language/Java_Collections_Interview_Prep.md), is a direct, everyday application of polymorphism — a collection calling `equals()` on an object gets whatever behavior that object's *actual* class defines, not `Object`'s default.
+I'd connect this directly to where these pillars show up throughout the rest of InterviewSmith rather than leaving them purely theoretical: Spring's dependency injection (covered in the [Spring Boot Internals guide](../Frameworks/Spring_Boot_Internals_Interview_Prep.md)) leans heavily on polymorphism and abstraction — injecting a class against an *interface* type, with the concrete implementation swappable, is exactly the "program to the abstraction, not the implementation" principle these pillars enable; and `equals()`/`hashCode()` overriding, covered in the [Java Collections guide](../Language/Java_Collections_Interview_Prep.md), is a direct, everyday application of polymorphism — a collection calling `equals()` on an object gets whatever behavior that object's *actual* class defines, not `Object`'s default.
 
 **Source:** [Oracle Java Tutorials — Object-Oriented Programming Concepts](https://docs.oracle.com/javase/tutorial/java/concepts/index.html), [Oracle Java Tutorials — Polymorphism](https://docs.oracle.com/javase/tutorial/java/IandI/polymorphism.html)
 
@@ -778,7 +778,7 @@ Process B's virtual address space:
 
 **Follow-up:**
 
-I'd tie this directly to a concrete failure mode covered elsewhere in this kit: when a containerized JVM's memory footprint (heap plus metaspace plus thread stacks plus everything else, covered in the [Java JVM & GC guide](../Language/Java_JVM_GC_Interview_Prep.md)) exceeds the container's memory limit, the container runtime's OOM killer terminates the process — that's a *cgroup*-enforced limit sitting on top of this virtual-memory system, a genuinely different mechanism from the OS swapping individual pages to disk under normal memory pressure, worth not conflating: a container getting OOM-killed isn't the OS "running out of virtual memory," it's the container's own configured resource limit being exceeded.
+I'd tie this directly to a concrete failure mode covered elsewhere in InterviewSmith: when a containerized JVM's memory footprint (heap plus metaspace plus thread stacks plus everything else, covered in the [Java JVM & GC guide](../Language/Java_JVM_GC_Interview_Prep.md)) exceeds the container's memory limit, the container runtime's OOM killer terminates the process — that's a *cgroup*-enforced limit sitting on top of this virtual-memory system, a genuinely different mechanism from the OS swapping individual pages to disk under normal memory pressure, worth not conflating: a container getting OOM-killed isn't the OS "running out of virtual memory," it's the container's own configured resource limit being exceeded.
 
 **Source:** [Operating Systems: Three Easy Pieces — Paging chapters](https://pages.cs.wisc.edu/~remzi/OSTEP/)
 
