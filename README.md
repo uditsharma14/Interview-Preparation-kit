@@ -53,10 +53,10 @@ The guides build on each other — each one's header states its own prerequisite
 |---|---|---|
 | [Java Collections](Language/Java_Collections_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. The Intermediate section onward assumes `equals()`/`hashCode()` basics; escalates to production leak diagnosis. |
 | [Java Concurrency](Language/Java_Concurrency_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. The Intermediate section onward assumes Collections. |
-| [Java JVM & GC](Language/Java_JVM_GC_Interview_Prep.md) | Staff | Assumes Collections and Concurrency for some sections. |
-| [Spring Boot Internals](Frameworks/Spring_Boot_Internals_Interview_Prep.md) | Staff | Assumes basic Spring (`@Component`/`@Autowired`). |
-| [Spring Security & OAuth2](Frameworks/Spring_Security_OAuth2_Interview_Prep.md) | Staff | Assumes Spring Boot Internals. |
-| [JPA & Hibernate](Frameworks/JPA_Hibernate_Interview_Prep.md) | Staff | Assumes Spring Boot Internals, basic SQL. |
+| [Java JVM & GC](Language/Java_JVM_GC_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. The Staff-level section assumes Collections and Concurrency for some parts. |
+| [Spring Boot Internals](Frameworks/Spring_Boot_Internals_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. The Intermediate section onward assumes the Basic section's `@Component`/`@Autowired` familiarity. |
+| [Spring Security & OAuth2](Frameworks/Spring_Security_OAuth2_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. Assumes Spring Boot Internals for the Basic section. |
+| [JPA & Hibernate](Frameworks/JPA_Hibernate_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. Assumes Spring Boot Internals and basic SQL for the Basic section. |
 | [Transactions](System%20Design/Transactions_Interview_Prep.md) | Staff | Assumes basic SQL. |
 | [Kafka](System%20Design/Kafka_Interview_Prep.md) | Staff | Assumes basic messaging/pub-sub concepts. |
 | [Redis & Caching](System%20Design/Redis_Caching_Interview_Prep.md) | Staff | Assumes basic Redis commands. |
@@ -67,7 +67,7 @@ The guides build on each other — each one's header states its own prerequisite
 | [AI Engineering](AI%20Engineering/AI_Engineering_Interview_Prep.md) | Staff | Assumes general backend engineering; fastest-moving guide in the repo — check its "last verified" date. |
 | [Tech Leadership](Tech%20Leadership/Engineering_Leadership_Interview_Prep.md) | Staff | Not technology-specific; no technical prerequisite, but most useful after the technical guides. |
 
-Most of this kit is genuinely Staff-scoped by design — see [Who this is for](#who-this-is-for) above for where the *entry points* (Java Collections' and Java Concurrency's Basic tiers, Kubernetes' Basic tier) are more accessible.
+Most of this kit is genuinely Staff-scoped by design — see [Who this is for](#who-this-is-for) above for where the *entry points* (the Basic tiers of Java Collections, Java Concurrency, Java JVM & GC, Spring Boot Internals, Spring Security & OAuth2, and JPA & Hibernate; Kubernetes' Basic tier) are more accessible.
 
 ## Quick-revision path
 
@@ -97,15 +97,15 @@ Pure Java runtime/language topics — no framework involved.
 
 - **[Java Collections Interview Prep](Language/Java_Collections_Interview_Prep.md)** — Graduated Basic → Staff: core interfaces, `equals()`/`hashCode()`, and `Comparable`/`Comparator` basics through `HashMap`/`TreeMap`/`LinkedHashMap` internals, concurrent collections, boxed-collection costs, and production leak diagnosis.
 - **[Java Concurrency Interview Prep](Language/Java_Concurrency_Interview_Prep.md)** — Graduated Basic → Staff: threads, `synchronized`, and deadlock basics through `ExecutorService`/coordination primitives to visibility/atomicity/ordering, lock comparisons, virtual threads, `ForkJoinPool`, the ABA problem, and structured concurrency.
-- **[Java JVM & GC Interview Prep](Language/Java_JVM_GC_Interview_Prep.md)** — Memory areas, JIT/escape analysis, reference types, G1/ZGC/Shenandoah, container OOM-kills, and native memory.
+- **[Java JVM & GC Interview Prep](Language/Java_JVM_GC_Interview_Prep.md)** — Graduated Basic → Staff: JVM/JDK/JRE, stack vs. heap, GC basics, and generational-heap fundamentals through memory areas, JIT/escape analysis, reference types, G1/ZGC/Shenandoah, container OOM-kills, and native memory.
 
 ### Frameworks
 
 Spring and JPA/Hibernate — how the framework itself works under the hood.
 
-- **[Spring Boot Internals Interview Prep](Frameworks/Spring_Boot_Internals_Interview_Prep.md)** — `SpringApplication.run()` internals, bean lifecycle, auto-configuration, AOP proxies and self-invocation, graceful shutdown, and execution models.
-- **[Spring Security & OAuth2 Interview Prep](Frameworks/Spring_Security_OAuth2_Interview_Prep.md)** — Filter chain architecture, CSRF/CORS, OAuth2 flows and PKCE, JWT validation and key rotation, token storage, BOLA, and multi-tenant authorization.
-- **[JPA & Hibernate Interview Prep](Frameworks/JPA_Hibernate_Interview_Prep.md)** — Entity lifecycle, dirty checking and flushing, N+1 diagnosis and fixes, fetch strategies, optimistic/pessimistic locking, ID generation and batching, and DTO boundaries.
+- **[Spring Boot Internals Interview Prep](Frameworks/Spring_Boot_Internals_Interview_Prep.md)** — Graduated Basic → Staff: DI/IoC and bean basics, stereotype annotations, and Spring Boot vs. Framework through `SpringApplication.run()` internals, bean lifecycle, auto-configuration, AOP proxies and self-invocation, graceful shutdown, and execution models.
+- **[Spring Security & OAuth2 Interview Prep](Frameworks/Spring_Security_OAuth2_Interview_Prep.md)** — Graduated Basic → Staff: `UserDetailsService`, password hashing, RBAC, and JWT structure basics through filter chain architecture, CSRF/CORS, OAuth2 flows and PKCE, JWT validation and key rotation, token storage, BOLA, and multi-tenant authorization.
+- **[JPA & Hibernate Interview Prep](Frameworks/JPA_Hibernate_Interview_Prep.md)** — Graduated Basic → Staff: ORM/JPA/Hibernate basics, entity/repository fundamentals, and relationship annotations through entity lifecycle, dirty checking and flushing, N+1 diagnosis and fixes, fetch strategies, optimistic/pessimistic locking, ID generation and batching, and DTO boundaries.
 
 ### System Design
 

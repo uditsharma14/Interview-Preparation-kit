@@ -1,53 +1,447 @@
-# Spring Security & OAuth2 — Interview Prep (Lead/Staff Level, with Code & Sources)
+# Spring Security & OAuth2 — Interview Prep, Basic to Staff Level (with Code & Sources)
 
-> **Target level:** Lead/Staff · **Baseline:** Spring Security 6.x (`SecurityFilterChain` bean-based configuration), Spring Boot 3.x, OAuth 2.0 / OpenID Connect · **Last verified:** 2026-08-22 · **Prerequisites:** [Spring Boot Internals](Spring_Boot_Internals_Interview_Prep.md)
+> **Target level:** Basic → Staff (graduated — see below) · **Baseline:** Spring Security 6.x (`SecurityFilterChain` bean-based configuration), Spring Boot 3.x, OAuth 2.0 / OpenID Connect · **Last verified:** 2026-08-23 · **Prerequisites:** [Spring Boot Internals](Spring_Boot_Internals_Interview_Prep.md) for the Basic section; the Intermediate section onward assumes the Basic section's authentication/authorization fundamentals
 
-How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining the actual security model and its failure modes, not naming annotations.
+How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining the actual security model and its failure modes, not naming annotations. Questions are grouped by level (Basic → Intermediate → Staff) so you can calibrate depth to the interview you're prepping for; the later sections assume the earlier ones as background and don't re-explain them.
 
 <!-- toc -->
 ## Table of Contents
 
-- [1. Explain the Spring Security Filter Chain From Request Entry to Authorization](#1-explain-the-spring-security-filter-chain-from-request-entry-to-authorization)
-- [2. How Are Authentication and Authorization Different?](#2-how-are-authentication-and-authorization-different)
-- [3. Explain `SecurityContext`, `Authentication`, `GrantedAuthority`, and `AuthenticationProvider`](#3-explain-securitycontext-authentication-grantedauthority-and-authenticationprovider)
-- [4. How Does Spring Choose Among Multiple `SecurityFilterChain` Beans?](#4-how-does-spring-choose-among-multiple-securityfilterchain-beans)
-- [5. What Is the Difference Between Request-Level and Method-Level Authorization?](#5-what-is-the-difference-between-request-level-and-method-level-authorization)
-- [6. Why Does Method-Security Self-Invocation Cause Problems?](#6-why-does-method-security-self-invocation-cause-problems)
-- [7. When Should CSRF Protection Be Enabled or Disabled?](#7-when-should-csrf-protection-be-enabled-or-disabled)
-- [8. Compare CORS and CSRF. Why Does Configuring One Not Solve the Other?](#8-compare-cors-and-csrf-why-does-configuring-one-not-solve-the-other)
-- [9. Compare Session-Based Authentication and Bearer-Token Authentication](#9-compare-session-based-authentication-and-bearer-token-authentication)
-- [10. Explain OAuth 2.0 Authorization-Code Flow With PKCE](#10-explain-oauth-20-authorization-code-flow-with-pkce)
-- [11. Why Is the Resource-Owner Password Flow Deprecated?](#11-why-is-the-resource-owner-password-flow-deprecated)
-- [12. What Are the Roles of the Resource Owner, Client, Authorization Server, and Resource Server?](#12-what-are-the-roles-of-the-resource-owner-client-authorization-server-and-resource-server)
-- [13. Compare Access Tokens, Refresh Tokens, and ID Tokens](#13-compare-access-tokens-refresh-tokens-and-id-tokens)
-- [14. What Is the Difference Between OAuth 2.0 and OpenID Connect?](#14-what-is-the-difference-between-oauth-20-and-openid-connect)
-- [15. Compare Opaque Tokens and JWT Access Tokens](#15-compare-opaque-tokens-and-jwt-access-tokens)
-- [16. How Does a Resource Server Validate a JWT?](#16-how-does-a-resource-server-validate-a-jwt)
-- [17. How Should Services Handle Signing-Key Rotation?](#17-how-should-services-handle-signing-key-rotation)
-- [18. What Are `iss`, `aud`, `exp`, `nbf`, `jti`, and `kid` Used For?](#18-what-are-iss-aud-exp-nbf-jti-and-kid-used-for)
-- [19. Why Is Revoking a JWT Difficult? What Strategies Are Available?](#19-why-is-revoking-a-jwt-difficult-what-strategies-are-available)
-- [20. Where Should Tokens Be Stored in a Browser Application?](#20-where-should-tokens-be-stored-in-a-browser-application)
-- [21. How Do Refresh-Token Rotation and Reuse Detection Work?](#21-how-do-refresh-token-rotation-and-reuse-detection-work)
-- [22. How Would You Secure Service-to-Service Communication?](#22-how-would-you-secure-service-to-service-communication)
-- [23. How Would You Model Scopes, Roles, Permissions, and Tenant Boundaries?](#23-how-would-you-model-scopes-roles-permissions-and-tenant-boundaries)
-- [24. How Do You Prevent Broken Object-Level Authorization?](#24-how-do-you-prevent-broken-object-level-authorization)
-- [25. How Should Authentication Context Propagate Through Asynchronous Processing?](#25-how-should-authentication-context-propagate-through-asynchronous-processing)
-- [26. How Would You Design Authorization for Kafka Consumers Where There Is No HTTP Request?](#26-how-would-you-design-authorization-for-kafka-consumers-where-there-is-no-http-request)
-- [27. How Do You Prevent Confused-Deputy Problems in Downstream Service Calls?](#27-how-do-you-prevent-confused-deputy-problems-in-downstream-service-calls)
-- [28. What Security Information Is Safe to Log?](#28-what-security-information-is-safe-to-log)
-- [29. How Would You Investigate Intermittent `401` Versus `403` Responses?](#29-how-would-you-investigate-intermittent-401-versus-403-responses)
-- [30. Design an Authentication and Authorization Architecture for a Multi-Tenant Platform](#30-design-an-authentication-and-authorization-architecture-for-a-multi-tenant-platform)
+- [Basic](#basic)
+  - [1. What Is Spring Security, and What Does `@EnableWebSecurity` Actually Do?](#1-what-is-spring-security-and-what-does-enablewebsecurity-actually-do)
+  - [2. What Is a `UserDetailsService`, and How Does Spring Security Use It?](#2-what-is-a-userdetailsservice-and-how-does-spring-security-use-it)
+  - [3. What's the Difference Between Basic Authentication and Form-Based Login?](#3-whats-the-difference-between-basic-authentication-and-form-based-login)
+  - [4. Why Does Spring Security Hash Passwords, and What Is `BCryptPasswordEncoder`?](#4-why-does-spring-security-hash-passwords-and-what-is-bcryptpasswordencoder)
+  - [5. What's the Difference Between a Cookie and a Session, Mechanically?](#5-whats-the-difference-between-a-cookie-and-a-session-mechanically)
+  - [6. What Is HTTPS/TLS, and Why Does It Matter for Authentication?](#6-what-is-httpstls-and-why-does-it-matter-for-authentication)
+  - [7. What Is Role-Based Access Control, and How Do You Express It With `@PreAuthorize`/`hasRole()`?](#7-what-is-role-based-access-control-and-how-do-you-express-it-with-preauthorizehasrole)
+- [Intermediate](#intermediate)
+  - [8. What's the Difference Between `hasRole()` and `hasAuthority()`?](#8-whats-the-difference-between-hasrole-and-hasauthority)
+  - [9. What Is a JWT, Structurally?](#9-what-is-a-jwt-structurally)
+  - [10. What Do `permitAll()`, `authenticated()`, and `denyAll()` Mean in a `SecurityFilterChain`?](#10-what-do-permitall-authenticated-and-denyall-mean-in-a-securityfilterchain)
+  - [11. What Is CSRF, at a Basic Level?](#11-what-is-csrf-at-a-basic-level)
+  - [12. What Does an `AuthenticationEntryPoint` Do When a Request Is Unauthenticated?](#12-what-does-an-authenticationentrypoint-do-when-a-request-is-unauthenticated)
+- [Staff Level](#staff-level)
+  - [13. Explain the Spring Security Filter Chain From Request Entry to Authorization](#13-explain-the-spring-security-filter-chain-from-request-entry-to-authorization)
+  - [14. How Are Authentication and Authorization Different?](#14-how-are-authentication-and-authorization-different)
+  - [15. Explain `SecurityContext`, `Authentication`, `GrantedAuthority`, and `AuthenticationProvider`](#15-explain-securitycontext-authentication-grantedauthority-and-authenticationprovider)
+  - [16. How Does Spring Choose Among Multiple `SecurityFilterChain` Beans?](#16-how-does-spring-choose-among-multiple-securityfilterchain-beans)
+  - [17. What Is the Difference Between Request-Level and Method-Level Authorization?](#17-what-is-the-difference-between-request-level-and-method-level-authorization)
+  - [18. Why Does Method-Security Self-Invocation Cause Problems?](#18-why-does-method-security-self-invocation-cause-problems)
+  - [19. When Should CSRF Protection Be Enabled or Disabled?](#19-when-should-csrf-protection-be-enabled-or-disabled)
+  - [20. Compare CORS and CSRF. Why Does Configuring One Not Solve the Other?](#20-compare-cors-and-csrf-why-does-configuring-one-not-solve-the-other)
+  - [21. Compare Session-Based Authentication and Bearer-Token Authentication](#21-compare-session-based-authentication-and-bearer-token-authentication)
+  - [22. Explain OAuth 2.0 Authorization-Code Flow With PKCE](#22-explain-oauth-20-authorization-code-flow-with-pkce)
+  - [23. Why Is the Resource-Owner Password Flow Deprecated?](#23-why-is-the-resource-owner-password-flow-deprecated)
+  - [24. What Are the Roles of the Resource Owner, Client, Authorization Server, and Resource Server?](#24-what-are-the-roles-of-the-resource-owner-client-authorization-server-and-resource-server)
+  - [25. Compare Access Tokens, Refresh Tokens, and ID Tokens](#25-compare-access-tokens-refresh-tokens-and-id-tokens)
+  - [26. What Is the Difference Between OAuth 2.0 and OpenID Connect?](#26-what-is-the-difference-between-oauth-20-and-openid-connect)
+  - [27. Compare Opaque Tokens and JWT Access Tokens](#27-compare-opaque-tokens-and-jwt-access-tokens)
+  - [28. How Does a Resource Server Validate a JWT?](#28-how-does-a-resource-server-validate-a-jwt)
+  - [29. How Should Services Handle Signing-Key Rotation?](#29-how-should-services-handle-signing-key-rotation)
+  - [30. What Are `iss`, `aud`, `exp`, `nbf`, `jti`, and `kid` Used For?](#30-what-are-iss-aud-exp-nbf-jti-and-kid-used-for)
+  - [31. Why Is Revoking a JWT Difficult? What Strategies Are Available?](#31-why-is-revoking-a-jwt-difficult-what-strategies-are-available)
+  - [32. Where Should Tokens Be Stored in a Browser Application?](#32-where-should-tokens-be-stored-in-a-browser-application)
+  - [33. How Do Refresh-Token Rotation and Reuse Detection Work?](#33-how-do-refresh-token-rotation-and-reuse-detection-work)
+  - [34. How Would You Secure Service-to-Service Communication?](#34-how-would-you-secure-service-to-service-communication)
+  - [35. How Would You Model Scopes, Roles, Permissions, and Tenant Boundaries?](#35-how-would-you-model-scopes-roles-permissions-and-tenant-boundaries)
+  - [36. How Do You Prevent Broken Object-Level Authorization?](#36-how-do-you-prevent-broken-object-level-authorization)
+  - [37. How Should Authentication Context Propagate Through Asynchronous Processing?](#37-how-should-authentication-context-propagate-through-asynchronous-processing)
+  - [38. How Would You Design Authorization for Kafka Consumers Where There Is No HTTP Request?](#38-how-would-you-design-authorization-for-kafka-consumers-where-there-is-no-http-request)
+  - [39. How Do You Prevent Confused-Deputy Problems in Downstream Service Calls?](#39-how-do-you-prevent-confused-deputy-problems-in-downstream-service-calls)
+  - [40. What Security Information Is Safe to Log?](#40-what-security-information-is-safe-to-log)
+  - [41. How Would You Investigate Intermittent `401` Versus `403` Responses?](#41-how-would-you-investigate-intermittent-401-versus-403-responses)
+  - [42. Design an Authentication and Authorization Architecture for a Multi-Tenant Platform](#42-design-an-authentication-and-authorization-architecture-for-a-multi-tenant-platform)
 - [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
 
 <!-- /toc -->
 
 ---
 
-## 1. Explain the Spring Security Filter Chain From Request Entry to Authorization
+## Basic
+
+### 1. What Is Spring Security, and What Does `@EnableWebSecurity` Actually Do?
 
 **Answer:**
 
-"Every request to a Spring Security-protected application passes through a chain of servlet filters *before* it ever reaches your controller, wired in via a single `DelegatingFilterProxy` registered with the servlet container, which itself delegates to Spring's `FilterChainProxy` — the actual entry point into Spring Security. `FilterChainProxy` picks the matching `SecurityFilterChain` for the request (question 4) and runs its ordered list of filters.
+"Spring Security is Spring's framework for authentication (confirming who a caller is) and authorization (deciding what they're allowed to do) — implemented primarily as a chain of servlet filters that intercept every incoming HTTP request before it reaches application code, covered in depth later in this guide. In modern Spring Boot (2.x+), adding the `spring-boot-starter-security` dependency already activates Spring Security with sensible defaults (every endpoint requires authentication, a generated login form, a randomly-generated default password logged at startup) — `@EnableWebSecurity` isn't strictly required to turn security on at all in a Boot application; its real job is signaling that you're providing **custom** security configuration (your own `SecurityFilterChain` bean) rather than accepting the auto-configured defaults, and it ensures Spring MVC integration hooks (like resolving `Authentication` as a controller method argument) are wired up correctly.
+
+The actual security rules — which endpoints require authentication, what login mechanism to use — are configured via a `SecurityFilterChain` `@Bean`, covered next, not via `@EnableWebSecurity` itself."
+
+**Code:**
+
+```java
+// Spring Boot 3.x — @EnableWebSecurity is often implicit via auto-configuration once
+// spring-boot-starter-security is on the classpath, but explicit custom config looks like this:
+@Configuration
+@EnableWebSecurity // signals: custom security config follows, don't just use the defaults
+class SecurityConfig {
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests(auth -> auth
+                .requestMatchers("/public/**").permitAll()
+                .anyRequest().authenticated());
+        return http.build();
+    }
+}
+```
+
+**Follow-up:**
+
+I'd mention that just adding the security starter dependency, with zero configuration at all, is a genuinely reasonable way to quickly verify Spring Security is active during initial setup — every endpoint immediately requires authentication, which confirms the filter chain is running — but it's never a production configuration on its own: real applications almost always need a custom `SecurityFilterChain` to express which endpoints are actually public, which authentication mechanism to use, and how authorization should work, which is exactly what the rest of this guide covers.
+
+**Source:** [Spring Security Reference — Getting Started](https://docs.spring.io/spring-security/reference/servlet/getting-started.html)
+
+---
+
+### 2. What Is a `UserDetailsService`, and How Does Spring Security Use It?
+
+**Answer:**
+
+"`UserDetailsService` is the interface Spring Security uses to load a user's credentials and authorities given a username — a single method, `loadUserByUsername(String username)`, that returns a `UserDetails` object containing the username, the (hashed) password, and the user's granted authorities/roles. During username/password authentication, `DaoAuthenticationProvider` calls this method to fetch the stored user record, then compares the submitted password (after hashing it) against the stored hash — `UserDetailsService` itself doesn't do the password comparison; it's purely responsible for *retrieving* the user's data from wherever it actually lives (a database, an LDAP directory, an in-memory list for testing).
+
+In a real application, you provide your own `UserDetailsService` implementation backed by your actual user store (typically a Spring Data repository querying a `users` table) — Spring Security ships a couple of basic implementations (in-memory, JDBC-based) mainly useful for prototyping or testing, not production use with a real user base."
+
+**Code:**
+
+```java
+@Component
+class DatabaseUserDetailsService implements UserDetailsService {
+    private final UserRepository userRepository;
+
+    DatabaseUserDetailsService(UserRepository userRepository) { this.userRepository = userRepository; }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new UsernameNotFoundException("No user: " + username));
+        return org.springframework.security.core.userdetails.User
+            .withUsername(user.getUsername())
+            .password(user.getHashedPassword()) // already hashed — never store or return plaintext
+            .authorities(user.getRoles())
+            .build();
+    }
+}
+```
+
+**Follow-up:**
+
+I'd flag that `UserDetailsService` is specifically tied to the username/password authentication flow — it has no role at all in OAuth2/JWT-based authentication, where the resource server validates a token issued by a separate authorization server instead of looking up credentials locally; conflating the two (expecting `UserDetailsService` to somehow be involved in JWT validation) is a common early-learning confusion worth being precise about, since they're genuinely separate authentication mechanisms covered in different parts of this guide.
+
+**Source:** [Spring Security Reference — `UserDetailsService`](https://docs.spring.io/spring-security/reference/servlet/authentication/passwords/user-details-service.html)
+
+---
+
+### 3. What's the Difference Between Basic Authentication and Form-Based Login?
+
+**Answer:**
+
+"**HTTP Basic authentication** sends credentials on *every single request*, base64-encoded (not encrypted — base64 is trivially reversible, so this absolutely requires HTTPS) in the `Authorization: Basic <credentials>` header, and the browser's own built-in credential prompt handles collecting them, with no custom login page involved. It's stateless (no server-side session needed) and simple, which makes it a reasonable fit for machine-to-machine or API-client scenarios, but a poor fit for a real end-user-facing web application, since there's no real 'log out' (the browser just keeps resending the cached credentials) and the built-in browser prompt is not customizable at all.
+
+**Form-based login** presents a proper HTML login form, and on successful submission, the server creates a session (or issues a token) and typically sets a session cookie — subsequent requests carry the session identifier instead of resending the raw credentials every time. This is the standard pattern for browser-based end-user applications, since it supports a real logout, a customizable UI, and doesn't require re-sending the password on every single request."
+
+**Code:**
+
+```java
+// Basic Auth — credentials on EVERY request, base64-encoded (NOT encrypted)
+http.httpBasic(Customizer.withDefaults());
+// curl -u username:password https://api.example.com/orders
+// -> Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=  (trivially decodable — HTTPS is mandatory)
+
+// Form login — credentials submitted ONCE, then a session cookie carries subsequent requests
+http.formLogin(form -> form.loginPage("/login").permitAll());
+```
+
+**Follow-up:**
+
+I'd mention that both of these are increasingly the "legacy" pattern for anything beyond a simple internal tool or a quick API-client integration — modern applications, especially anything with a separate frontend/mobile client or third-party integrations, lean toward OAuth2/OpenID Connect and bearer tokens instead, covered in depth later in this guide, specifically because token-based auth decouples the authentication mechanism from the resource server and supports delegated access (a third-party app acting on a user's behalf) in a way neither Basic Auth nor traditional session-based form login was designed for.
+
+**Source:** [Spring Security Reference — Basic Authentication](https://docs.spring.io/spring-security/reference/servlet/authentication/passwords/basic.html), [Spring Security Reference — Form Login](https://docs.spring.io/spring-security/reference/servlet/authentication/passwords/form.html)
+
+---
+
+### 4. Why Does Spring Security Hash Passwords, and What Is `BCryptPasswordEncoder`?
+
+**Answer:**
+
+"Storing a password in plaintext means anyone with database access — an attacker who breaches it, a rogue insider, a misconfigured backup — has every user's actual password immediately, and since people reuse passwords across services, that single breach compromises accounts on entirely unrelated systems too. Hashing transforms the password into a one-way-derived value: given the hash, you can't feasibly recover the original password, but you *can* verify a later login attempt by hashing the submitted password the same way and comparing.
+
+`BCryptPasswordEncoder` is Spring Security's standard implementation of a **deliberately slow**, salted hashing algorithm (bcrypt) — 'slow' is the actual point, not a flaw: a fast hash (plain SHA-256, for instance) lets an attacker who steals the hash database try billions of password guesses per second on cheap hardware, while bcrypt's deliberate computational cost (tunable via its 'strength'/work-factor parameter) makes brute-forcing dramatically more expensive, without meaningfully slowing down the one legitimate hash-and-compare operation a real login performs. bcrypt also automatically generates and embeds a random salt per password, so two users with the identical password get completely different stored hashes, defeating precomputed rainbow-table attacks."
+
+**Code:**
+
+```java
+@Bean
+PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder(); // default strength (work factor) of 10
+}
+
+// Registering a new user — HASH before storing, never store the raw password:
+String hashed = passwordEncoder.encode(rawPassword);
+userRepository.save(new User(username, hashed));
+
+// Verifying a login attempt — compare, don't decrypt (bcrypt hashes can't be reversed):
+boolean matches = passwordEncoder.matches(submittedPassword, storedHash);
+```
+
+**Follow-up:**
+
+I'd bring up why a fast general-purpose hash function (MD5, SHA-256 alone) is specifically the wrong tool for passwords, even though it's a perfectly good hash for other purposes (checksums, content-addressing) — those are deliberately optimized to be *fast*, which is exactly the property that makes brute-forcing cheap once an attacker has the hash database; bcrypt (and similar purpose-built password-hashing algorithms like Argon2 or PBKDF2) are deliberately slow and tunable specifically to counter that, which is the whole reason a dedicated password-hashing library exists as a distinct category from general-purpose hashing.
+
+**Source:** [`BCryptPasswordEncoder` Javadoc](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/crypto/bcrypt/BCryptPasswordEncoder.html), [Spring Security Reference — Password Storage](https://docs.spring.io/spring-security/reference/features/authentication/password-storage.html)
+
+---
+
+### 5. What's the Difference Between a Cookie and a Session, Mechanically?
+
+**Answer:**
+
+"A **cookie** is just a small piece of data the server asks the browser to store (via a `Set-Cookie` response header) and automatically send back on every subsequent request to that domain (via a `Cookie` request header) — the browser handles the storage and resending mechanically; the cookie's *content* can be literally anything the server puts in it. A **session** is a server-side concept: a chunk of state the server keeps associated with a particular client, most commonly a `HttpSession` object holding whatever the application stored in it (logged-in user info, cart contents). The two are connected by convention, not by any inherent requirement: the standard pattern is that the server generates a random, unguessable session identifier, sends it to the browser *as a cookie* (`JSESSIONID` in a typical Java web app), and on each subsequent request, uses that cookie's value to look up the corresponding server-side session state.
+
+The cookie itself, by default, carries only the opaque session ID — not the actual session data — which is why losing or tampering with the cookie value just means the server can't find the corresponding session, not that any real user data was exposed in the cookie itself."
+
+**Code:**
+
+```http
+# Server creates a session, sends the ID back as a cookie
+Set-Cookie: JSESSIONID=A1B2C3D4E5F6; HttpOnly; Secure; SameSite=Lax
+
+# Browser automatically resends it on every subsequent request to this domain
+GET /orders HTTP/1.1
+Cookie: JSESSIONID=A1B2C3D4E5F6
+# Server looks up session A1B2C3D4E5F6 server-side to find "who is this, are they logged in"
+```
+
+**Follow-up:**
+
+I'd flag that this "session ID in a cookie, actual data server-side" split has a real operational implication at scale: server-side sessions have to live *somewhere* accessible to whichever server instance handles the next request, which means either sticky sessions (routing a given user's requests consistently to the same server instance) or a shared session store (Redis being the common choice) — this is exactly the trade-off that motivates stateless, token-based authentication (covered later in this guide) for horizontally-scaled services, since a self-contained token needs no server-side session lookup at all.
+
+**Source:** [MDN — HTTP Cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies), [`HttpSession` Javadoc](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/http/httpsession)
+
+---
+
+### 6. What Is HTTPS/TLS, and Why Does It Matter for Authentication?
+
+**Answer:**
+
+"TLS (Transport Layer Security, the modern successor to SSL) encrypts the data traveling between client and server, and HTTPS is simply HTTP running over a TLS connection instead of a plain, unencrypted TCP connection. Without it, everything sent in a request — including an `Authorization` header, a session cookie, form-submitted login credentials — travels across the network as plaintext, readable by anyone positioned to intercept the traffic (a compromised network device, a malicious actor on the same public Wi-Fi, an ISP).
+
+This is exactly why every authentication mechanism covered in this guide — Basic Auth, form login, bearer tokens — depends on HTTPS as a hard prerequisite, not an optional hardening step: encoding (base64) or hashing credentials doesn't protect them in transit the way encryption does, and even a bearer token, which looks 'random,' is fully usable by anyone who intercepts it in plaintext transit, with no need to crack anything at all."
+
+**Code:**
+
+```text
+Without TLS: GET /login HTTP/1.1
+             Authorization: Basic dXNlcjpwYXNzd29yZA==
+             -- travels as PLAINTEXT bytes on the wire, trivially readable by an interceptor --
+
+With TLS:    the entire request (headers, body, URL path) is encrypted before leaving the client;
+             an interceptor sees only opaque encrypted bytes, not the actual header/credential content
+```
+
+**Follow-up:**
+
+I'd mention `Secure` and `HttpOnly` cookie flags as the practical, Spring-Security-adjacent detail worth knowing here: the `Secure` flag tells the browser to only ever send that cookie over an HTTPS connection, never plain HTTP, closing off a downgrade-style leak even if some part of the application accidentally serves an HTTP endpoint; `HttpOnly` (a separate, complementary flag) prevents JavaScript from reading the cookie at all, which is about XSS protection rather than transport security specifically — the two flags address different threats and are both worth setting on any sensitive cookie, covered again in the token-storage question later in this guide.
+
+**Source:** [MDN — Transport Layer Security](https://developer.mozilla.org/en-US/docs/Web/Security/Transport_Layer_Security)
+
+---
+
+### 7. What Is Role-Based Access Control, and How Do You Express It With `@PreAuthorize`/`hasRole()`?
+
+**Answer:**
+
+"Role-Based Access Control (RBAC) grants permissions based on a user's assigned **role** (`ADMIN`, `USER`, `MANAGER`) rather than checking permissions for each individual user one by one — a role is a named bundle of permissions, and a user is granted access to whatever their assigned role(s) allow, which scales far better than per-user permission management as the user base and feature set grow. In Spring Security, roles are represented as a specific kind of `GrantedAuthority` — by convention, prefixed with `ROLE_` (`ROLE_ADMIN`) — and can be checked declaratively at the method level via `@PreAuthorize(\"hasRole('ADMIN')\")`, which evaluates *before* the method runs and throws `AccessDeniedException` if the currently-authenticated user doesn't have that role, preventing the method body from executing at all for an unauthorized caller.
+
+Method-level authorization like this requires `@EnableMethodSecurity` to be active, and the underlying mechanism is a Spring AOP proxy wrapping the bean — the exact same proxying mechanism `@Transactional` uses, which is why it has the exact same self-invocation limitation, covered in depth later in this guide."
+
+**Code:**
+
+```java
+@Service
+class AdminService {
+    @PreAuthorize("hasRole('ADMIN')") // checks for the ROLE_ADMIN authority BEFORE the method runs
+    void deleteUser(Long userId) {
+        // this body never executes at all for a caller without ROLE_ADMIN —
+        // AccessDeniedException is thrown before the method is entered
+        userRepository.deleteById(userId);
+    }
+}
+```
+
+**Follow-up:**
+
+I'd mention that RBAC is a good default but has a real scaling limitation worth naming: it works well when permissions genuinely cluster into a handful of coarse roles, but breaks down for fine-grained, resource-specific authorization (\"can this specific user edit *this specific* order, but not someone else's\") — that's a different problem, object-level/attribute-based authorization, covered directly in the BOLA-prevention question later in this guide, and RBAC alone is explicitly not sufficient for it.
+
+**Source:** [Spring Security Reference — Authorization Architecture](https://docs.spring.io/spring-security/reference/servlet/authorization/architecture.html)
+
+---
+
+## Intermediate
+
+### 8. What's the Difference Between `hasRole()` and `hasAuthority()`?
+
+**Answer:**
+
+"Both check whether the currently-authenticated user has a specific `GrantedAuthority`, but `hasRole('ADMIN')` is specifically a convenience shortcut that automatically prepends the `ROLE_` prefix — it checks for the authority `ROLE_ADMIN`, not literally `ADMIN`. `hasAuthority('ROLE_ADMIN')` checks for the exact authority string you pass, with no automatic prefixing at all — you have to spell out `ROLE_` yourself if that's the convention your authorities actually use.
+
+This means `hasRole('ADMIN')` and `hasAuthority('ROLE_ADMIN')` are functionally identical when your authorities follow the standard `ROLE_` naming convention, but `hasAuthority()` is the more general, correct tool when checking a **non-role-shaped permission** — a fine-grained authority like `orders:write` or `reports:export` that isn't meant to represent a broad role at all and shouldn't be forced through the `ROLE_`-prefix convention just to use `hasRole()`."
+
+**Code:**
+
+```java
+// User has authority "ROLE_ADMIN" (the standard role-naming convention)
+@PreAuthorize("hasRole('ADMIN')")        // checks for "ROLE_ADMIN" — the prefix is added automatically
+void adminOnlyMethod() { /* ... */ }
+
+@PreAuthorize("hasAuthority('ROLE_ADMIN')") // functionally IDENTICAL — you spelled out ROLE_ yourself
+void sameCheckDifferentSyntax() { /* ... */ }
+
+// A fine-grained, non-role-shaped permission — hasAuthority() is the correct, direct tool here
+@PreAuthorize("hasAuthority('orders:write')") // NOT a "role" conceptually — hasRole() is the wrong fit
+void updateOrder() { /* ... */ }
+```
+
+**Follow-up:**
+
+I'd flag the mistake this distinction is meant to prevent: calling `hasRole('orders:write')` on a fine-grained permission actually checks for the authority `ROLE_orders:write` — the automatic prefixing silently produces a check that will never match the actual `orders:write` authority a user was granted, a subtle, quiet bug (the check just always fails, or worse, always seems to pass in a misconfigured test) that's easy to miss without knowing `hasRole()`'s prefixing behavior explicitly.
+
+**Source:** [Spring Security Reference — Authorization Expressions](https://docs.spring.io/spring-security/reference/servlet/authorization/method-security.html)
+
+---
+
+### 9. What Is a JWT, Structurally?
+
+**Answer:**
+
+"A JWT (JSON Web Token) is three base64url-encoded segments joined by dots: `header.payload.signature`. The **header** identifies the signing algorithm and token type (`{\"alg\":\"RS256\",\"typ\":\"JWT\"}`). The **payload** (also called claims) is a JSON object holding the actual data — who the token represents (`sub`), when it expires (`exp`), who issued it (`iss`), and any application-specific claims (roles, tenant ID) — covered in full depth later in this guide. The **signature** is computed over the header and payload using the issuer's private/secret key, and it's what a recipient verifies to confirm the token genuinely came from the claimed issuer and hasn't been tampered with since.
+
+The detail that trips people up constantly: base64url encoding is **not encryption** — anyone can decode a JWT's header and payload without any key at all (paste one into jwt.io and read it directly), so a JWT's contents are fully readable by anyone who has the token, even though its *authenticity* (that it wasn't forged or altered) is cryptographically protected by the signature. Never put a genuine secret (a raw password, a credit card number) directly in a JWT's claims — 'signed' means tamper-evident, not confidential."
+
+**Code:**
+
+```text
+JWT structure:  header.payload.signature
+
+eyJhbGciOiJSUzI1NiJ9  .  eyJzdWIiOiJhbGljZSIsImV4cCI6MTc...  .  MEUCIQD...
+     ^header (base64url)      ^payload/claims (base64url)         ^signature
+
+# Decoding the header/payload requires NO key at all — just base64url decoding:
+echo "eyJhbGciOiJSUzI1NiJ9" | base64 -d
+# {"alg":"RS256"}   <- readable by anyone with the token, no secret required
+
+# But COMPUTING a valid signature requires the issuer's private/secret key —
+# that's the part that actually can't be forged without it
+```
+
+**Follow-up:**
+
+I'd bring up the practical consequence directly: because the payload is fully readable without any key, a JWT should never be logged in full (application logs, error-tracking tools) without redaction, and should never be treated as a safe place to store anything a user shouldn't be able to read about their own token — this is exactly the setup for the resource-server-validation and claims-specific questions covered next in this guide, both of which assume this "signed, but not encrypted" structural understanding.
+
+**Source:** [RFC 7519 — JSON Web Token (JWT)](https://datatracker.ietf.org/doc/html/rfc7519)
+
+---
+
+### 10. What Do `permitAll()`, `authenticated()`, and `denyAll()` Mean in a `SecurityFilterChain`?
+
+**Answer:**
+
+"These are authorization rules applied to URL patterns inside `authorizeHttpRequests()`, evaluated in the order they're declared — the first matching rule for a given request wins, which is why ordering matters and a catch-all rule almost always goes last. `permitAll()` allows the request through with **no authentication check at all** — the right rule for genuinely public endpoints (a health check, a login page, static assets). `authenticated()` requires the request to come from a successfully authenticated principal, but doesn't check any specific role or authority — any logged-in user, regardless of role, passes. `denyAll()` rejects every request matching that pattern unconditionally, regardless of authentication state — useful for explicitly blocking a path (a deprecated internal endpoint, a path that should never be reachable directly) rather than leaving it to accidentally fall through to a more permissive default rule later in the chain.
+
+A typical configuration lists more specific rules first (`permitAll()` on `/public/**`, specific role checks on admin paths) and ends with a catch-all `anyRequest().authenticated()`, so anything not explicitly matched by an earlier, more specific rule still requires at least authentication by default — a secure-by-default posture, rather than accidentally leaving something unintentionally public."
+
+**Code:**
+
+```java
+http.authorizeHttpRequests(auth -> auth
+    .requestMatchers("/public/**", "/login").permitAll()      // no auth check at all
+    .requestMatchers("/internal/debug/**").denyAll()            // blocked unconditionally, always
+    .requestMatchers("/admin/**").hasRole("ADMIN")               // specific role required
+    .anyRequest().authenticated()                                 // catch-all: must be LOGGED IN, any role
+);
+// Order matters: rules are evaluated top-to-bottom, first match wins
+```
+
+**Follow-up:**
+
+I'd flag the ordering mistake this question is really testing: putting `anyRequest().authenticated()` *before* a more specific `permitAll()` rule for a public path means the catch-all matches first and the intended-to-be-public endpoint incorrectly requires authentication — Spring Security doesn't "prefer the more specific rule" automatically the way some routing frameworks do; it's strictly first-match-wins in declaration order, so specific rules genuinely must be declared before more general ones.
+
+**Source:** [Spring Security Reference — Authorize HTTP Requests](https://docs.spring.io/spring-security/reference/servlet/authorization/authorize-http-requests.html)
+
+---
+
+### 11. What Is CSRF, at a Basic Level?
+
+**Answer:**
+
+"CSRF (Cross-Site Request Forgery) exploits the fact that a browser automatically attaches a site's cookies (including a session cookie) to *any* request sent to that site — including a request triggered by a completely different, malicious website the victim happens to have open in another tab. If a user is logged into `bank.com` (has a valid session cookie for it) and then visits `evil.com`, which contains a hidden form or script that submits a request to `bank.com/transfer-funds`, the browser dutifully attaches the victim's real `bank.com` session cookie to that request — from the bank's server's perspective, it looks like a completely legitimate, authenticated request from that user, because the cookie genuinely is theirs, even though the *user* never actually intended to make that request at all.
+
+The core defense is a CSRF token: the server includes a random, unpredictable, per-session (or per-request) token in legitimate forms/pages it serves, and requires that exact token to be present and correct on any state-changing request — since `evil.com` has no way to read or predict that token (same-origin policy prevents it from reading the legitimate page's content), it can trigger a request with the victim's cookie attached, but can't supply the matching CSRF token, so the server rejects the forged request."
+
+**Code:**
+
+```html
+<!-- A legitimate form served by bank.com includes a CSRF token the server can verify -->
+<form action="/transfer-funds" method="post">
+    <input type="hidden" name="_csrf" value="a1b2c3d4-random-unpredictable-token"/>
+    <!-- ... -->
+</form>
+<!-- evil.com CANNOT read this token (same-origin policy blocks it from reading bank.com's
+     page content), so a forged request from evil.com is missing it and gets rejected -->
+```
+
+**Follow-up:**
+
+I'd mention that CSRF is specifically a **cookie-based-session** problem at its root — it exploits the browser's automatic cookie-attachment behavior — which is exactly why a pure bearer-token API (where the client explicitly attaches the token in an `Authorization` header via its own JavaScript code, rather than the browser doing it automatically) is inherently far less exposed to CSRF: there's no automatic browser behavior for an attacker to piggyback on. This is the foundational context for the enable/disable decision and the CORS-vs-CSRF comparison covered next in this guide.
+
+**Source:** [OWASP — Cross-Site Request Forgery](https://owasp.org/www-community/attacks/csrf), [Spring Security Reference — CSRF](https://docs.spring.io/spring-security/reference/features/exploits/csrf.html)
+
+---
+
+### 12. What Does an `AuthenticationEntryPoint` Do When a Request Is Unauthenticated?
+
+**Answer:**
+
+"`AuthenticationEntryPoint` is the component Spring Security invokes specifically when an **unauthenticated** request tries to access a resource that requires authentication — it's responsible for deciding how to respond in that situation, since the right answer genuinely differs by application type. For a traditional server-rendered web application, the default entry point typically issues an HTTP redirect to the login page (`302` to `/login`), since the natural thing for a browser to do next is show the user a form. For a REST API, redirecting to an HTML login page makes no sense to a JSON-consuming client at all — the appropriate entry point instead returns a `401 Unauthorized` status with a JSON error body, letting the API client (a mobile app, a frontend SPA, another service) handle that failure programmatically instead of following a redirect meant for a browser.
+
+This is a distinct, separate concept from `AccessDeniedHandler`, which handles the different case of an **authenticated** user attempting an action they don't have permission for (`403 Forbidden`) — mixing the two up is a common source of returning the wrong status code (a `401` for someone who's actually logged in but lacks permission, or vice versa), which is exactly the diagnostic distinction the intermittent-401-vs-403 investigation question later in this guide walks through."
+
+**Code:**
+
+```java
+@Bean
+SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http.exceptionHandling(exceptions -> exceptions
+        // Unauthenticated request to a protected resource -> 401 with a JSON body, not an HTML redirect
+        .authenticationEntryPoint((request, response, authException) -> {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\":\"authentication required\"}");
+        })
+        // Authenticated but lacking permission -> 403, a SEPARATE handler entirely
+        .accessDeniedHandler((request, response, accessDeniedException) -> {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        })
+    );
+    return http.build();
+}
+```
+
+**Follow-up:**
+
+I'd tie this directly back to the basic-authentication-vs-form-login question earlier in this guide: Spring Security's default `AuthenticationEntryPoint` behavior actually depends on which authentication mechanisms are configured — enabling `httpBasic()` alongside form login can produce a `WWW-Authenticate: Basic` challenge header instead of the expected redirect, which is a genuinely common source of "why is my API returning a browser login prompt instead of a clean 401 JSON response" confusion in a REST API that accidentally left `httpBasic()`/form-login defaults active instead of configuring an explicit, API-appropriate entry point.
+
+**Source:** [`AuthenticationEntryPoint` Javadoc](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/web/AuthenticationEntryPoint.html)
+
+---
+
+## Staff Level
+
+### 13. Explain the Spring Security Filter Chain From Request Entry to Authorization
+
+**Answer:**
+
+"Every request to a Spring Security-protected application passes through a chain of servlet filters *before* it ever reaches your controller, wired in via a single `DelegatingFilterProxy` registered with the servlet container, which itself delegates to Spring's `FilterChainProxy` — the actual entry point into Spring Security. `FilterChainProxy` picks the matching `SecurityFilterChain` for the request (question 16) and runs its ordered list of filters.
 
 The important filters, roughly in the order they run: `SecurityContextPersistenceFilter`/`SecurityContextHolderFilter` restores the `SecurityContext` from the session (or leaves it empty for stateless setups) at the start of the chain, and ensures it's cleared at the end. Then authentication-mechanism-specific filters run — `UsernamePasswordAuthenticationFilter` for form login, `BearerTokenAuthenticationFilter` for OAuth2 resource-server bearer tokens, `BasicAuthenticationFilter` for HTTP Basic — whichever mechanism is configured attempts to authenticate the request and, on success, populates the `SecurityContext` with an `Authentication` object. Later, `ExceptionTranslationFilter` catches `AuthenticationException`/`AccessDeniedException` thrown further down the chain and translates them into the right HTTP response (redirect to login, or a 401/403). Finally, `FilterSecurityInterceptor` (or `AuthorizationFilter` in newer Spring Security versions) does the actual authorization check — deciding, based on the now-populated `SecurityContext` and the configured access rules, whether this specific request is allowed to proceed to the actual controller at all."
 
@@ -83,7 +477,7 @@ I'd bring up `DelegatingFilterProxy` explicitly as the bridge between the plain 
 
 ---
 
-## 2. How Are Authentication and Authorization Different?
+### 14. How Are Authentication and Authorization Different?
 
 **Answer:**
 
@@ -115,13 +509,13 @@ class AccountController {
 
 **Follow-up:**
 
-I'd bring up the 403-vs-404 information-disclosure trade-off explicitly as a deliberate architectural decision that should be made per-resource-type, not left to whatever a framework defaults to: for a multi-tenant system, returning 403 for "this resource exists but isn't yours" versus 404 for "as far as you're concerned, this doesn't exist" has real security implications — a 403 confirms the resource's existence to an attacker probing IDs, a 404 doesn't. I'd also mention that this exact distinction — and getting the response code right for each failure mode — is one of the practical diagnostics behind question 29 (investigating intermittent 401 vs 403), since conflating the two in logs/monitoring makes root-causing much harder.
+I'd bring up the 403-vs-404 information-disclosure trade-off explicitly as a deliberate architectural decision that should be made per-resource-type, not left to whatever a framework defaults to: for a multi-tenant system, returning 403 for "this resource exists but isn't yours" versus 404 for "as far as you're concerned, this doesn't exist" has real security implications — a 403 confirms the resource's existence to an attacker probing IDs, a 404 doesn't. I'd also mention that this exact distinction — and getting the response code right for each failure mode — is one of the practical diagnostics behind question 41 (investigating intermittent 401 vs 403), since conflating the two in logs/monitoring makes root-causing much harder.
 
 **Source:** [Spring Security Reference — Authentication vs Authorization](https://docs.spring.io/spring-security/reference/features/authentication/index.html)
 
 ---
 
-## 3. Explain `SecurityContext`, `Authentication`, `GrantedAuthority`, and `AuthenticationProvider`
+### 15. Explain `SecurityContext`, `Authentication`, `GrantedAuthority`, and `AuthenticationProvider`
 
 **Answer:**
 
@@ -178,7 +572,7 @@ I'd flag the `ThreadLocal`-backed `SecurityContextHolder` as a direct callback t
 
 ---
 
-## 4. How Does Spring Choose Among Multiple `SecurityFilterChain` Beans?
+### 16. How Does Spring Choose Among Multiple `SecurityFilterChain` Beans?
 
 **Answer:**
 
@@ -227,7 +621,7 @@ I'd emphasize the "exactly one chain applies, no fallthrough or merging" behavio
 
 ---
 
-## 5. What Is the Difference Between Request-Level and Method-Level Authorization?
+### 17. What Is the Difference Between Request-Level and Method-Level Authorization?
 
 **Answer:**
 
@@ -268,7 +662,7 @@ I'd flag `@PostAuthorize` specifically as needing careful judgment: because it e
 
 ---
 
-## 6. Why Does Method-Security Self-Invocation Cause Problems?
+### 18. Why Does Method-Security Self-Invocation Cause Problems?
 
 **Answer:**
 
@@ -321,7 +715,7 @@ I'd treat this as high enough severity to warrant an actual automated safeguard 
 
 ---
 
-## 7. When Should CSRF Protection Be Enabled or Disabled?
+### 19. When Should CSRF Protection Be Enabled or Disabled?
 
 **Answer:**
 
@@ -365,7 +759,7 @@ I'd flag the dangerous middle-ground configuration explicitly, since it's a real
 
 ---
 
-## 8. Compare CORS and CSRF. Why Does Configuring One Not Solve the Other?
+### 20. Compare CORS and CSRF. Why Does Configuring One Not Solve the Other?
 
 **Answer:**
 
@@ -416,13 +810,13 @@ I'd state the core mental model explicitly, since it's the thing that resolves t
 
 ---
 
-## 9. Compare Session-Based Authentication and Bearer-Token Authentication
+### 21. Compare Session-Based Authentication and Bearer-Token Authentication
 
 **Answer:**
 
 "Session-based authentication issues an opaque session identifier (typically via a cookie) after login, and the server maintains the actual session state — who's logged in, what their authorities are — in server-side storage (in-memory, or a shared store like Redis for a multi-instance deployment). Every subsequent request presents just the session ID, and the server looks up the associated state. This is simple to reason about and easy to revoke instantly (delete the server-side session, and the ID is immediately worthless), but it requires either sticky sessions or a shared session store to work correctly across multiple server instances, and it doesn't naturally extend to service-to-service or mobile/native-client scenarios the way a self-contained token does.
 
-Bearer-token authentication (most commonly JWT in modern systems) has the client present a token — often self-contained, carrying the claims needed to establish identity and authorities directly in the token itself, cryptographically signed by an authorization server — in an `Authorization: Bearer <token>` header on every request. The server can validate the token's signature and read its claims **without any server-side session state or lookup at all**, which is exactly what makes it scale cleanly across many stateless server instances with zero shared session infrastructure, and what makes it a natural fit for service-to-service and cross-domain scenarios that cookies handle awkwardly. The trade-off, covered in depth in question 19, is that this same self-contained, no-lookup-required property makes *revocation* fundamentally harder — there's no server-side record to simply delete, since the whole point was avoiding server-side lookups."
+Bearer-token authentication (most commonly JWT in modern systems) has the client present a token — often self-contained, carrying the claims needed to establish identity and authorities directly in the token itself, cryptographically signed by an authorization server — in an `Authorization: Bearer <token>` header on every request. The server can validate the token's signature and read its claims **without any server-side session state or lookup at all**, which is exactly what makes it scale cleanly across many stateless server instances with zero shared session infrastructure, and what makes it a natural fit for service-to-service and cross-domain scenarios that cookies handle awkwardly. The trade-off, covered in depth in question 31, is that this same self-contained, no-lookup-required property makes *revocation* fundamentally harder — there's no server-side record to simply delete, since the whole point was avoiding server-side lookups."
 
 **Code:**
 
@@ -459,7 +853,7 @@ I'd frame the actual decision as being about the deployment topology and revocat
 
 ---
 
-## 10. Explain OAuth 2.0 Authorization-Code Flow With PKCE
+### 22. Explain OAuth 2.0 Authorization-Code Flow With PKCE
 
 **Answer:**
 
@@ -520,7 +914,7 @@ I'd bring up that PKCE is now recommended for **all** clients, not just public o
 
 ---
 
-## 11. Why Is the Resource-Owner Password Flow Deprecated?
+### 23. Why Is the Resource-Owner Password Flow Deprecated?
 
 **Answer:**
 
@@ -555,13 +949,13 @@ I'd mention the historical context for why ROPC existed at all — it was meant 
 
 ---
 
-## 12. What Are the Roles of the Resource Owner, Client, Authorization Server, and Resource Server?
+### 24. What Are the Roles of the Resource Owner, Client, Authorization Server, and Resource Server?
 
 **Answer:**
 
 "These four roles are the core vocabulary of the entire OAuth2 spec, and keeping them straight is what makes the rest of the flows make sense.
 
-The **resource owner** is the entity — usually an end user — who owns the protected data and can grant or deny access to it. The **client** is the application requesting access to that data *on the resource owner's behalf* — critically, the client is not the same as the resource owner, and OAuth2's whole design is built around the client never needing to directly hold the resource owner's actual credentials. The **authorization server** is the trusted party that authenticates the resource owner, collects their consent, and issues tokens representing that granted access — this is the system that owns the login page and the token-issuance logic. The **resource server** is the API that actually holds the protected data and enforces access based on a presented, validated token — it trusts tokens issued by the authorization server (having validated them, question 16) without needing to re-authenticate the user itself.
+The **resource owner** is the entity — usually an end user — who owns the protected data and can grant or deny access to it. The **client** is the application requesting access to that data *on the resource owner's behalf* — critically, the client is not the same as the resource owner, and OAuth2's whole design is built around the client never needing to directly hold the resource owner's actual credentials. The **authorization server** is the trusted party that authenticates the resource owner, collects their consent, and issues tokens representing that granted access — this is the system that owns the login page and the token-issuance logic. The **resource server** is the API that actually holds the protected data and enforces access based on a presented, validated token — it trusts tokens issued by the authorization server (having validated them, question 28) without needing to re-authenticate the user itself.
 
 A concrete mapping makes this click: a user (resource owner) uses a third-party photo-printing app (client) that wants to access their Google Photos (resource server), and Google's own login/consent system (authorization server) is what actually authenticates the user and issues the printing app a scoped token — the printing app never sees the user's Google password, and Google Photos (the resource server) only ever sees a token, never re-verifying the user's identity itself for each API call."
 
@@ -576,7 +970,7 @@ Resource Owner  --(1. authenticates + consents)-->  Authorization Server
         |
         | (3. presents access token)
         v
-Resource Server -- validates token (question 16) -- serves the protected data
+Resource Server -- validates token (question 28) -- serves the protected data
 
 # In a microservices context, these roles are often ALL within one organization:
 #   Resource Owner = the end user
@@ -588,19 +982,19 @@ Resource Server -- validates token (question 16) -- serves the protected data
 
 **Follow-up:**
 
-I'd bring up that in a large internal microservices architecture, a single service frequently plays **both** the resource-server role (validating incoming tokens from external callers) **and** the client role (acting as a client itself when calling further downstream services, question 22) — recognizing which role a given piece of code is playing at any moment clarifies exactly which OAuth2 concern applies: token *validation* logic belongs to the resource-server role, token *acquisition/attachment* logic belongs to the client role, and conflating the two in a design discussion is a common source of confused, circular architecture conversations. I'd also mention that the same physical service can even be a client to *itself* in a service-mesh context — worth flagging so the vocabulary stays precise rather than devolving into "the service" meaning three different roles in the same sentence.
+I'd bring up that in a large internal microservices architecture, a single service frequently plays **both** the resource-server role (validating incoming tokens from external callers) **and** the client role (acting as a client itself when calling further downstream services, question 34) — recognizing which role a given piece of code is playing at any moment clarifies exactly which OAuth2 concern applies: token *validation* logic belongs to the resource-server role, token *acquisition/attachment* logic belongs to the client role, and conflating the two in a design discussion is a common source of confused, circular architecture conversations. I'd also mention that the same physical service can even be a client to *itself* in a service-mesh context — worth flagging so the vocabulary stays precise rather than devolving into "the service" meaning three different roles in the same sentence.
 
 **Source:** [RFC 6749 §1.1 — Roles](https://datatracker.ietf.org/doc/html/rfc6749#section-1.1)
 
 ---
 
-## 13. Compare Access Tokens, Refresh Tokens, and ID Tokens
+### 25. Compare Access Tokens, Refresh Tokens, and ID Tokens
 
 **Answer:**
 
 "**Access tokens** are what a client presents to a resource server to actually access protected data — they're deliberately short-lived (commonly minutes to an hour) to limit the blast radius if one leaks, and they carry the granted scopes/authorities the resource server checks against.
 
-**Refresh tokens** are long-lived credentials the client holds *privately* (never sent to a resource server, only ever presented back to the authorization server's token endpoint) specifically to obtain a *new* access token once the current one expires, without forcing the user to re-authenticate interactively every time a short-lived access token expires. Because they're long-lived and powerful (effectively 'get me a fresh access token, indefinitely'), they need to be stored and transmitted with real care, and refresh-token rotation (question 21) exists specifically to limit the damage if one is ever compromised.
+**Refresh tokens** are long-lived credentials the client holds *privately* (never sent to a resource server, only ever presented back to the authorization server's token endpoint) specifically to obtain a *new* access token once the current one expires, without forcing the user to re-authenticate interactively every time a short-lived access token expires. Because they're long-lived and powerful (effectively 'get me a fresh access token, indefinitely'), they need to be stored and transmitted with real care, and refresh-token rotation (question 33) exists specifically to limit the damage if one is ever compromised.
 
 **ID tokens** are a distinctly different thing, and this is a common source of confusion: they belong to OpenID Connect (OIDC), not core OAuth2, and they exist purely to convey *authentication* information (who the user is, when they authenticated, via which method) to the **client** itself — they're meant to be consumed by the client application, not presented to a resource server as an access credential. An ID token is always a JWT with a specific, standardized claim set; an access token, by contrast, is *not required* by the OAuth2 spec to be any particular format at all (it can be opaque or a JWT), and conflating 'my access token happens to be a JWT' with 'therefore it's the same thing as an ID token' is a genuinely common mistake."
 
@@ -632,19 +1026,19 @@ I'd bring up that in a large internal microservices architecture, a single servi
 
 **Follow-up:**
 
-I'd call out the "never send the access token as if it were proof of identity to your own frontend, and never send the ID token to a resource server as if it were an access credential" rule explicitly, since mixing these up is a real, recurring implementation mistake — an ID token's `aud` claim is the client, not a resource server, so a resource server that's misconfigured to accept ID tokens as access tokens is validating a token that was never intended to authorize API access at all, and might not even carry the scope information a resource server needs to make an authorization decision. I'd also mention token lifetime tuning as a genuine security/UX trade-off: shorter access-token lifetimes reduce the blast radius of a leaked token but increase the frequency of refresh-token-exchange calls (more load on the authorization server, and a slightly larger window where a delayed revocation propagation, per question 19, matters); this is a real tuning knob, not a "shorter is always strictly better" decision.
+I'd call out the "never send the access token as if it were proof of identity to your own frontend, and never send the ID token to a resource server as if it were an access credential" rule explicitly, since mixing these up is a real, recurring implementation mistake — an ID token's `aud` claim is the client, not a resource server, so a resource server that's misconfigured to accept ID tokens as access tokens is validating a token that was never intended to authorize API access at all, and might not even carry the scope information a resource server needs to make an authorization decision. I'd also mention token lifetime tuning as a genuine security/UX trade-off: shorter access-token lifetimes reduce the blast radius of a leaked token but increase the frequency of refresh-token-exchange calls (more load on the authorization server, and a slightly larger window where a delayed revocation propagation, per question 31, matters); this is a real tuning knob, not a "shorter is always strictly better" decision.
 
 **Source:** [RFC 6749 §1.4 — Access Token](https://datatracker.ietf.org/doc/html/rfc6749#section-1.4), [OpenID Connect Core — ID Token](https://openid.net/specs/openid-connect-core-1_0.html#IDToken)
 
 ---
 
-## 14. What Is the Difference Between OAuth 2.0 and OpenID Connect?
+### 26. What Is the Difference Between OAuth 2.0 and OpenID Connect?
 
 **Answer:**
 
 "OAuth2 is fundamentally an **authorization** framework — it's about a client obtaining scoped, delegated access to a resource on a user's behalf. It was never actually designed to answer 'who is this user' in a standardized way — plenty of early, ad-hoc 'social login' implementations built on top of bare OAuth2 by treating 'the client successfully got an access token' as a proxy for 'the user is authenticated,' which is a real category error (a client getting an access token proves it was granted some access, not necessarily that it has any standardized way to verify who the user actually is).
 
-**OpenID Connect (OIDC)** is a thin, standardized identity layer built directly on top of OAuth2 specifically to close that gap — it adds the ID token (question 13), a standardized `/userinfo` endpoint for fetching profile claims, and a standardized discovery document (`/.well-known/openid-configuration`) describing an authorization server's exact endpoints and capabilities. The practical rule: if you need to know *who the user is* (their identity, for your own application's use — displaying their name, tying data to their user ID), you need OIDC, not bare OAuth2. If you only need your client to be granted scoped *access to a resource*, without needing to establish or display identity information yourself, plain OAuth2 suffices — though in practice, the overwhelming majority of modern 'login with X' integrations are OIDC, since almost every real system needs to know who's logged in, not just that access was granted."
+**OpenID Connect (OIDC)** is a thin, standardized identity layer built directly on top of OAuth2 specifically to close that gap — it adds the ID token (question 25), a standardized `/userinfo` endpoint for fetching profile claims, and a standardized discovery document (`/.well-known/openid-configuration`) describing an authorization server's exact endpoints and capabilities. The practical rule: if you need to know *who the user is* (their identity, for your own application's use — displaying their name, tying data to their user ID), you need OIDC, not bare OAuth2. If you only need your client to be granted scoped *access to a resource*, without needing to establish or display identity information yourself, plain OAuth2 suffices — though in practice, the overwhelming majority of modern 'login with X' integrations are OIDC, since almost every real system needs to know who's logged in, not just that access was granted."
 
 **Code:**
 
@@ -678,13 +1072,13 @@ I'd bring up the practical, historical reason OIDC exists at all as useful conte
 
 ---
 
-## 15. Compare Opaque Tokens and JWT Access Tokens
+### 27. Compare Opaque Tokens and JWT Access Tokens
 
 **Answer:**
 
 "An **opaque token** is a random, meaningless-on-its-own string — it carries no information by itself, and a resource server can only validate it by making a call back to the authorization server (typically its token-introspection endpoint, RFC 7662) to ask 'is this still valid, and if so, what does it represent.' A **JWT access token** is self-contained — it's a signed (and optionally encrypted) structure carrying the claims (subject, scopes, expiry) directly, so a resource server can validate it entirely locally, by checking the signature against a known public key, with **no network call to the authorization server needed at all** for a normal validation.
 
-The trade-off is close to a mirror image of each other. Opaque tokens: every single validation costs a network round-trip to the authorization server (added latency, and the authorization server becomes a hard dependency for every resource server's every request), but revocation is instant and precise — the authorization server can simply mark the token invalid in its own store, and the very next introspection call reflects that immediately. JWTs: validation is fast and fully decoupled from the authorization server being available or reachable at request time (a real resilience win — a resource server can keep validating already-issued tokens even if the authorization server is briefly down), but revocation is fundamentally hard (question 19) — a resource server has no way to know a JWT was revoked before its natural expiry unless some additional, out-of-band mechanism is layered on top, which reintroduces some of the same 'ask someone else if this is still good' cost JWTs were meant to avoid."
+The trade-off is close to a mirror image of each other. Opaque tokens: every single validation costs a network round-trip to the authorization server (added latency, and the authorization server becomes a hard dependency for every resource server's every request), but revocation is instant and precise — the authorization server can simply mark the token invalid in its own store, and the very next introspection call reflects that immediately. JWTs: validation is fast and fully decoupled from the authorization server being available or reachable at request time (a real resilience win — a resource server can keep validating already-issued tokens even if the authorization server is briefly down), but revocation is fundamentally hard (question 31) — a resource server has no way to know a JWT was revoked before its natural expiry unless some additional, out-of-band mechanism is layered on top, which reintroduces some of the same 'ask someone else if this is still good' cost JWTs were meant to avoid."
 
 **Code:**
 
@@ -719,7 +1113,7 @@ I'd frame the actual decision around the real operational trade-off: JWTs are th
 
 ---
 
-## 16. How Does a Resource Server Validate a JWT?
+### 28. How Does a Resource Server Validate a JWT?
 
 **Answer:**
 
@@ -727,7 +1121,7 @@ I'd frame the actual decision around the real operational trade-off: JWTs are th
 
 First, **cryptographic signature verification**: the resource server fetches the authorization server's public signing keys (typically from its JWKS endpoint, `/.well-known/jwks.json`, identified by a `kid` — key ID — in the JWT header matching a specific key in that set) and verifies the JWT's signature was genuinely produced by the authorization server's private key, proving the token wasn't forged or tampered with. This is necessary but **not sufficient** on its own.
 
-Second, **claim validation** — even a token with a perfectly valid signature needs its claims checked: `exp` (has it expired), `nbf` (is it being used before it's valid), and critically `iss`/`aud` (was this token actually issued *by the authorization server this resource server trusts*, and was it actually *intended for this specific resource server*, not just any resource server that happens to trust the same issuer). Skipping the `aud` check specifically is a genuinely common, dangerous mistake: without it, a valid token issued for a *completely different* resource server (in a multi-service environment sharing one authorization server) would still pass signature verification, since it's a legitimately signed token — it's just not meant for *this* API, and accepting it anyway is a confused-deputy-style vulnerability (question 27)."
+Second, **claim validation** — even a token with a perfectly valid signature needs its claims checked: `exp` (has it expired), `nbf` (is it being used before it's valid), and critically `iss`/`aud` (was this token actually issued *by the authorization server this resource server trusts*, and was it actually *intended for this specific resource server*, not just any resource server that happens to trust the same issuer). Skipping the `aud` check specifically is a genuinely common, dangerous mistake: without it, a valid token issued for a *completely different* resource server (in a multi-service environment sharing one authorization server) would still pass signature verification, since it's a legitimately signed token — it's just not meant for *this* API, and accepting it anyway is a confused-deputy-style vulnerability (question 39)."
 
 **Code:**
 
@@ -759,13 +1153,13 @@ public JwtDecoder jwtDecoder() {
 
 **Follow-up:**
 
-I'd emphasize the `aud` validation gap as specifically the thing worth bringing up unprompted, since Spring Security's default JWT validation (`JwtValidators.createDefaultWithIssuer`) checks `exp`/`nbf`/`iss` but explicitly does **not** check `aud` by default — a resource server that doesn't add this check itself will happily accept a token minted for an entirely different downstream API, as long as both share the same trusted issuer, which is a genuinely exploitable gap in a multi-service architecture with a shared identity provider. I'd also mention JWKS key rotation handling (question 17) as directly tied to this validation flow — the decoder needs to handle a `kid` it hasn't cached yet gracefully (re-fetching the JWKS document), which most libraries do correctly out of the box, but it's worth confirming rather than assuming for any custom validation code.
+I'd emphasize the `aud` validation gap as specifically the thing worth bringing up unprompted, since Spring Security's default JWT validation (`JwtValidators.createDefaultWithIssuer`) checks `exp`/`nbf`/`iss` but explicitly does **not** check `aud` by default — a resource server that doesn't add this check itself will happily accept a token minted for an entirely different downstream API, as long as both share the same trusted issuer, which is a genuinely exploitable gap in a multi-service architecture with a shared identity provider. I'd also mention JWKS key rotation handling (question 29) as directly tied to this validation flow — the decoder needs to handle a `kid` it hasn't cached yet gracefully (re-fetching the JWKS document), which most libraries do correctly out of the box, but it's worth confirming rather than assuming for any custom validation code.
 
 **Source:** [Spring Security Reference — JWT Validation](https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/jwt.html#oauth2resourceserver-jwt-validation), [RFC 7519 — JWT §4.1 Registered Claims](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1)
 
 ---
 
-## 17. How Should Services Handle Signing-Key Rotation?
+### 29. How Should Services Handle Signing-Key Rotation?
 
 **Answer:**
 
@@ -809,7 +1203,7 @@ I'd bring up this exact scenario as a direct link to the cross-stack design ques
 
 ---
 
-## 18. What Are `iss`, `aud`, `exp`, `nbf`, `jti`, and `kid` Used For?
+### 30. What Are `iss`, `aud`, `exp`, `nbf`, `jti`, and `kid` Used For?
 
 **Answer:**
 
@@ -817,7 +1211,7 @@ I'd bring up this exact scenario as a direct link to the cross-stack design ques
 
 `iss` (issuer) — identifies *who issued* this token, allowing a resource server to confirm it trusts this specific issuer, not just that the signature happens to verify against *some* key it has cached.
 
-`aud` (audience) — identifies *who the token is intended for*; a resource server must check its own identifier appears here, or it risks accepting a token that was legitimately issued but meant for a different service entirely (question 16's confused-deputy risk).
+`aud` (audience) — identifies *who the token is intended for*; a resource server must check its own identifier appears here, or it risks accepting a token that was legitimately issued but meant for a different service entirely (question 28's confused-deputy risk).
 
 `exp` (expiration time) — a Unix timestamp after which the token must be rejected regardless of signature validity; this is what bounds the blast radius of a leaked token.
 
@@ -855,7 +1249,7 @@ I'd bring up `jti` as the specific, standardized mechanism for building a target
 
 ---
 
-## 19. Why Is Revoking a JWT Difficult? What Strategies Are Available?
+### 31. Why Is Revoking a JWT Difficult? What Strategies Are Available?
 
 **Answer:**
 
@@ -895,7 +1289,7 @@ I'd name the actual trade-off explicitly as a spectrum, not a binary choice: pur
 
 ---
 
-## 20. Where Should Tokens Be Stored in a Browser Application?
+### 32. Where Should Tokens Be Stored in a Browser Application?
 
 **Answer:**
 
@@ -903,7 +1297,7 @@ I'd name the actual trade-off explicitly as a spectrum, not a binary choice: pur
 
 **`localStorage`/`sessionStorage`**: accessible to any JavaScript running on the page, which means it's fully exposed to **XSS** — if an attacker manages to inject a script (via any XSS vulnerability anywhere on the page, including in a third-party dependency), they can read the token directly and exfiltrate it. This is the option I'd actively avoid for anything beyond a low-sensitivity token, despite it being the most common pattern in tutorials and many real SPAs.
 
-**A cookie with `HttpOnly`, `Secure`, and `SameSite=Strict`/`Lax`**: `HttpOnly` means JavaScript literally cannot read the cookie's value at all, closing off the XSS-exfiltration vector entirely — a real, meaningful security improvement over `localStorage`. But this reintroduces CSRF exposure (question 7/8) since the browser now auto-attaches the cookie to requests, so CSRF protection becomes mandatory again, and it requires the token to be issued as a cookie by a same-site (or carefully configured cross-site) backend rather than handled directly by frontend JavaScript.
+**A cookie with `HttpOnly`, `Secure`, and `SameSite=Strict`/`Lax`**: `HttpOnly` means JavaScript literally cannot read the cookie's value at all, closing off the XSS-exfiltration vector entirely — a real, meaningful security improvement over `localStorage`. But this reintroduces CSRF exposure (question 19/20) since the browser now auto-attaches the cookie to requests, so CSRF protection becomes mandatory again, and it requires the token to be issued as a cookie by a same-site (or carefully configured cross-site) backend rather than handled directly by frontend JavaScript.
 
 **In-memory only (a JavaScript variable, never persisted to any storage)**: the most XSS-resistant option, since there's nothing sitting in storage for a script to read even if XSS occurs — but the token is lost on every page refresh, requiring a silent re-authentication flow (commonly, a same-site `HttpOnly` refresh-token cookie combined with a short-lived, in-memory-only access token) to restore it without forcing the user to log in again on every reload — this hybrid, 'refresh token in an `HttpOnly` cookie, access token in memory only,' is generally the pattern I'd actually recommend for a security-conscious SPA."
 
@@ -940,7 +1334,7 @@ I'd bring up that this decision needs to be paired with a broader XSS-prevention
 
 ---
 
-## 21. How Do Refresh-Token Rotation and Reuse Detection Work?
+### 33. How Do Refresh-Token Rotation and Reuse Detection Work?
 
 **Answer:**
 
@@ -987,7 +1381,7 @@ I'd walk through exactly why "revoke the whole family, not just reject this requ
 
 ---
 
-## 22. How Would You Secure Service-to-Service Communication?
+### 34. How Would You Secure Service-to-Service Communication?
 
 **Answer:**
 
@@ -1033,7 +1427,7 @@ I'd bring up the "don't just forward the original bearer token to every downstre
 
 ---
 
-## 23. How Would You Model Scopes, Roles, Permissions, and Tenant Boundaries?
+### 35. How Would You Model Scopes, Roles, Permissions, and Tenant Boundaries?
 
 **Answer:**
 
@@ -1045,7 +1439,7 @@ I'd bring up the "don't just forward the original bearer token to every downstre
 
 **Permissions** are fine-grained, specific capabilities (`orders:cancel`, `orders:refund:approve`) — the actual atomic unit authorization decisions should usually be checked against, with roles acting as a convenient way to *assign* a bundle of permissions to a user rather than the check itself.
 
-**Tenant boundaries**, in a multi-tenant system, are an entirely orthogonal dimension layered on top of all three — a role or permission is meaningless without also confirming the action is scoped to the correct tenant; `ADMIN` doesn't mean 'admin of everything,' it means 'admin *within their own tenant*,' and every single authorization check needs to include the tenant-scoping condition, not just the role/permission check, or you get exactly the kind of broken object-level authorization covered in question 24."
+**Tenant boundaries**, in a multi-tenant system, are an entirely orthogonal dimension layered on top of all three — a role or permission is meaningless without also confirming the action is scoped to the correct tenant; `ADMIN` doesn't mean 'admin of everything,' it means 'admin *within their own tenant*,' and every single authorization check needs to include the tenant-scoping condition, not just the role/permission check, or you get exactly the kind of broken object-level authorization covered in question 36."
 
 **Code:**
 
@@ -1081,7 +1475,7 @@ I'd bring up the practical failure mode this distinction guards against: teams t
 
 ---
 
-## 24. How Do You Prevent Broken Object-Level Authorization?
+### 36. How Do You Prevent Broken Object-Level Authorization?
 
 **Answer:**
 
@@ -1103,7 +1497,7 @@ Order getOrder(@PathVariable String id) {
 Order getOrder(@PathVariable String id, Authentication authentication) {
     return orderRepository.findByIdAndOwnerId(id, authentication.getName())
         .orElseThrow(() -> new ResourceNotFoundException("order not found")); // 404, not 403 —
-}                                                                                // per question 2,
+}                                                                                // per question 14,
                                                                                    // deliberately not
                                                                                    // confirming the
                                                                                    // order even exists
@@ -1125,13 +1519,13 @@ I'd bring up this exact vulnerability class as consistently ranking #1 in OWASP'
 
 ---
 
-## 25. How Should Authentication Context Propagate Through Asynchronous Processing?
+### 37. How Should Authentication Context Propagate Through Asynchronous Processing?
 
 **Answer:**
 
 "This is exactly the concurrency-file question about propagating context across thread boundaries, applied specifically to security. `SecurityContextHolder` is `ThreadLocal`-backed by default, so an `@Async` method, a manually-submitted executor task, or any work handed off to a different thread starts with a completely empty `SecurityContext` unless something explicitly copies it across — and code that assumes `SecurityContextHolder.getContext().getAuthentication()` will 'just work' inside async code is a common, real bug.
 
-Spring Security provides `DelegatingSecurityContextExecutor`/`DelegatingSecurityContextExecutorService` wrappers specifically for this — they wrap a plain `Executor`, capturing the calling thread's `SecurityContext` at submission time and restoring it on the executing thread for the duration of the task, then clearing it afterward (the same 'copy in, clear in finally' idiom from the concurrency file's `ThreadLocal`-leak discussion, since a pooled executor thread will be reused for a completely unrelated task next). For genuinely asynchronous, non-request-driven work — a Kafka consumer processing a message, a scheduled batch job — there's no 'calling thread's security context' to propagate at all, since there was never an HTTP request establishing one in the first place; that's a different problem, covered specifically in question 26."
+Spring Security provides `DelegatingSecurityContextExecutor`/`DelegatingSecurityContextExecutorService` wrappers specifically for this — they wrap a plain `Executor`, capturing the calling thread's `SecurityContext` at submission time and restoring it on the executing thread for the duration of the task, then clearing it afterward (the same 'copy in, clear in finally' idiom from the concurrency file's `ThreadLocal`-leak discussion, since a pooled executor thread will be reused for a completely unrelated task next). For genuinely asynchronous, non-request-driven work — a Kafka consumer processing a message, a scheduled batch job — there's no 'calling thread's security context' to propagate at all, since there was never an HTTP request establishing one in the first place; that's a different problem, covered specifically in question 38."
 
 **Code:**
 
@@ -1168,7 +1562,7 @@ I'd flag that `SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_
 
 ---
 
-## 26. How Would You Design Authorization for Kafka Consumers Where There Is No HTTP Request?
+### 38. How Would You Design Authorization for Kafka Consumers Where There Is No HTTP Request?
 
 **Answer:**
 
@@ -1215,13 +1609,13 @@ I'd bring up the specific staleness risk this design has to account for explicit
 
 ---
 
-## 27. How Do You Prevent Confused-Deputy Problems in Downstream Service Calls?
+### 39. How Do You Prevent Confused-Deputy Problems in Downstream Service Calls?
 
 **Answer:**
 
 "A confused-deputy vulnerability is when a service — trusted with some elevated privilege to do its job — can be tricked by a caller into misusing that privilege on the caller's behalf, beyond what the caller itself should actually be authorized to do. The classic shape in a service-to-service context: Service A has broad access to Service B (because Service A legitimately needs *some* access to B for its own normal function), and if Service A blindly forwards *whatever a client asked it to do* directly to Service B using its own elevated service-to-service credential, without checking whether the *original calling user* was actually authorized for that specific action, the client has effectively borrowed Service A's greater privilege to do something it couldn't do directly.
 
-The core defenses: never let a service's own broad service-to-service credential substitute for checking the *original caller's* actual authorization — every hop needs its own authorization check against the actual originating principal's permissions, not just 'am I, the calling service, generally trusted to talk to this downstream service.' This is exactly what audience-restricted tokens and token exchange (question 22) are for — ensuring a downstream service call carries a token that's scoped to what the *original* caller is actually permitted, rather than the intermediate service's own broader privilege being transparently exercised on the caller's behalf without re-verification."
+The core defenses: never let a service's own broad service-to-service credential substitute for checking the *original caller's* actual authorization — every hop needs its own authorization check against the actual originating principal's permissions, not just 'am I, the calling service, generally trusted to talk to this downstream service.' This is exactly what audience-restricted tokens and token exchange (question 34) are for — ensuring a downstream service call carries a token that's scoped to what the *original* caller is actually permitted, rather than the intermediate service's own broader privilege being transparently exercised on the caller's behalf without re-verification."
 
 **Code:**
 
@@ -1259,7 +1653,7 @@ I'd bring up the classic, canonical confused-deputy example for context — the 
 
 ---
 
-## 28. What Security Information Is Safe to Log?
+### 40. What Security Information Is Safe to Log?
 
 **Answer:**
 
@@ -1303,13 +1697,13 @@ I'd bring up that this is exactly the kind of thing that shouldn't rely on every
 
 ---
 
-## 29. How Would You Investigate Intermittent `401` Versus `403` Responses?
+### 41. How Would You Investigate Intermittent `401` Versus `403` Responses?
 
 **Answer:**
 
-"First, per question 2, I'd confirm the two are being reported correctly and distinctly in whatever logging/monitoring is available — if they're conflated into one generic 'auth error' metric, I'd fix that first, since the two point at completely different root-cause categories.
+"First, per question 14, I'd confirm the two are being reported correctly and distinctly in whatever logging/monitoring is available — if they're conflated into one generic 'auth error' metric, I'd fix that first, since the two point at completely different root-cause categories.
 
-For **intermittent 401s** specifically — since a *consistent* 401 usually just means bad credentials, but *intermittent* implies something is failing only sometimes — my prime suspects are: clock skew between the resource server and the token issuer causing `exp`/`nbf` checks to fail right at the edges of a token's validity window (a token that should be valid gets rejected as expired, or not-yet-valid, purely due to clock drift); a JWKS key-rotation issue where a resource server hasn't yet picked up a newly-rotated key and rejects tokens signed with it (tying directly to question 17); or a load-balanced fleet where only *some* instances have a stale JWKS cache or misconfiguration, so the same request succeeds or fails depending purely on which instance happens to handle it — a classic 'works when I retry' symptom.
+For **intermittent 401s** specifically — since a *consistent* 401 usually just means bad credentials, but *intermittent* implies something is failing only sometimes — my prime suspects are: clock skew between the resource server and the token issuer causing `exp`/`nbf` checks to fail right at the edges of a token's validity window (a token that should be valid gets rejected as expired, or not-yet-valid, purely due to clock drift); a JWKS key-rotation issue where a resource server hasn't yet picked up a newly-rotated key and rejects tokens signed with it (tying directly to question 29); or a load-balanced fleet where only *some* instances have a stale JWKS cache or misconfiguration, so the same request succeeds or fails depending purely on which instance happens to handle it — a classic 'works when I retry' symptom.
 
 For **intermittent 403s**, I'd suspect: a cache (permissions/roles cached with a TTL) serving stale authorization data that hasn't caught up with a recent, legitimate permission change; a race condition where an authorization check runs against data that's being concurrently modified (a role being granted in one transaction while a request checking that exact role runs concurrently against not-yet-committed data); or, in a multi-tenant/multi-region system, a request being routed to a region/instance that hasn't yet received a recent authorization-data replication update."
 
@@ -1350,7 +1744,7 @@ I'd emphasize that the single highest-leverage diagnostic step is almost always 
 
 ---
 
-## 30. Design an Authentication and Authorization Architecture for a Multi-Tenant Platform
+### 42. Design an Authentication and Authorization Architecture for a Multi-Tenant Platform
 
 **Answer:**
 
@@ -1358,11 +1752,11 @@ I'd emphasize that the single highest-leverage diagnostic step is almost always 
 
 **Identity layer**: a central identity provider (either a managed service — Okta, Auth0, Cognito — or a self-hosted OIDC-compliant authorization server like Keycloak or Spring Authorization Server) handling authentication for all tenants, issuing OIDC ID tokens for user identity and OAuth2 access tokens for API authorization. Tenant identification needs to be established *at* authentication time, embedded as a claim in the issued token (a `tenant_id` claim) — not derived later from something client-suppliable like a header or a request parameter, which would let a malicious client simply claim to be a different tenant.
 
-**Authorization layer**: fine-grained permission checks (question 23's roles/permissions model) always evaluated *together with* the tenant claim from the token — every single data-access path scoped by tenant at the query/repository level as a structural default (question 24's BOLA prevention, applied specifically to tenant boundaries here), not as an optional check individual endpoints might forget.
+**Authorization layer**: fine-grained permission checks (question 35's roles/permissions model) always evaluated *together with* the tenant claim from the token — every single data-access path scoped by tenant at the query/repository level as a structural default (question 36's BOLA prevention, applied specifically to tenant boundaries here), not as an optional check individual endpoints might forget.
 
 **Tenant isolation strategy**: a genuine architectural decision with real trade-offs — separate databases per tenant (strongest isolation, most operational overhead), a shared database with a tenant-ID column and row-level security/mandatory query filtering (moderate isolation, much less operational overhead, but correctness now depends on every query correctly applying the filter), or a hybrid (shared infrastructure for most tenants, dedicated infrastructure for specific high-sensitivity or high-scale tenants) — and I'd pick based on the platform's actual sensitivity/scale/compliance requirements rather than defaulting to whichever is easiest to build first.
 
-**Cross-cutting concerns**: propagating tenant + user identity consistently through async processing (question 25/26) and service-to-service calls (question 22), auditing every authorization decision with enough detail to investigate a suspected cross-tenant leak after the fact, and a deliberate incident-response plan specifically for 'a cross-tenant data leak was discovered' — since for a multi-tenant platform, that's one of the most severe possible incident categories and deserves its own tested runbook, not an improvised response."
+**Cross-cutting concerns**: propagating tenant + user identity consistently through async processing (question 37/38) and service-to-service calls (question 34), auditing every authorization decision with enough detail to investigate a suspected cross-tenant leak after the fact, and a deliberate incident-response plan specifically for 'a cross-tenant data leak was discovered' — since for a multi-tenant platform, that's one of the most severe possible incident categories and deserves its own tested runbook, not an improvised response."
 
 **Code:**
 

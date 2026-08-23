@@ -1,49 +1,498 @@
-# JPA & Hibernate — Interview Prep (Lead/Staff Level, with Code & Sources)
+# JPA & Hibernate — Interview Prep, Basic to Staff Level (with Code & Sources)
 
-> **Target level:** Lead/Staff · **Baseline:** Jakarta Persistence 3.1, Hibernate ORM 6.x, Spring Data JPA (Spring Boot 3.x) · **Last verified:** 2026-08-22 · **Prerequisites:** [Spring Boot Internals](Spring_Boot_Internals_Interview_Prep.md), basic SQL
+> **Target level:** Basic → Staff (graduated — see below) · **Baseline:** Jakarta Persistence 3.1, Hibernate ORM 6.x, Spring Data JPA (Spring Boot 3.x) · **Last verified:** 2026-08-23 · **Prerequisites:** [Spring Boot Internals](Spring_Boot_Internals_Interview_Prep.md), basic SQL for the Basic section; the Intermediate section onward assumes the Basic section's entity/repository fundamentals
 
-How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining what the persistence context actually does under the hood and where its abstractions leak, not reciting annotation names.
+How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining what the persistence context actually does under the hood and where its abstractions leak, not reciting annotation names. Questions are grouped by level (Basic → Intermediate → Staff) so you can calibrate depth to the interview you're prepping for; the later sections assume the earlier ones as background and don't re-explain them.
 
 <!-- toc -->
 ## Table of Contents
 
-- [1. Explain the Entity Lifecycle States](#1-explain-the-entity-lifecycle-states)
-- [2. What Is the Persistence Context, and What Guarantees Does It Provide?](#2-what-is-the-persistence-context-and-what-guarantees-does-it-provide)
-- [3. How Does Dirty Checking Work?](#3-how-does-dirty-checking-work)
-- [4. When Does Hibernate Flush Changes?](#4-when-does-hibernate-flush-changes)
-- [5. What Is the Difference Between `flush()` and Transaction Commit?](#5-what-is-the-difference-between-flush-and-transaction-commit)
-- [6. Explain First-Level and Second-Level Caches](#6-explain-first-level-and-second-level-caches)
-- [7. What Causes the N+1 Query Problem?](#7-what-causes-the-n1-query-problem)
-- [8. Compare Join Fetching, Entity Graphs, Batch Fetching, and DTO Projections](#8-compare-join-fetching-entity-graphs-batch-fetching-and-dto-projections)
-- [9. Why Can Join-Fetching Multiple Collections Produce Duplicates or Excessive Result Sets?](#9-why-can-join-fetching-multiple-collections-produce-duplicates-or-excessive-result-sets)
-- [10. Compare Lazy and Eager Loading. Why Is Changing Everything to Eager Loading Dangerous?](#10-compare-lazy-and-eager-loading-why-is-changing-everything-to-eager-loading-dangerous)
-- [11. What Is `LazyInitializationException`, and What Design Problem Does It Usually Reveal?](#11-what-is-lazyinitializationexception-and-what-design-problem-does-it-usually-reveal)
-- [12. Why Is Open Session in View Controversial?](#12-why-is-open-session-in-view-controversial)
-- [13. Compare `persist`, `merge`, and Repository `save`](#13-compare-persist-merge-and-repository-save)
-- [14. Why Can `merge` Produce Unexpected Behavior?](#14-why-can-merge-produce-unexpected-behavior)
-- [15. Compare `IDENTITY`, `SEQUENCE`, and Application-Generated IDs](#15-compare-identity-sequence-and-application-generated-ids)
-- [16. How Do ID-Generation Strategies Affect Batching?](#16-how-do-id-generation-strategies-affect-batching)
-- [17. Explain Owning and Inverse Sides of Relationships](#17-explain-owning-and-inverse-sides-of-relationships)
-- [18. What Problems Arise From Incorrect `equals` and `hashCode` Implementations on Entities?](#18-what-problems-arise-from-incorrect-equals-and-hashcode-implementations-on-entities)
-- [19. How Do Cascade Operations Differ From `orphanRemoval`?](#19-how-do-cascade-operations-differ-from-orphanremoval)
-- [20. How Does Optimistic Locking Work?](#20-how-does-optimistic-locking-work)
-- [21. When Should Pessimistic Locking Be Used?](#21-when-should-pessimistic-locking-be-used)
-- [22. What Happens When Bulk JPQL Updates Bypass the Persistence Context?](#22-what-happens-when-bulk-jpql-updates-bypass-the-persistence-context)
-- [23. How Would You Process Millions of Records Without Exhausting Memory?](#23-how-would-you-process-millions-of-records-without-exhausting-memory)
-- [24. How Do JDBC Batching and Ordered Inserts Improve Throughput?](#24-how-do-jdbc-batching-and-ordered-inserts-improve-throughput)
-- [25. How Would You Diagnose a Query That Is Fast in SQL Tooling But Slow Through Hibernate?](#25-how-would-you-diagnose-a-query-that-is-fast-in-sql-tooling-but-slow-through-hibernate)
-- [26. When Should You Use Native SQL or JDBC Instead of JPA?](#26-when-should-you-use-native-sql-or-jdbc-instead-of-jpa)
-- [27. How Do Database Indexes Interact With Generated Hibernate Queries?](#27-how-do-database-indexes-interact-with-generated-hibernate-queries)
-- [28. How Would You Safely Migrate a Heavily Used Entity Relationship?](#28-how-would-you-safely-migrate-a-heavily-used-entity-relationship)
-- [29. How Do You Avoid Leaking Persistence Models Into API Contracts?](#29-how-do-you-avoid-leaking-persistence-models-into-api-contracts)
-- [30. Describe a Production Hibernate Performance Incident and Its Resolution](#30-describe-a-production-hibernate-performance-incident-and-its-resolution)
+- [Basic](#basic)
+  - [1. What Is an ORM, and What Problem Does JPA/Hibernate Solve?](#1-what-is-an-orm-and-what-problem-does-jpahibernate-solve)
+  - [2. What's the Difference Between JPA and Hibernate?](#2-whats-the-difference-between-jpa-and-hibernate)
+  - [3. What Does `@Entity` Do, and What Are the Basic Requirements for an Entity Class?](#3-what-does-entity-do-and-what-are-the-basic-requirements-for-an-entity-class)
+  - [4. What Is Spring Data JPA, and What Does a Repository Interface Give You?](#4-what-is-spring-data-jpa-and-what-does-a-repository-interface-give-you)
+  - [5. What's the Difference Between `@Id` and `@GeneratedValue`?](#5-whats-the-difference-between-id-and-generatedvalue)
+  - [6. What's the Difference Between `@OneToMany`, `@ManyToOne`, `@OneToOne`, and `@ManyToMany`?](#6-whats-the-difference-between-onetomany-manytoone-onetoone-and-manytomany)
+  - [7. What Is a DTO, and Why Not Just Return Entities Directly From an API?](#7-what-is-a-dto-and-why-not-just-return-entities-directly-from-an-api)
+- [Intermediate](#intermediate)
+  - [8. What's the Difference Between `save()`, `findById()`, and `deleteById()` in Spring Data JPA?](#8-whats-the-difference-between-save-findbyid-and-deletebyid-in-spring-data-jpa)
+  - [9. What Is JPQL, and How Does It Differ From Native SQL?](#9-what-is-jpql-and-how-does-it-differ-from-native-sql)
+  - [10. What's the Difference Between `@Transactional` at the Repository vs. Service Layer?](#10-whats-the-difference-between-transactional-at-the-repository-vs-service-layer)
+  - [11. What Is a Composite Key, and How Do You Model One in JPA?](#11-what-is-a-composite-key-and-how-do-you-model-one-in-jpa)
+  - [12. What's the Difference Between `CascadeType.ALL` and Individual Cascade Types?](#12-whats-the-difference-between-cascadetypeall-and-individual-cascade-types)
+- [Staff Level](#staff-level)
+  - [13. Explain the Entity Lifecycle States](#13-explain-the-entity-lifecycle-states)
+  - [14. What Is the Persistence Context, and What Guarantees Does It Provide?](#14-what-is-the-persistence-context-and-what-guarantees-does-it-provide)
+  - [15. How Does Dirty Checking Work?](#15-how-does-dirty-checking-work)
+  - [16. When Does Hibernate Flush Changes?](#16-when-does-hibernate-flush-changes)
+  - [17. What Is the Difference Between `flush()` and Transaction Commit?](#17-what-is-the-difference-between-flush-and-transaction-commit)
+  - [18. Explain First-Level and Second-Level Caches](#18-explain-first-level-and-second-level-caches)
+  - [19. What Causes the N+1 Query Problem?](#19-what-causes-the-n1-query-problem)
+  - [20. Compare Join Fetching, Entity Graphs, Batch Fetching, and DTO Projections](#20-compare-join-fetching-entity-graphs-batch-fetching-and-dto-projections)
+  - [21. Why Can Join-Fetching Multiple Collections Produce Duplicates or Excessive Result Sets?](#21-why-can-join-fetching-multiple-collections-produce-duplicates-or-excessive-result-sets)
+  - [22. Compare Lazy and Eager Loading. Why Is Changing Everything to Eager Loading Dangerous?](#22-compare-lazy-and-eager-loading-why-is-changing-everything-to-eager-loading-dangerous)
+  - [23. What Is `LazyInitializationException`, and What Design Problem Does It Usually Reveal?](#23-what-is-lazyinitializationexception-and-what-design-problem-does-it-usually-reveal)
+  - [24. Why Is Open Session in View Controversial?](#24-why-is-open-session-in-view-controversial)
+  - [25. Compare `persist`, `merge`, and Repository `save`](#25-compare-persist-merge-and-repository-save)
+  - [26. Why Can `merge` Produce Unexpected Behavior?](#26-why-can-merge-produce-unexpected-behavior)
+  - [27. Compare `IDENTITY`, `SEQUENCE`, and Application-Generated IDs](#27-compare-identity-sequence-and-application-generated-ids)
+  - [28. How Do ID-Generation Strategies Affect Batching?](#28-how-do-id-generation-strategies-affect-batching)
+  - [29. Explain Owning and Inverse Sides of Relationships](#29-explain-owning-and-inverse-sides-of-relationships)
+  - [30. What Problems Arise From Incorrect `equals` and `hashCode` Implementations on Entities?](#30-what-problems-arise-from-incorrect-equals-and-hashcode-implementations-on-entities)
+  - [31. How Do Cascade Operations Differ From `orphanRemoval`?](#31-how-do-cascade-operations-differ-from-orphanremoval)
+  - [32. How Does Optimistic Locking Work?](#32-how-does-optimistic-locking-work)
+  - [33. When Should Pessimistic Locking Be Used?](#33-when-should-pessimistic-locking-be-used)
+  - [34. What Happens When Bulk JPQL Updates Bypass the Persistence Context?](#34-what-happens-when-bulk-jpql-updates-bypass-the-persistence-context)
+  - [35. How Would You Process Millions of Records Without Exhausting Memory?](#35-how-would-you-process-millions-of-records-without-exhausting-memory)
+  - [36. How Do JDBC Batching and Ordered Inserts Improve Throughput?](#36-how-do-jdbc-batching-and-ordered-inserts-improve-throughput)
+  - [37. How Would You Diagnose a Query That Is Fast in SQL Tooling But Slow Through Hibernate?](#37-how-would-you-diagnose-a-query-that-is-fast-in-sql-tooling-but-slow-through-hibernate)
+  - [38. When Should You Use Native SQL or JDBC Instead of JPA?](#38-when-should-you-use-native-sql-or-jdbc-instead-of-jpa)
+  - [39. How Do Database Indexes Interact With Generated Hibernate Queries?](#39-how-do-database-indexes-interact-with-generated-hibernate-queries)
+  - [40. How Would You Safely Migrate a Heavily Used Entity Relationship?](#40-how-would-you-safely-migrate-a-heavily-used-entity-relationship)
+  - [41. How Do You Avoid Leaking Persistence Models Into API Contracts?](#41-how-do-you-avoid-leaking-persistence-models-into-api-contracts)
+  - [42. Describe a Production Hibernate Performance Incident and Its Resolution](#42-describe-a-production-hibernate-performance-incident-and-its-resolution)
 - [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
 
 <!-- /toc -->
 
 ---
 
-## 1. Explain the Entity Lifecycle States
+## Basic
+
+### 1. What Is an ORM, and What Problem Does JPA/Hibernate Solve?
+
+**Answer:**
+
+"An ORM (Object-Relational Mapper) bridges the mismatch between how data naturally models in an object-oriented language (objects, references, inheritance) and how it's stored in a relational database (tables, rows, foreign keys) — this gap is often called the 'object-relational impedance mismatch.' Without an ORM, every piece of data access means hand-writing SQL, manually mapping `ResultSet` columns onto object fields, and manually tracking which objects have unsaved changes that need to be written back — repetitive, error-prone boilerplate that has to be redone for every entity type in the application.
+
+**JPA** (Jakarta Persistence API, formerly Java Persistence API) is the *specification* — a set of interfaces and annotations (`@Entity`, `EntityManager`, JPQL) defining how Java objects map to relational data, without dictating a specific implementation. **Hibernate** is the most widely-used *implementation* of that specification — it's the actual engine that does the work: generating SQL, tracking changes, managing the object-to-row mapping — covered in more depth in the next question. Spring Data JPA, covered shortly after, then adds a further convenience layer on top of both."
+
+**Code:**
+
+```java
+// WITHOUT an ORM: manual SQL, manual mapping, manual change tracking
+ResultSet rs = statement.executeQuery("SELECT id, name, email FROM users WHERE id = ?");
+User user = new User(rs.getLong("id"), rs.getString("name"), rs.getString("email"));
+// ... later, to save a change, you must remember to write and run an UPDATE yourself
+
+// WITH JPA/Hibernate: the mapping and change-tracking are handled for you
+@Entity
+class User {
+    @Id private Long id;
+    private String name;
+    private String email;
+}
+
+User user = entityManager.find(User.class, 1L); // SELECT generated automatically
+user.setEmail("new@example.com");                 // no explicit UPDATE call needed —
+                                                     // Hibernate detects and writes this change
+                                                     // automatically at flush time (covered later)
+```
+
+**Follow-up:**
+
+I'd be upfront about the trade-off, not just the benefit: an ORM removes a huge amount of repetitive boilerplate, but it also introduces its own real complexity — the N+1 query problem, flush-timing surprises, and lazy-loading pitfalls covered throughout the rest of this guide are all *consequences* of the abstraction Hibernate provides, not things that would exist with hand-written SQL. The genuinely useful framing for an interview: an ORM trades hand-written SQL boilerplate for a different, ORM-specific set of things you now need to understand deeply to use it correctly at scale — it's not simply 'less to know overall.'
+
+**Source:** [Jakarta Persistence Specification 3.1 — Introduction](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html)
+
+---
+
+### 2. What's the Difference Between JPA and Hibernate?
+
+**Answer:**
+
+"JPA is a specification — a set of interfaces (`EntityManager`, `Query`) and annotations (`@Entity`, `@Id`, `@OneToMany`) that define a contract for how object-relational mapping *should* behave, published as part of Jakarta EE. It has no runtime behavior of its own; it's a contract other libraries implement. Hibernate is a concrete implementation of that contract — the actual library that runs at runtime, generates SQL, manages the persistence context, and executes queries — and it predates JPA itself (Hibernate existed before JPA was standardized, and JPA's design was heavily influenced by it).
+
+Other JPA implementations exist (EclipseLink, OpenJPA), and code written purely against JPA's own interfaces is technically portable across them, though in practice most real applications end up depending on Hibernate-specific behavior or extensions somewhere (a particular caching detail, a Hibernate-specific annotation) once they go beyond the basics — 'we could swap Hibernate for another JPA provider with zero changes' is more true in theory than in most real, long-lived codebases."
+
+**Code:**
+
+```java
+// Pure JPA interface — technically implementation-agnostic
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Entity;
+
+@Entity // this annotation is JPA, not Hibernate-specific
+class Order { /* ... */ }
+
+// A Hibernate-SPECIFIC extension — ties this code to Hibernate specifically,
+// not portable to a different JPA provider without changes
+import org.hibernate.annotations.BatchSize;
+
+@Entity
+@BatchSize(size = 20) // Hibernate-specific annotation, not part of the JPA spec itself
+class Product { /* ... */ }
+```
+
+**Follow-up:**
+
+I'd mention that in modern Spring Boot applications specifically, this distinction is often more academic than practical — `spring-boot-starter-data-jpa` pulls in Hibernate as the JPA provider by default, and most teams never actually swap it, so 'JPA vs. Hibernate' matters most for understanding *which* documentation to read for a specific behavior (the JPA spec for portable, standardized behavior; Hibernate's own reference docs for Hibernate-specific features and the actual runtime behavior of things the spec leaves as implementation-defined, like exact flush timing).
+
+**Source:** [Jakarta Persistence Specification 3.1](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html), [Hibernate ORM User Guide](https://docs.jboss.org/hibernate/orm/6.4/userguide/html_single/Hibernate_User_Guide.html)
+
+---
+
+### 3. What Does `@Entity` Do, and What Are the Basic Requirements for an Entity Class?
+
+**Answer:**
+
+"`@Entity` marks a class as a JPA-managed persistent type — an instance of it corresponds to a row in a database table, and Hibernate takes responsibility for mapping its fields to columns, generating the necessary SQL, and tracking changes made to it. A few requirements come with that: the class needs a **no-argument constructor** (Hibernate uses reflection to instantiate entities when loading from the database, before populating fields — a constructor requiring arguments doesn't fit that instantiation pattern), it must **not be `final`** (Hibernate's lazy-loading and proxying, covered later in this guide, work by generating a runtime subclass, which is impossible for a `final` class), and it needs an identifier field annotated `@Id` (covered next) — every entity must have a way to uniquely identify which row it corresponds to.
+
+By default, the table name matches the class's simple name, and column names match field names (both usually adjusted to snake_case by Hibernate's naming strategy), though `@Table(name = \"...\")` and `@Column(name = \"...\")` let you override either explicitly when the class/field name doesn't match the actual database naming convention."
+
+**Code:**
+
+```java
+@Entity
+@Table(name = "orders") // explicit override — otherwise defaults to the class's simple name
+class Order {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "total_amount") // explicit override — otherwise defaults to "totalAmount" -> snake_case
+    private BigDecimal totalAmount;
+
+    protected Order() {} // no-arg constructor — REQUIRED, Hibernate uses this via reflection
+
+    public Order(BigDecimal totalAmount) { // a real, business-facing constructor is fine ALONGSIDE it
+        this.totalAmount = totalAmount;
+    }
+}
+```
+
+**Follow-up:**
+
+I'd mention that the no-arg constructor doesn't have to be `public` — `protected` (as above) is the common convention, since it satisfies Hibernate's reflection-based instantiation requirement while still discouraging application code from calling it directly and bypassing whatever validation a real, business-facing constructor might enforce. I'd also flag that Java `record`s, despite being a natural fit conceptually for simple data carriers, are **not usable as JPA entities** at all — they're implicitly `final` and have no no-arg constructor by design, both of which directly violate the requirements above.
+
+**Source:** [Jakarta Persistence Specification 3.1 — Entity Class Requirements](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html)
+
+---
+
+### 4. What Is Spring Data JPA, and What Does a Repository Interface Give You?
+
+**Answer:**
+
+"Spring Data JPA is a layer built on top of JPA/Hibernate that eliminates most of the remaining boilerplate around writing data-access code — instead of manually implementing CRUD operations against an `EntityManager`, you declare a **repository interface** extending `JpaRepository<EntityType, IdType>`, and Spring generates a working implementation automatically at startup, with zero implementation code written by you at all. That gives you standard CRUD methods (`save()`, `findById()`, `findAll()`, `deleteById()`) immediately, plus **derived query methods** — Spring parses a method's *name* (`findByEmailAndStatus(String email, Status status)`) and generates the corresponding JPQL query automatically, without you writing any query at all for straightforward cases.
+
+For queries too complex for name-derivation to express cleanly, `@Query` lets you supply explicit JPQL (or native SQL) directly on the repository method, which is covered in more depth in the JPQL question later in this section."
+
+**Code:**
+
+```java
+interface OrderRepository extends JpaRepository<Order, Long> {
+    // Standard CRUD (save, findById, findAll, deleteById, etc.) — inherited, zero code needed
+
+    // Derived query — Spring parses the METHOD NAME and generates the query automatically
+    List<Order> findByCustomerIdAndStatus(Long customerId, OrderStatus status);
+    // generates roughly: SELECT o FROM Order o WHERE o.customerId = ?1 AND o.status = ?2
+
+    // Explicit JPQL for anything derivation can't express cleanly
+    @Query("SELECT o FROM Order o WHERE o.total > :minTotal ORDER BY o.createdAt DESC")
+    List<Order> findLargeOrders(@Param("minTotal") BigDecimal minTotal);
+}
+
+// Usage — no implementation class was ever written for OrderRepository:
+List<Order> orders = orderRepository.findByCustomerIdAndStatus(123L, OrderStatus.SHIPPED);
+```
+
+**Follow-up:**
+
+I'd flag that derived query methods are genuinely convenient but have a real readability ceiling — a method name accumulating five or six conditions (`findByStatusAndCustomerIdAndCreatedAtBetweenAndTotalGreaterThan...`) becomes harder to read than the equivalent explicit JPQL or a `Specification`-based dynamic query would be, so the practical guidance is: derived methods for genuinely simple, few-condition lookups, and explicit `@Query`/`Specification` once a query's conditions grow past what a readable method name can express.
+
+**Source:** [Spring Data JPA Reference — Query Methods](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html)
+
+---
+
+### 5. What's the Difference Between `@Id` and `@GeneratedValue`?
+
+**Answer:**
+
+"`@Id` marks which field is the entity's **primary key** — the field whose value uniquely identifies a specific row/entity instance; every entity must have exactly one (or a composite key, covered later in this guide). On its own, `@Id` says nothing about *how* that value gets populated — without anything else, the application would have to explicitly set the ID field itself before persisting.
+
+`@GeneratedValue` is what tells Hibernate to generate the ID value **automatically**, and its `strategy` attribute determines *how*: `IDENTITY` delegates to the database's own auto-increment column mechanism, `SEQUENCE` uses a separate database sequence object Hibernate calls to obtain the next value, `AUTO` lets the JPA provider pick a strategy appropriate for the configured database, and `TABLE` (rarely used in practice) simulates a sequence using an ordinary database table. The choice between these — particularly `IDENTITY` versus `SEQUENCE` — has real, non-cosmetic performance consequences for JDBC batching, covered in depth later in this guide."
+
+**Code:**
+
+```java
+@Entity
+class Order {
+    @Id // marks this as the primary key
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "order_seq")
+    @SequenceGenerator(name = "order_seq", sequenceName = "order_id_seq", allocationSize = 50)
+    private Long id; // Hibernate calls the database sequence to obtain this value automatically
+}
+
+// WITHOUT @GeneratedValue: the application itself must explicitly set the ID before persisting —
+// @Id alone doesn't generate anything
+@Entity
+class LegacyRecord {
+    @Id
+    private String id; // application code must call setId(...) itself before persist()
+}
+```
+
+**Follow-up:**
+
+I'd mention `allocationSize` on `@SequenceGenerator` as a real, easy-to-miss performance detail: Hibernate can grab a *block* of sequence values in one round trip (e.g., 50 at a time, as above) and hand them out to newly-created entities without a database round trip for every single insert, which meaningfully reduces sequence-related overhead for high-throughput inserts — but it also means the database sequence's actual value can jump by 50 for every batch, which is expected, correct behavior, not a bug, even though it can look surprising the first time someone notices gaps in a sequence-backed ID column.
+
+**Source:** [Jakarta Persistence Specification 3.1 — `@GeneratedValue`](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html)
+
+---
+
+### 6. What's the Difference Between `@OneToMany`, `@ManyToOne`, `@OneToOne`, and `@ManyToMany`?
+
+**Answer:**
+
+"These four annotations express the four possible relationship cardinalities between two entities, from the perspective of the entity the annotation is declared on. `@ManyToOne` — many instances of this entity relate to one instance of the other (many `Order`s belong to one `Customer`) — this is also the side that typically holds the actual foreign-key column in the database. `@OneToMany` is the inverse view of the same relationship from the 'one' side (one `Customer` has many `Order`s) — usually mapped as a `Collection`/`List`/`Set` field. `@OneToOne` — exactly one instance relates to exactly one instance of the other (one `User` has one `UserProfile`). `@ManyToMany` — many instances relate to many instances on both sides (many `Student`s enroll in many `Course`s), which requires a separate join table in the database to represent, since a plain foreign-key column on either side can't express a many-to-many relationship.
+
+Which side is the 'owning' side (the side Hibernate actually looks at to determine what to write to the database) versus the 'inverse' side is a distinct, separate concept from cardinality, covered in depth later in this guide — it's easy to conflate 'which annotation describes this side' with 'which side controls the actual persisted relationship,' but they're independent questions."
+
+**Code:**
+
+```java
+@Entity
+class Customer {
+    @OneToMany(mappedBy = "customer") // the "one" side — a Customer has many Orders
+    private List<Order> orders;
+}
+
+@Entity
+class Order {
+    @ManyToOne // the "many" side — holds the actual foreign key column (customer_id)
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
+}
+
+@Entity
+class Student {
+    @ManyToMany
+    @JoinTable(name = "student_course", // requires an explicit JOIN TABLE — neither side alone can hold this
+        joinColumns = @JoinColumn(name = "student_id"),
+        inverseJoinColumns = @JoinColumn(name = "course_id"))
+    private Set<Course> courses;
+}
+```
+
+**Follow-up:**
+
+I'd mention that `@ManyToMany` specifically is worth being cautious with in real applications — the moment the join table itself needs any additional data of its own (an enrollment date, an approval status), a plain `@ManyToMany` can't express that at all, and the standard fix is modeling the join table as its own explicit entity with `@ManyToOne` relationships on both sides instead, which is more verbose but lets the association itself carry real attributes — a genuinely common refactor once a "simple" many-to-many relationship turns out to need metadata of its own.
+
+**Source:** [Jakarta Persistence Specification 3.1 — Relationships](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html)
+
+---
+
+### 7. What Is a DTO, and Why Not Just Return Entities Directly From an API?
+
+**Answer:**
+
+"A DTO (Data Transfer Object) is a plain object shaped specifically for a particular boundary — typically an API response or request — containing only the fields that boundary actually needs, decoupled from the entity's own internal structure. Returning JPA entities directly from a REST API controller is a common early mistake with several real problems: it can leak internal implementation details (database column names, internal-only fields) into a public contract that other teams/clients depend on; it risks accidentally triggering lazy-loading during JSON serialization outside a transaction, throwing `LazyInitializationException` (covered later in this guide) at the worst possible time; and it tightly couples the API's public shape to the entity's persistence structure, so a purely internal schema change (renaming a column, restructuring a relationship for a performance reason) becomes a breaking API change for external consumers, even though nothing about the actual API contract needed to change.
+
+A DTO breaks that coupling deliberately: the entity's shape can evolve freely for internal/persistence reasons, and the DTO's shape only changes when the actual public contract needs to change — the mapping between them (entity to DTO) is where that boundary is enforced explicitly."
+
+**Code:**
+
+```java
+@Entity
+class Order { // the PERSISTENCE model — shaped for the database and internal business logic
+    @Id private Long id;
+    private BigDecimal total;
+    @OneToMany private List<OrderItem> items; // lazy by default — a real LazyInitializationException risk if serialized directly
+    private String internalNotes; // internal-only — should NEVER be exposed via the API
+}
+
+record OrderResponse(Long id, BigDecimal total, int itemCount) {} // the API's PUBLIC contract —
+                                                                     // deliberately narrower, no internal fields
+
+@GetMapping("/orders/{id}")
+OrderResponse getOrder(@PathVariable Long id) {
+    Order order = orderRepository.findById(id).orElseThrow();
+    return new OrderResponse(order.getId(), order.getTotal(), order.getItems().size()); // explicit mapping
+}
+```
+
+**Follow-up:**
+
+I'd mention that this mapping step, done by hand for every entity/DTO pair, gets repetitive fast in a larger application, which is exactly why libraries like MapStruct (generating the mapping code at compile time, so it's fast and type-checked) exist — but I'd be clear that the *reason* for the DTO boundary (decoupling the API contract from the persistence model) matters more than which specific mapping mechanism implements it, and this connects directly to the persistence-model-leakage question covered in depth later in this guide.
+
+**Source:** [Spring Framework Reference — Data Transfer Objects](https://docs.spring.io/spring-framework/reference/data-access/orm/general.html)
+
+---
+
+## Intermediate
+
+### 8. What's the Difference Between `save()`, `findById()`, and `deleteById()` in Spring Data JPA?
+
+**Answer:**
+
+"These are the standard CRUD methods every `JpaRepository` inherits automatically. `save(entity)` persists a new entity or updates an existing one — Hibernate decides which based on whether the entity's ID is already set (roughly: `null`/unset ID means insert, a populated ID means update), which is a genuinely common source of confusion covered in more depth by the `persist`-versus-`merge` comparison later in this guide, since `save()` internally delegates to one or the other depending on that same detection logic. `findById(id)` returns an `Optional<T>` — not the entity directly — specifically to force the caller to explicitly handle the 'not found' case rather than risking a `null` dereference, following the standard modern-Java `Optional` convention for a lookup that might not find anything. `deleteById(id)` removes the row matching that ID; unlike `delete(entity)` (which takes an already-loaded entity), `deleteById()` can trigger an extra `SELECT` first in some Hibernate versions/configurations to load the entity before deleting it, since delete lifecycle callbacks and cascade behavior may need the actual loaded entity, not just its ID, to execute correctly.
+
+Because `Optional` is involved, the typical call-site pattern uses `orElseThrow()` (mapping to a `404`-style API error) or `orElse(defaultValue)`, rather than calling `.get()` unconditionally, which would just trade a `NullPointerException` for an equally uninformative `NoSuchElementException`."
+
+**Code:**
+
+```java
+Order order = orderRepository.save(new Order(...)); // ID unset -> INSERT; ID set -> UPDATE
+
+Order found = orderRepository.findById(123L)
+    .orElseThrow(() -> new OrderNotFoundException(123L)); // explicit handling — not a bare .get()
+
+orderRepository.deleteById(123L); // removes the row matching this ID
+```
+
+**Follow-up:**
+
+I'd bring up that `save()`'s insert-vs-update detection based on ID presence has a real, specific gotcha for entities using `IDENTITY`-strategy ID generation combined with a manually-set ID for some other reason (data migration, testing) — Hibernate can misinterpret a manually-set, already-populated ID as 'this must be an update' and attempt to update a row that doesn't exist yet, rather than inserting a new one; this exact ambiguity, and how to work around it, is covered directly in the `persist`-versus-`merge` question later in this guide.
+
+**Source:** [Spring Data JPA Reference — `CrudRepository`](https://docs.spring.io/spring-data/jpa/reference/repositories/core-concepts.html)
+
+---
+
+### 9. What Is JPQL, and How Does It Differ From Native SQL?
+
+**Answer:**
+
+"JPQL (Jakarta Persistence Query Language) is a query language modeled closely on SQL syntax, but it queries against **entities and their fields**, not database tables and columns directly — `SELECT o FROM Order o WHERE o.status = :status` references the `Order` *entity* and its `status` *field*, not necessarily a table literally named `orders` or a column literally named `status`. Because JPQL is entity-aware, it's portable across different underlying databases (the same JPQL runs unchanged against PostgreSQL, MySQL, or any other JPA-supported database, since the actual SQL dialect translation is Hibernate's job), and it understands entity relationships directly, letting you write `JOIN o.items` navigating an object association rather than hand-writing the equivalent SQL `JOIN ... ON` condition yourself.
+
+**Native SQL** (via `@Query(nativeQuery = true)` or `entityManager.createNativeQuery()`) is real, actual SQL sent directly to the database — full access to database-specific features JPQL simply can't express (a database-specific function, a `CTE`, an optimizer hint), at the cost of losing portability across databases and losing some of Hibernate's automatic entity-relationship awareness."
+
+**Code:**
+
+```java
+// JPQL — references the ENTITY and its fields, portable across databases
+@Query("SELECT o FROM Order o WHERE o.customer.id = :customerId AND o.status = :status")
+List<Order> findByCustomerAndStatus(@Param("customerId") Long customerId, @Param("status") OrderStatus status);
+
+// Native SQL — references actual TABLE/COLUMN names, database-specific, not portable
+@Query(value = "SELECT * FROM orders WHERE customer_id = :customerId AND status = :status", nativeQuery = true)
+List<Order> findByCustomerAndStatusNative(@Param("customerId") Long customerId, @Param("status") String status);
+```
+
+**Follow-up:**
+
+I'd give the practical guidance directly: default to JPQL for the large majority of queries, since it stays portable and entity-aware; reach for native SQL specifically when you need a database feature JPQL genuinely can't express, or when you've profiled a specific query and need to hand-tune it beyond what Hibernate's generated SQL achieves — and I'd flag that native queries interact with Hibernate's dirty-checking and caching less cleanly than JPQL does (Hibernate can't automatically reason about which entities a native query might have affected the way it can for JPQL), which is covered in more depth in the native-SQL question later in this guide.
+
+**Source:** [Jakarta Persistence Specification 3.1 — Jakarta Persistence Query Language](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html)
+
+---
+
+### 10. What's the Difference Between `@Transactional` at the Repository vs. Service Layer?
+
+**Answer:**
+
+"Spring Data JPA's generated repository implementations already wrap each individual method (`save()`, `findById()`, a derived query method) in its own transaction by default — so a single repository call is always transactionally safe on its own, with no explicit `@Transactional` needed for that one call in isolation. The real question is what happens when a service method needs to call **multiple** repository operations that must all succeed or all fail together — without an explicit `@Transactional` at the *service* layer wrapping the whole method, each individual repository call gets its own separate, independent transaction, so a failure partway through leaves earlier calls already committed, with no way to roll them back together as one atomic unit.
+
+Placing `@Transactional` on the **service** method is the standard, correct pattern for exactly this reason: it establishes one transaction boundary spanning every repository call inside that method, so either the whole sequence commits together or the whole sequence rolls back together on any exception — this is also precisely why the self-invocation/proxy limitations covered in the Spring Boot Internals and Spring Security guides apply identically here, since `@Transactional` uses the exact same underlying proxy mechanism regardless of which guide's example demonstrates it."
+
+**Code:**
+
+```java
+@Service
+class OrderService {
+    private final OrderRepository orderRepository;
+    private final InventoryRepository inventoryRepository;
+
+    @Transactional // ONE transaction spans BOTH repository calls below
+    void placeOrder(Order order) {
+        orderRepository.save(order);                       // call 1
+        inventoryRepository.decrementStock(order.getSku()); // call 2
+        // if call 2 throws, call 1's save() is rolled back too — same transaction, atomic together
+    }
+}
+```
+
+**Follow-up:**
+
+I'd flag the common mistake this question is really testing: assuming that because each individual repository method is "already transactional," a service method calling several of them in sequence is automatically safe as a unit too — it isn't, without an explicit `@Transactional` establishing one shared boundary across all of them, and forgetting this is a genuinely common source of partial-write bugs that only surface under a failure partway through a multi-step operation, exactly the kind of bug that's easy to miss in testing (which rarely exercises the mid-sequence-failure path) and painful to diagnose in production.
+
+**Source:** [Spring Framework Reference — Declarative Transaction Management](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative.html)
+
+---
+
+### 11. What Is a Composite Key, and How Do You Model One in JPA?
+
+**Answer:**
+
+"A composite key is a primary key made up of **more than one column** — common for join/association tables (a many-to-many join table's key is naturally the pair of foreign keys it holds) or for entities that are only meaningfully unique when identified by a combination of fields (an `OrderItem` uniquely identified by `order_id` + `line_number`, say). JPA supports two ways to model this: an `@Embeddable` class annotated `@EmbeddedId` on the entity — a separate class holding the composite key's fields, treated as a single unit — or an `@IdClass`, where the key fields stay directly on the entity itself, but a separate class (matching those field names and types) is declared via `@IdClass` purely to tell JPA how to construct the composite identifier.
+
+`@EmbeddedId` is generally the more common, more object-oriented approach in modern code, since the composite key becomes a genuine, reusable value object (with its own `equals()`/`hashCode()`, which the composite key type must implement correctly, since JPA relies on it to determine entity identity)."
+
+**Code:**
+
+```java
+@Embeddable
+class OrderItemId implements Serializable {
+    private Long orderId;
+    private Integer lineNumber;
+
+    // equals()/hashCode() based on BOTH fields — required, JPA relies on this for identity
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof OrderItemId other
+            && orderId.equals(other.orderId) && lineNumber.equals(other.lineNumber);
+    }
+    @Override
+    public int hashCode() { return Objects.hash(orderId, lineNumber); }
+}
+
+@Entity
+class OrderItem {
+    @EmbeddedId
+    private OrderItemId id; // the composite key IS this embedded object, not a single scalar field
+
+    private String productSku;
+    private int quantity;
+}
+
+// Lookup by the composite key:
+OrderItem item = entityManager.find(OrderItem.class, new OrderItemId(orderId, lineNumber));
+```
+
+**Follow-up:**
+
+I'd mention that composite keys, while sometimes the most natural fit conceptually, add real friction in practice — every relationship pointing *at* an entity with a composite key has to reference the whole embedded key object rather than a single scalar value, and JPQL/native queries involving it get correspondingly more verbose. A common, pragmatic alternative many teams reach for instead: give the entity its own single-column surrogate key (a simple auto-generated `id`), and express the "must be unique per order + line number" business rule as a database-level unique constraint on those two columns instead of as the actual primary key — getting the uniqueness guarantee without the composite-key modeling overhead everywhere else in the codebase.
+
+**Source:** [Jakarta Persistence Specification 3.1 — Composite Primary Keys](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html)
+
+---
+
+### 12. What's the Difference Between `CascadeType.ALL` and Individual Cascade Types?
+
+**Answer:**
+
+"Cascading defines what happens to **associated** entities when a persistence operation is performed on the entity that owns the association — without any cascade configured, saving/deleting a `Customer` has zero automatic effect on that customer's associated `Order`s; each entity's lifecycle is managed completely independently unless you explicitly say otherwise. The individual cascade types each correspond to one specific operation: `PERSIST` (saving the parent also saves not-yet-persisted associated entities), `MERGE`, `REMOVE` (deleting the parent also deletes associated entities — a genuinely consequential one to apply carelessly), `REFRESH`, and `DETACH`.
+
+`CascadeType.ALL` is simply shorthand for all five combined — convenient to write, but it's worth being deliberate rather than defaulting to it reflexively: applying `REMOVE` cascade to a relationship where the associated entities are actually shared or independently meaningful (rather than truly 'owned exclusively by, and meaningless without, the parent') can delete data a different part of the application still needed, silently, as a side effect of an entirely different operation. The genuinely common, safe pattern is a parent-owns-children relationship (`Order` owning its `OrderItem`s, which have no independent meaning without their parent order) — cascading `PERSIST`/`MERGE`/`REMOVE` there is usually correct; cascading blindly on a relationship between two independently-meaningful entities usually isn't."
+
+**Code:**
+
+```java
+@Entity
+class Order {
+    // Order items are genuinely OWNED by the order — cascading ALL (including REMOVE) is appropriate:
+    // deleting the Order should delete its items; they have no independent meaning without it
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> items;
+
+    // A Customer is NOT owned by the Order — cascading REMOVE here would be a serious bug,
+    // deleting a customer record just because one of their orders was deleted
+    @ManyToOne // no cascade at all — Customer's lifecycle is managed completely independently
+    private Customer customer;
+}
+```
+
+**Follow-up:**
+
+I'd connect this directly to the specific, easy-to-make mistake it's testing for: `CascadeType.ALL` (or explicitly `CascadeType.REMOVE`) on a `@ManyToOne`/`@ManyToMany` relationship pointing at a genuinely shared or independent entity is a common real-world bug source — deleting one `Order` accidentally deleting the `Customer` it references, because cascade was applied reflexively to every relationship rather than deliberately only where the parent-owns-child semantic genuinely holds — which is exactly the distinction the cascade-versus-`orphanRemoval` question, covered next in this guide, sharpens further.
+
+**Source:** [Jakarta Persistence Specification 3.1 — Cascading Persistence Operations](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html)
+
+---
+
+## Staff Level
+
+### 13. Explain the Entity Lifecycle States
 
 **Answer:**
 
@@ -51,9 +500,9 @@ How to use this: each question has **the answer the way I'd actually say it out 
 
 **Transient**: a plain object, just constructed via `new`, with no association to any persistence context at all — JPA doesn't know it exists, and it will never be persisted no matter what happens to it, until it's explicitly attached.
 
-**Managed** (persistent): the entity is associated with an active persistence context (`EntityManager`) — any change made to its fields is tracked and will be automatically written to the database at flush time via dirty checking (question 3), without an explicit `save()` call being required for updates.
+**Managed** (persistent): the entity is associated with an active persistence context (`EntityManager`) — any change made to its fields is tracked and will be automatically written to the database at flush time via dirty checking (question 15), without an explicit `save()` call being required for updates.
 
-**Detached**: the entity *was* managed, but its persistence context has since closed (the transaction ended, the `EntityManager` closed) — the object still holds its data in memory, and its identity is still meaningful, but changes made to it are no longer tracked or automatically persisted, and accessing an uninitialized lazy association on it throws `LazyInitializationException` (question 11), since there's no active session left to fetch that data.
+**Detached**: the entity *was* managed, but its persistence context has since closed (the transaction ended, the `EntityManager` closed) — the object still holds its data in memory, and its identity is still meaningful, but changes made to it are no longer tracked or automatically persisted, and accessing an uninitialized lazy association on it throws `LazyInitializationException` (question 23), since there's no active session left to fetch that data.
 
 **Removed**: the entity is still managed for the remainder of the current persistence context, but has been marked for deletion — the actual `DELETE` SQL is issued at flush time, and after the transaction commits, the object is effectively transitioned out of existence, even though the in-memory Java object reference still technically exists until garbage collected."
 
@@ -79,19 +528,19 @@ entityManager.remove(managed);        // REMOVED — still managed until flush/c
 
 **Follow-up:**
 
-I'd bring up that the single most common real-world bug rooted in this lifecycle is mutating a **detached** entity and being surprised the change never made it to the database — this happens constantly with entities passed between layers (loaded in one request-scoped transaction, mutated later in code that assumes it's still managed) or entities held across an async boundary. The fix isn't "remember which state it's in" — it's designing code so that mutation always happens on a managed instance within an active transaction (re-fetch, or explicitly `merge()` a detached instance back in, question 13), rather than relying on developers to track lifecycle state manually across a codebase.
+I'd bring up that the single most common real-world bug rooted in this lifecycle is mutating a **detached** entity and being surprised the change never made it to the database — this happens constantly with entities passed between layers (loaded in one request-scoped transaction, mutated later in code that assumes it's still managed) or entities held across an async boundary. The fix isn't "remember which state it's in" — it's designing code so that mutation always happens on a managed instance within an active transaction (re-fetch, or explicitly `merge()` a detached instance back in, question 25), rather than relying on developers to track lifecycle state manually across a codebase.
 
 **Source:** [Jakarta Persistence Specification §3.2 — Entity Instance's Life Cycle](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html)
 
 ---
 
-## 2. What Is the Persistence Context, and What Guarantees Does It Provide?
+### 14. What Is the Persistence Context, and What Guarantees Does It Provide?
 
 **Answer:**
 
 "The persistence context is the `EntityManager`'s in-memory cache of managed entities for the current unit of work — every entity loaded or persisted through a given `EntityManager` gets registered in it, keyed by its identity (entity type + primary key).
 
-The guarantees it provides: **identity guarantee** — within a single persistence context, requesting the same entity (same type, same ID) twice always returns the *exact same Java object reference*, not two separate objects representing the same row, which means `==` comparison works correctly for entities loaded within the same context, and any change made through one reference is immediately visible through the other (they're literally the same object). **Automatic dirty checking** (question 3) — changes to managed entities are tracked and translated into SQL automatically at flush time, without explicit save calls per mutation. **Write-behind behavior** — SQL statements aren't necessarily issued the moment you call a setter; they're batched up and issued at flush time (question 4), which the persistence context manages transparently. This combination is what people mean by 'the first-level cache' — it's not primarily a performance optimization (though it has that effect too), it's fundamentally an identity and consistency guarantee for the current unit of work."
+The guarantees it provides: **identity guarantee** — within a single persistence context, requesting the same entity (same type, same ID) twice always returns the *exact same Java object reference*, not two separate objects representing the same row, which means `==` comparison works correctly for entities loaded within the same context, and any change made through one reference is immediately visible through the other (they're literally the same object). **Automatic dirty checking** (question 15) — changes to managed entities are tracked and translated into SQL automatically at flush time, without explicit save calls per mutation. **Write-behind behavior** — SQL statements aren't necessarily issued the moment you call a setter; they're batched up and issued at flush time (question 16), which the persistence context manages transparently. This combination is what people mean by 'the first-level cache' — it's not primarily a performance optimization (though it has that effect too), it's fundamentally an identity and consistency guarantee for the current unit of work."
 
 **Code:**
 
@@ -111,19 +560,19 @@ System.out.println(order2.getStatus()); // "shipped" — they're literally the
 
 **Follow-up:**
 
-I'd emphasize that the identity guarantee is scoped to a **single persistence context** (typically one transaction, in a typical Spring-managed setup) — it says nothing about consistency *across* different transactions/persistence contexts, which is exactly why optimistic locking (question 20) exists as a separate mechanism for cross-transaction consistency, and why the second-level cache (question 6) is an entirely separate, explicitly-opted-into layer for sharing cached data *across* persistence contexts, with a much weaker consistency story than the first-level cache's per-context identity guarantee. I'd also mention that this identity guarantee is precisely why entity `equals()`/`hashCode()` implementations matter so much less *within* a single transaction (reference equality already works correctly there) but matter enormously the moment entities cross persistence-context boundaries or get placed in a `Set` spanning multiple contexts (question 18).
+I'd emphasize that the identity guarantee is scoped to a **single persistence context** (typically one transaction, in a typical Spring-managed setup) — it says nothing about consistency *across* different transactions/persistence contexts, which is exactly why optimistic locking (question 32) exists as a separate mechanism for cross-transaction consistency, and why the second-level cache (question 18) is an entirely separate, explicitly-opted-into layer for sharing cached data *across* persistence contexts, with a much weaker consistency story than the first-level cache's per-context identity guarantee. I'd also mention that this identity guarantee is precisely why entity `equals()`/`hashCode()` implementations matter so much less *within* a single transaction (reference equality already works correctly there) but matter enormously the moment entities cross persistence-context boundaries or get placed in a `Set` spanning multiple contexts (question 30).
 
 **Source:** [Jakarta Persistence Specification §7.6 — Persistence Context](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html)
 
 ---
 
-## 3. How Does Dirty Checking Work?
+### 15. How Does Dirty Checking Work?
 
 **Answer:**
 
 "At flush time, Hibernate compares each managed entity's *current* field values against a snapshot it took of that entity's state at the moment it became managed (when it was loaded or persisted) — any field that differs between the current state and that original snapshot is considered 'dirty,' and Hibernate generates an `UPDATE` statement for exactly those changed fields (or the whole row, depending on the dynamic-update setting). This is why simply calling a setter on a managed entity is enough to get it persisted — there's no explicit `save()`/`update()` call required for a mutation on an already-managed instance, since dirty checking happens automatically at flush.
 
-The mechanism has a real, non-trivial cost worth understanding: Hibernate has to keep that original-state snapshot around for every managed entity for the lifetime of the persistence context, and the comparison work at flush time scales with the number of managed entities and their field count — for a persistence context managing a very large number of entities (a large batch operation loading and modifying thousands of rows), this snapshot-keeping and comparison overhead becomes a real, measurable cost, which is part of why bulk operations (question 22/23) are handled completely differently rather than just loading everything as managed entities and mutating them."
+The mechanism has a real, non-trivial cost worth understanding: Hibernate has to keep that original-state snapshot around for every managed entity for the lifetime of the persistence context, and the comparison work at flush time scales with the number of managed entities and their field count — for a persistence context managing a very large number of entities (a large batch operation loading and modifying thousands of rows), this snapshot-keeping and comparison overhead becomes a real, measurable cost, which is part of why bulk operations (question 34/35) are handled completely differently rather than just loading everything as managed entities and mutating them."
 
 **Code:**
 
@@ -151,7 +600,7 @@ I'd bring up `@DynamicUpdate` as the annotation controlling whether the generate
 
 ---
 
-## 4. When Does Hibernate Flush Changes?
+### 16. When Does Hibernate Flush Changes?
 
 **Answer:**
 
@@ -191,19 +640,19 @@ entityManager.setFlushMode(FlushModeType.COMMIT);
 
 **Follow-up:**
 
-I'd bring up `flush()` versus `clear()` as a pattern worth understanding precisely for batch processing (question 23 covers this at length): calling `flush()` alone pushes pending SQL to the database but does **not** shrink the persistence context's managed-entity set or its dirty-checking snapshots — for that, `clear()` (or `detach()` per-entity) is needed afterward, and the common batch-processing idiom is `flush()` then `clear()` together, periodically, specifically to bound both the pending-SQL backlog *and* the growing memory/dirty-checking overhead of an ever-larger managed-entity set within one long-running persistence context. I'd also flag that relying on auto-flush's query-analysis behavior as your *only* consistency mechanism is fragile for anything beyond simple JPQL — for native queries or cases where the auto-flush heuristic might not catch a dependency, an explicit `flush()` before a query that needs to see pending changes is the more defensible, less magic-dependent choice.
+I'd bring up `flush()` versus `clear()` as a pattern worth understanding precisely for batch processing (question 35 covers this at length): calling `flush()` alone pushes pending SQL to the database but does **not** shrink the persistence context's managed-entity set or its dirty-checking snapshots — for that, `clear()` (or `detach()` per-entity) is needed afterward, and the common batch-processing idiom is `flush()` then `clear()` together, periodically, specifically to bound both the pending-SQL backlog *and* the growing memory/dirty-checking overhead of an ever-larger managed-entity set within one long-running persistence context. I'd also flag that relying on auto-flush's query-analysis behavior as your *only* consistency mechanism is fragile for anything beyond simple JPQL — for native queries or cases where the auto-flush heuristic might not catch a dependency, an explicit `flush()` before a query that needs to see pending changes is the more defensible, less magic-dependent choice.
 
 **Source:** [Hibernate ORM User Guide — Flushing](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#flushing)
 
 ---
 
-## 5. What Is the Difference Between `flush()` and Transaction Commit?
+### 17. What Is the Difference Between `flush()` and Transaction Commit?
 
 **Answer:**
 
 "`flush()` synchronizes the persistence context's in-memory state with the database — it issues whatever pending `INSERT`/`UPDATE`/`DELETE` SQL is needed to make the database match the current managed-entity state — but it does **not** end the transaction, and critically, it does **not** make those changes durable or visible to other transactions. A flush without a commit can still be rolled back entirely, and depending on the database's isolation level, other concurrent transactions typically still won't see the flushed-but-uncommitted changes (they're visible within the *same* database transaction, just not yet committed).
 
-**Commit** is what actually ends the database transaction — it makes the changes durable (the 'D' in ACID) and visible to other transactions (subject to isolation level), and it's also the point at which, if a `@Version`-based optimistic lock check is going to fail, it's guaranteed to have already been checked (since Hibernate flushes as part of the commit process if there are pending changes). The practical distinction that actually matters day to day: `flush()` is about making Java-object-state changes visible as SQL *within the current transaction* (relevant for query-consistency reasons, question 4), while commit is about finalizing the transaction as a whole — a flush is something that can happen multiple times within one transaction, commit happens exactly once at the transaction's end."
+**Commit** is what actually ends the database transaction — it makes the changes durable (the 'D' in ACID) and visible to other transactions (subject to isolation level), and it's also the point at which, if a `@Version`-based optimistic lock check is going to fail, it's guaranteed to have already been checked (since Hibernate flushes as part of the commit process if there are pending changes). The practical distinction that actually matters day to day: `flush()` is about making Java-object-state changes visible as SQL *within the current transaction* (relevant for query-consistency reasons, question 16), while commit is about finalizing the transaction as a whole — a flush is something that can happen multiple times within one transaction, commit happens exactly once at the transaction's end."
 
 **Code:**
 
@@ -231,17 +680,17 @@ void demonstrateFlushVsCommit() {
 
 **Follow-up:**
 
-I'd bring up that this distinction matters concretely for `IDENTITY`-strategy ID generation (question 15) — since an `IDENTITY` column's value is only known *after* the actual `INSERT` executes, Hibernate has no choice but to flush immediately on `persist()` for `IDENTITY`-strategy entities (it can't batch/delay the insert the way it can with a pre-allocated `SEQUENCE` value), which is exactly why `IDENTITY` strategy disables JDBC batching for inserts (a real, sometimes-surprising performance consequence, covered more in question 16). I'd also mention that calling `flush()` unnecessarily/excessively (a common anti-pattern from developers uncertain about Hibernate's behavior, calling `flush()` after every single `persist()`/`merge()` "just to be safe") defeats batching optimizations and adds unnecessary round trips — flush should be called deliberately, for a specific reason (needing pending changes visible to a subsequent query, or explicit batch-boundary management), not reflexively.
+I'd bring up that this distinction matters concretely for `IDENTITY`-strategy ID generation (question 27) — since an `IDENTITY` column's value is only known *after* the actual `INSERT` executes, Hibernate has no choice but to flush immediately on `persist()` for `IDENTITY`-strategy entities (it can't batch/delay the insert the way it can with a pre-allocated `SEQUENCE` value), which is exactly why `IDENTITY` strategy disables JDBC batching for inserts (a real, sometimes-surprising performance consequence, covered more in question 28). I'd also mention that calling `flush()` unnecessarily/excessively (a common anti-pattern from developers uncertain about Hibernate's behavior, calling `flush()` after every single `persist()`/`merge()` "just to be safe") defeats batching optimizations and adds unnecessary round trips — flush should be called deliberately, for a specific reason (needing pending changes visible to a subsequent query, or explicit batch-boundary management), not reflexively.
 
 **Source:** [Hibernate ORM User Guide — Flushing](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#flushing), [Jakarta Persistence Specification §3.2.4 — Synchronization to the Database](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html)
 
 ---
 
-## 6. Explain First-Level and Second-Level Caches
+### 18. Explain First-Level and Second-Level Caches
 
 **Answer:**
 
-"The **first-level cache** is the persistence context itself (question 2) — automatic, always on, scoped strictly to one `EntityManager`/transaction, and providing the identity guarantee discussed there. There's no configuration decision to make about it; every JPA implementation has one, and it exists for as long as the persistence context is open.
+"The **first-level cache** is the persistence context itself (question 14) — automatic, always on, scoped strictly to one `EntityManager`/transaction, and providing the identity guarantee discussed there. There's no configuration decision to make about it; every JPA implementation has one, and it exists for as long as the persistence context is open.
 
 The **second-level cache** is an entirely separate, **optional**, application-wide (not per-transaction) cache that sits *between* the persistence context and the database — shared across *all* persistence contexts/transactions in the application, backed by a cache provider (Ehcache, Caffeine, Infinispan, Redis via a Hibernate integration) that Hibernate must be explicitly configured to use, entity type by entity type (via `@Cacheable` plus the relevant cache-concurrency-strategy configuration). Its purpose is avoiding a database round-trip for data that's read frequently and changes relatively rarely across the *whole application*, not just within one transaction.
 
@@ -284,7 +733,7 @@ I'd bring up the different `CacheConcurrencyStrategy` options as a real decision
 
 ---
 
-## 7. What Causes the N+1 Query Problem?
+### 19. What Causes the N+1 Query Problem?
 
 **Answer:**
 
@@ -316,13 +765,13 @@ I'd bring up that the most reliable way to *catch* N+1 problems isn't code revie
 
 ---
 
-## 8. Compare Join Fetching, Entity Graphs, Batch Fetching, and DTO Projections
+### 20. Compare Join Fetching, Entity Graphs, Batch Fetching, and DTO Projections
 
 **Answer:**
 
 "These are the four main tools for solving N+1 and controlling fetch shape, each with different trade-offs.
 
-**Join fetching** (`JOIN FETCH` in JPQL, or `@EntityGraph`'s underlying mechanism) issues a single SQL query with an actual SQL `JOIN`, pulling parent and association data together in one round trip — the most efficient in terms of round-trip count, but joining a *collection* association can multiply result rows (question 9's duplicate-row problem), and joining multiple collections in one query compounds that multiplication badly.
+**Join fetching** (`JOIN FETCH` in JPQL, or `@EntityGraph`'s underlying mechanism) issues a single SQL query with an actual SQL `JOIN`, pulling parent and association data together in one round trip — the most efficient in terms of round-trip count, but joining a *collection* association can multiply result rows (question 21's duplicate-row problem), and joining multiple collections in one query compounds that multiplication badly.
 
 **Entity graphs** (`@NamedEntityGraph`/`EntityGraph` built dynamically) are a more declarative, reusable way to specify 'for this specific query, fetch these associations eagerly' without hardcoding it into the entity's own default fetch type — letting the same entity be fetched shallowly in one context and with specific associations eagerly loaded in another, based on what a specific use case actually needs, rather than one fixed fetch strategy baked into the mapping.
 
@@ -357,13 +806,13 @@ List<OrderSummary> findAllSummaries();
 
 **Follow-up:**
 
-I'd give a clear decision framework rather than presenting these as interchangeable: DTO projections for genuinely read-only reporting/display use cases where entity behavior (dirty checking, cascading, lazy navigation) is never needed — this is usually the most efficient option and I'd reach for it more often than teams typically do, since a lot of "read a bunch of data to render a screen" code doesn't actually need full managed entities at all. Join fetch/entity graphs for cases where you genuinely need managed entities with specific associations pre-loaded (about to mutate them, or pass them somewhere that needs full entity behavior) — but I'd watch carefully for the collection-multiplication problem (question 9) if joining more than one collection. Batch fetching as the pragmatic, low-effort fallback for existing code with an N+1 problem that isn't worth a larger refactor — a `@BatchSize` annotation is often a five-minute fix for a real, measured performance problem, versus a more invasive redesign to a join-fetch or DTO-projection approach.
+I'd give a clear decision framework rather than presenting these as interchangeable: DTO projections for genuinely read-only reporting/display use cases where entity behavior (dirty checking, cascading, lazy navigation) is never needed — this is usually the most efficient option and I'd reach for it more often than teams typically do, since a lot of "read a bunch of data to render a screen" code doesn't actually need full managed entities at all. Join fetch/entity graphs for cases where you genuinely need managed entities with specific associations pre-loaded (about to mutate them, or pass them somewhere that needs full entity behavior) — but I'd watch carefully for the collection-multiplication problem (question 21) if joining more than one collection. Batch fetching as the pragmatic, low-effort fallback for existing code with an N+1 problem that isn't worth a larger refactor — a `@BatchSize` annotation is often a five-minute fix for a real, measured performance problem, versus a more invasive redesign to a join-fetch or DTO-projection approach.
 
 **Source:** [Hibernate ORM User Guide — Fetching Strategies](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#fetching), [Vlad Mihalcea — Entity Graphs](https://vladmihalcea.com/jpa-entity-graph/)
 
 ---
 
-## 9. Why Can Join-Fetching Multiple Collections Produce Duplicates or Excessive Result Sets?
+### 21. Why Can Join-Fetching Multiple Collections Produce Duplicates or Excessive Result Sets?
 
 **Answer:**
 
@@ -400,19 +849,19 @@ Order findWithItemsAndHistory(@Param("id") Long id); // may throw
 
 **Follow-up:**
 
-I'd bring up the practical fixes, in order of preference: fetch **one** collection via join-fetch (the largest/most commonly-needed one) and let any additional collection load via batch fetching (question 8) instead of joining it in the same query — avoiding the cross-product entirely while still avoiding a pure N+1 for the second collection; or use `Set` instead of `List` for collections being joined (removing "bag" ambiguity, since `Set` semantics let Hibernate de-duplicate more reliably, though `Set` brings its own equals/hashCode considerations, question 18); or, often the cleanest fix, run two separate queries — one join-fetching the parent with the first collection, a second query fetching the second collection separately (Hibernate will correctly associate results back onto the already-loaded, first-level-cached parent entities) — trading one extra round trip for avoiding the cross-product multiplication entirely, which is very often the better trade at any meaningful collection size.
+I'd bring up the practical fixes, in order of preference: fetch **one** collection via join-fetch (the largest/most commonly-needed one) and let any additional collection load via batch fetching (question 20) instead of joining it in the same query — avoiding the cross-product entirely while still avoiding a pure N+1 for the second collection; or use `Set` instead of `List` for collections being joined (removing "bag" ambiguity, since `Set` semantics let Hibernate de-duplicate more reliably, though `Set` brings its own equals/hashCode considerations, question 30); or, often the cleanest fix, run two separate queries — one join-fetching the parent with the first collection, a second query fetching the second collection separately (Hibernate will correctly associate results back onto the already-loaded, first-level-cached parent entities) — trading one extra round trip for avoiding the cross-product multiplication entirely, which is very often the better trade at any meaningful collection size.
 
 **Source:** [Vlad Mihalcea — MultipleBagFetchException](https://vladmihalcea.com/hibernate-multiplebagfetchexception/), [Hibernate ORM User Guide — Fetching](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#fetching)
 
 ---
 
-## 10. Compare Lazy and Eager Loading. Why Is Changing Everything to Eager Loading Dangerous?
+### 22. Compare Lazy and Eager Loading. Why Is Changing Everything to Eager Loading Dangerous?
 
 **Answer:**
 
 "Lazy loading defers fetching an association until it's actually accessed — the association is represented by a proxy (or, for collections, a proxy collection) that transparently triggers a query the first time code actually calls a method on it. Eager loading fetches the association immediately, as part of the original query for the owning entity (or via an immediately-issued follow-up query), regardless of whether the calling code ever actually uses it.
 
-The naive fix people reach for after hitting a `LazyInitializationException` (question 11) — 'just make everything `FetchType.EAGER`' — trades one problem for a worse one: eager associations are fetched *every single time* the owning entity is loaded, by *every* code path that loads it, whether or not that specific code path needs the association at all. This has two compounding costs: unnecessary data transfer and query overhead on every load (even for code paths that never touch the association), and — much worse — eager-loaded collection associations compound exactly like the join-multiplication problem from question 9 if more than one eager collection exists on the same entity, except now it happens *unconditionally, on every single load of that entity, everywhere in the codebase*, rather than only when a specific query explicitly opts into joining. This is why the general, strong guidance is: default every association to `LAZY` (JPA's own spec default for `@OneToMany`/`@ManyToMany` is already lazy; `@ManyToOne`/`@OneToOne` default to eager in the *spec*, which is itself a common gotcha worth overriding explicitly), and use eager fetching or explicit join-fetch/entity-graphs (question 8) deliberately, per-query, only where a specific use case actually needs it."
+The naive fix people reach for after hitting a `LazyInitializationException` (question 23) — 'just make everything `FetchType.EAGER`' — trades one problem for a worse one: eager associations are fetched *every single time* the owning entity is loaded, by *every* code path that loads it, whether or not that specific code path needs the association at all. This has two compounding costs: unnecessary data transfer and query overhead on every load (even for code paths that never touch the association), and — much worse — eager-loaded collection associations compound exactly like the join-multiplication problem from question 21 if more than one eager collection exists on the same entity, except now it happens *unconditionally, on every single load of that entity, everywhere in the codebase*, rather than only when a specific query explicitly opts into joining. This is why the general, strong guidance is: default every association to `LAZY` (JPA's own spec default for `@OneToMany`/`@ManyToMany` is already lazy; `@ManyToOne`/`@OneToOne` default to eager in the *spec*, which is itself a common gotcha worth overriding explicitly), and use eager fetching or explicit join-fetch/entity-graphs (question 20) deliberately, per-query, only where a specific use case actually needs it."
 
 **Code:**
 
@@ -444,13 +893,13 @@ class Order {
 
 **Follow-up:**
 
-I'd frame the right mental model explicitly: fetch strategy shouldn't be a property fixed once on the entity mapping at all — it's fundamentally a **per-use-case** decision (this specific screen/operation needs the items eagerly, this other one doesn't), and JPA's mapping-level `fetch` attribute is really just a *default* for when a query doesn't specify anything more precise — the actual mechanism for expressing "this specific query needs this association eagerly" should be entity graphs or join-fetch (question 8), applied at the query call site, not a blanket entity-level `EAGER` setting that applies unconditionally everywhere. I'd also mention that `LazyInitializationException` (the next question) is genuinely a *good* signal to have — it's telling you a specific code path needs an association that isn't loaded, which is much more actionable and locatable than silently eager-loading everything and never getting that signal at all, just paying the cost uniformly and invisibly everywhere.
+I'd frame the right mental model explicitly: fetch strategy shouldn't be a property fixed once on the entity mapping at all — it's fundamentally a **per-use-case** decision (this specific screen/operation needs the items eagerly, this other one doesn't), and JPA's mapping-level `fetch` attribute is really just a *default* for when a query doesn't specify anything more precise — the actual mechanism for expressing "this specific query needs this association eagerly" should be entity graphs or join-fetch (question 20), applied at the query call site, not a blanket entity-level `EAGER` setting that applies unconditionally everywhere. I'd also mention that `LazyInitializationException` (the next question) is genuinely a *good* signal to have — it's telling you a specific code path needs an association that isn't loaded, which is much more actionable and locatable than silently eager-loading everything and never getting that signal at all, just paying the cost uniformly and invisibly everywhere.
 
 **Source:** [Jakarta Persistence Specification — Fetch Type](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html), [Vlad Mihalcea — The Best Way to Use Fetch Types](https://vladmihalcea.com/eager-fetching-is-a-code-smell/)
 
 ---
 
-## 11. What Is `LazyInitializationException`, and What Design Problem Does It Usually Reveal?
+### 23. What Is `LazyInitializationException`, and What Design Problem Does It Usually Reveal?
 
 **Answer:**
 
@@ -480,7 +929,7 @@ Order loadOrderWithItems(Long id) {
     Order order = orderRepository.findById(id).orElseThrow();
     order.getItems().size(); // force initialization HERE, while the session is
     return order;              // still open — or better, use a JOIN FETCH query
-}                                // (question 8) to get this in the original SELECT
+}                                // (question 20) to get this in the original SELECT
 ```
 
 **Follow-up:**
@@ -491,13 +940,13 @@ I'd bring up that the actual, durable fix is architectural, not a one-off code p
 
 ---
 
-## 12. Why Is Open Session in View Controversial?
+### 24. Why Is Open Session in View Controversial?
 
 **Answer:**
 
 "Open Session in View (OSIV) — Spring Boot's default behavior for web applications, `spring.jpa.open-in-view=true` — keeps the Hibernate session (and its underlying database connection) open for the **entire duration of the HTTP request**, not just for the duration of the `@Transactional` service method, specifically so that lazy associations can still be initialized later, during view rendering or JSON serialization, without throwing `LazyInitializationException`.
 
-It's controversial for a few concrete, real reasons, not just aesthetic purity: it holds a **database connection checked out from the pool for the entire request duration**, including time spent on rendering, serialization, or waiting on unrelated slow work (an external API call made after the data was loaded) — under load, this ties up connection-pool capacity far longer than the actual database work requires, and can exhaust the pool under concurrency that would otherwise be perfectly fine if connections were released as soon as the actual database work finished. It also **hides** the exact design problem question 11 describes — lazy-loading gaps that should be caught explicitly (and fixed by loading what's actually needed, where it's needed) instead 'just work' via OSIV's extended session, meaning the N+1 query problem (question 7) can silently manifest *during view rendering*, invisible to anyone profiling just the service-layer method, since the actual lazy-load queries now happen later, outside the code that looks like 'the database part' of the request."
+It's controversial for a few concrete, real reasons, not just aesthetic purity: it holds a **database connection checked out from the pool for the entire request duration**, including time spent on rendering, serialization, or waiting on unrelated slow work (an external API call made after the data was loaded) — under load, this ties up connection-pool capacity far longer than the actual database work requires, and can exhaust the pool under concurrency that would otherwise be perfectly fine if connections were released as soon as the actual database work finished. It also **hides** the exact design problem question 23 describes — lazy-loading gaps that should be caught explicitly (and fixed by loading what's actually needed, where it's needed) instead 'just work' via OSIV's extended session, meaning the N+1 query problem (question 19) can silently manifest *during view rendering*, invisible to anyone profiling just the service-layer method, since the actual lazy-load queries now happen later, outside the code that looks like 'the database part' of the request."
 
 **Code:**
 
@@ -514,19 +963,19 @@ spring.jpa.open-in-view=false
 
 **Follow-up:**
 
-I'd mention that Spring Boot actually logs a warning at startup if `spring.jpa.open-in-view` is left at its default `true` value without explicit configuration, specifically because the framework maintainers consider it a footgun worth calling out rather than a safe default to rely on silently — a strong signal that even the framework's own authors recommend making this an explicit, deliberate choice rather than accepting the implicit default. I'd frame the actual staff-level recommendation as: disable OSIV, and treat any resulting `LazyInitializationException`s that surface as legitimate bugs revealing genuinely missing eager-fetch logic in the data-access layer (question 11's fix) — this trades a slightly more annoying development experience (exceptions instead of silent extended sessions) for connection-pool efficiency under load and much better visibility into where and why each query is actually being issued, both of which matter far more in a production system under real traffic than the convenience OSIV offers during initial development.
+I'd mention that Spring Boot actually logs a warning at startup if `spring.jpa.open-in-view` is left at its default `true` value without explicit configuration, specifically because the framework maintainers consider it a footgun worth calling out rather than a safe default to rely on silently — a strong signal that even the framework's own authors recommend making this an explicit, deliberate choice rather than accepting the implicit default. I'd frame the actual staff-level recommendation as: disable OSIV, and treat any resulting `LazyInitializationException`s that surface as legitimate bugs revealing genuinely missing eager-fetch logic in the data-access layer (question 23's fix) — this trades a slightly more annoying development experience (exceptions instead of silent extended sessions) for connection-pool efficiency under load and much better visibility into where and why each query is actually being issued, both of which matter far more in a production system under real traffic than the convenience OSIV offers during initial development.
 
 **Source:** [Spring Boot Reference — Open EntityManager in View](https://docs.spring.io/spring-boot/reference/data/sql.html#data.sql.jpa-and-spring-data), [Vlad Mihalcea — Open Session in View Anti-Pattern](https://vladmihalcea.com/the-open-session-in-view-anti-pattern/)
 
 ---
 
-## 13. Compare `persist`, `merge`, and Repository `save`
+### 25. Compare `persist`, `merge`, and Repository `save`
 
 **Answer:**
 
 "`persist()` is specifically for making a **new, transient** entity managed — it takes a transient object and schedules it for insertion, and the same object instance you passed in becomes the managed one (no new object is returned or needed). Calling `persist()` on an entity that already has an assigned ID representing an existing row (in some ID-generation strategies) is technically undefined/incorrect usage — `persist()` is conceptually 'this is new.'
 
-`merge()` is for reconciling a **detached** entity's state back into the persistence context — it does **not** attach the object you passed in directly; instead, it loads (or finds already-loaded) the *managed* entity with the same ID, copies the detached object's field values onto that managed instance, and **returns the managed instance** — the object you originally passed to `merge()` remains detached, unmanaged, and any code that continues mutating the original passed-in reference expecting it to now be tracked is a common, real bug (question 14 covers this directly).
+`merge()` is for reconciling a **detached** entity's state back into the persistence context — it does **not** attach the object you passed in directly; instead, it loads (or finds already-loaded) the *managed* entity with the same ID, copies the detached object's field values onto that managed instance, and **returns the managed instance** — the object you originally passed to `merge()` remains detached, unmanaged, and any code that continues mutating the original passed-in reference expecting it to now be tracked is a common, real bug (question 26 covers this directly).
 
 Spring Data JPA's `save()` is a convenience wrapper that inspects the entity for whether it looks new (no ID assigned yet, or has version/ID heuristics suggesting it's transient) and calls either `persist()` or `merge()` accordingly — convenient, but it means `save()`'s actual behavior (and its actual return-value semantics, mirroring `merge()`'s 'returns a different object' behavior when it delegates to merge) depends on entity state in a way that's not always obvious from the call site alone."
 
@@ -559,7 +1008,7 @@ I'd flag the "always use the returned reference from `save()`/`merge()`, never t
 
 ---
 
-## 14. Why Can `merge` Produce Unexpected Behavior?
+### 26. Why Can `merge` Produce Unexpected Behavior?
 
 **Answer:**
 
@@ -595,19 +1044,19 @@ void updateStatusCorrectly(Long id, String newStatus) {
 
 **Follow-up:**
 
-I'd state the practical guidance directly: for typical application code performing a targeted update (change one or two fields on an existing entity), the safer and more common pattern is to `find()` the managed entity directly within an active transaction and mutate it (relying on dirty checking, question 3) rather than constructing a detached representation and calling `merge()` — `merge()` is genuinely most appropriate for scenarios where you truly have a detached, *fully and correctly populated* entity graph (e.g., an entity that was loaded, sent to a client, modified there, and sent back in full, as in some optimistic-locking client/server round-trip patterns) rather than as a general-purpose "save this update" mechanism. I'd also flag that this exact "partial detached object silently wiping fields via merge" bug is common in codebases that map incoming API request DTOs directly onto entity objects and merge them — a request body that only includes a subset of fields, naively mapped onto a new entity instance and merged, is a textbook version of this exact trap.
+I'd state the practical guidance directly: for typical application code performing a targeted update (change one or two fields on an existing entity), the safer and more common pattern is to `find()` the managed entity directly within an active transaction and mutate it (relying on dirty checking, question 15) rather than constructing a detached representation and calling `merge()` — `merge()` is genuinely most appropriate for scenarios where you truly have a detached, *fully and correctly populated* entity graph (e.g., an entity that was loaded, sent to a client, modified there, and sent back in full, as in some optimistic-locking client/server round-trip patterns) rather than as a general-purpose "save this update" mechanism. I'd also flag that this exact "partial detached object silently wiping fields via merge" bug is common in codebases that map incoming API request DTOs directly onto entity objects and merge them — a request body that only includes a subset of fields, naively mapped onto a new entity instance and merged, is a textbook version of this exact trap.
 
 **Source:** [Jakarta Persistence Specification §3.2.7.1 — Merge](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html), [Vlad Mihalcea — merge() gotchas](https://vladmihalcea.com/jpa-persist-and-merge/)
 
 ---
 
-## 15. Compare `IDENTITY`, `SEQUENCE`, and Application-Generated IDs
+### 27. Compare `IDENTITY`, `SEQUENCE`, and Application-Generated IDs
 
 **Answer:**
 
-"`IDENTITY` relies on the database's own auto-increment column mechanism — simple to set up, universally supported, but the actual generated ID value is only known *after* the `INSERT` statement has physically executed, since the database itself assigns it. This has a real, significant consequence: Hibernate cannot batch `INSERT` statements for `IDENTITY`-strategy entities (question 16), since it needs to execute each insert individually to learn that row's ID before it can do anything else involving that entity (cascading a relationship that references it, for instance) — a genuine JDBC batching limitation baked into how `IDENTITY` fundamentally works, not a Hibernate configuration shortcoming.
+"`IDENTITY` relies on the database's own auto-increment column mechanism — simple to set up, universally supported, but the actual generated ID value is only known *after* the `INSERT` statement has physically executed, since the database itself assigns it. This has a real, significant consequence: Hibernate cannot batch `INSERT` statements for `IDENTITY`-strategy entities (question 28), since it needs to execute each insert individually to learn that row's ID before it can do anything else involving that entity (cascading a relationship that references it, for instance) — a genuine JDBC batching limitation baked into how `IDENTITY` fundamentally works, not a Hibernate configuration shortcoming.
 
-`SEQUENCE` uses a database sequence object, and critically, Hibernate can **pre-fetch a range of sequence values** (via `hi/lo` or `pooled` optimizers) *before* actually needing them for any specific insert — meaning the ID is known immediately upon requesting the next value from the pre-fetched range, entirely independent of when the actual `INSERT` executes, which is exactly what allows `SEQUENCE`-strategy entities to be properly JDBC-batched (question 16). This makes `SEQUENCE` the generally preferred strategy for any database that supports it (PostgreSQL, Oracle — notably, MySQL historically lacked true sequences, though recent versions have added support).
+`SEQUENCE` uses a database sequence object, and critically, Hibernate can **pre-fetch a range of sequence values** (via `hi/lo` or `pooled` optimizers) *before* actually needing them for any specific insert — meaning the ID is known immediately upon requesting the next value from the pre-fetched range, entirely independent of when the actual `INSERT` executes, which is exactly what allows `SEQUENCE`-strategy entities to be properly JDBC-batched (question 28). This makes `SEQUENCE` the generally preferred strategy for any database that supports it (PostgreSQL, Oracle — notably, MySQL historically lacked true sequences, though recent versions have added support).
 
 Application-generated IDs (typically UUIDs, generated in Java before the entity is ever persisted) sidestep the database round-trip for ID assignment entirely — the ID is known the instant the object is constructed, which enables full batching regardless of database support for sequences, and is also useful for distributed ID generation (no coordination needed across multiple app instances/services, unlike a shared database sequence). The trade-off: UUIDs are larger (16 bytes vs. a 4/8-byte integer), which has a real, measurable cost for index size and insert performance at large scale, and randomly-generated UUIDs (as opposed to sequential/time-ordered UUID variants) can cause worse index locality/fragmentation on B-tree-indexed primary keys, particularly under high insert volume."
 
@@ -646,13 +1095,13 @@ I'd bring up the `allocationSize` pitfall specifically, since it's a common, sub
 
 ---
 
-## 16. How Do ID-Generation Strategies Affect Batching?
+### 28. How Do ID-Generation Strategies Affect Batching?
 
 **Answer:**
 
 "JDBC batching lets the driver send multiple `INSERT`/`UPDATE` statements to the database in a single network round trip instead of one round trip per statement — a significant throughput improvement for bulk write operations, but it fundamentally requires Hibernate to know, *at the time it's building the batch*, all the SQL and parameter values it's going to send — including each row's ID, for an `INSERT`.
 
-This is exactly why the ID-generation strategy directly gates whether batching is even possible at all: `IDENTITY` (question 15) can't be batched, full stop, because the ID for row N+1 literally isn't knowable until row N's `INSERT` has already physically executed and the database has assigned and returned its auto-increment value — there's no way to build a batch of not-yet-executed statements when each one depends on the side effect of the previous one having already run. `SEQUENCE` (with a properly configured `allocationSize` pre-fetching a range of IDs) and application-assigned UUIDs both have the ID available immediately, in application memory, before any `INSERT` executes at all — so Hibernate can freely accumulate a batch of fully-formed, ready-to-execute statements and flush them together in one round trip, regardless of how many rows are in the batch."
+This is exactly why the ID-generation strategy directly gates whether batching is even possible at all: `IDENTITY` (question 27) can't be batched, full stop, because the ID for row N+1 literally isn't knowable until row N's `INSERT` has already physically executed and the database has assigned and returned its auto-increment value — there's no way to build a batch of not-yet-executed statements when each one depends on the side effect of the previous one having already run. `SEQUENCE` (with a properly configured `allocationSize` pre-fetching a range of IDs) and application-assigned UUIDs both have the ID available immediately, in application memory, before any `INSERT` executes at all — so Hibernate can freely accumulate a batch of fully-formed, ready-to-execute statements and flush them together in one round trip, regardless of how many rows are in the batch."
 
 **Code:**
 
@@ -688,7 +1137,7 @@ I'd bring up that this is a genuinely common, costly mistake in real systems: a 
 
 ---
 
-## 17. Explain Owning and Inverse Sides of Relationships
+### 29. Explain Owning and Inverse Sides of Relationships
 
 **Answer:**
 
@@ -738,13 +1187,13 @@ I'd bring up the "always add a bidirectional helper method on the entity itself,
 
 ---
 
-## 18. What Problems Arise From Incorrect `equals` and `hashCode` Implementations on Entities?
+### 30. What Problems Arise From Incorrect `equals` and `hashCode` Implementations on Entities?
 
 **Answer:**
 
 "This is a genuinely subtle area because the 'obviously correct' choices from plain Java object design (use all fields, or use the database-generated ID) both have real problems specific to JPA entities.
 
-Using the **default `Object` identity** (`==`-based `equals`/`hashCode`, i.e., not overriding them at all) mostly works *within* a single persistence context (the identity guarantee from question 2 means the same row is always the same object reference there), but breaks the moment entities from *different* persistence contexts need to be compared (a detached entity loaded in one request compared against one loaded in another) — two objects representing the exact same database row, loaded in different sessions, would be considered unequal, which breaks `Set` membership checks, `contains()`, and similar operations across session boundaries.
+Using the **default `Object` identity** (`==`-based `equals`/`hashCode`, i.e., not overriding them at all) mostly works *within* a single persistence context (the identity guarantee from question 14 means the same row is always the same object reference there), but breaks the moment entities from *different* persistence contexts need to be compared (a detached entity loaded in one request compared against one loaded in another) — two objects representing the exact same database row, loaded in different sessions, would be considered unequal, which breaks `Set` membership checks, `contains()`, and similar operations across session boundaries.
 
 Using **all fields** (a typical IDE-generated `equals`/`hashCode`) is dangerous for a JPA entity specifically because of lazy loading and mutable state — a `hashCode()` computed from a field that later changes (this is exactly the mutable-`HashMap`-key hazard from the Collections file, applied to entities) means an entity placed in a `HashSet` and then mutated becomes unreachable in that set, and computing `hashCode()`/`equals()` using a lazy-loaded collection field can accidentally trigger unwanted lazy initialization or even a `LazyInitializationException` at a very unexpected moment (inside a `HashMap` internal operation).
 
@@ -805,13 +1254,13 @@ I'd bring up the specific recommendation from Hibernate's own documentation and 
 
 ---
 
-## 19. How Do Cascade Operations Differ From `orphanRemoval`?
+### 31. How Do Cascade Operations Differ From `orphanRemoval`?
 
 **Answer:**
 
 "**Cascading** propagates an operation performed on a parent entity to its associated child entities automatically — `CascadeType.PERSIST` means persisting the parent also persists any not-yet-persisted children in the association; `CascadeType.REMOVE` means removing the parent also removes its children; `CascadeType.MERGE` propagates a merge similarly, and so on for each JPA operation. Cascading is fundamentally about *propagating an explicit operation the application performed* on the parent down to the children.
 
-`orphanRemoval` is a distinct, narrower mechanism specifically about children being **removed from the parent's collection** (or having their parent reference nulled) — with `orphanRemoval = true`, if a child is removed from the parent's `@OneToMany` collection (via `list.remove(child)`) or its parent reference is set to null, Hibernate deletes that now-'orphaned' child from the database at flush time, **even though no explicit remove/delete operation was called on the child itself** — the mere act of disassociating it from its parent is what triggers deletion. This matters specifically for genuine parent-owned, 'child cannot meaningfully exist without this specific parent' relationships (order items belonging to exactly one order) — without `orphanRemoval`, removing an item from an order's `items` collection only breaks the *in-memory* association (and, per question 17, only if the owning side is also updated); the child row would otherwise remain in the database, now an orphaned, dangling row referencing a relationship it's no longer conceptually part of."
+`orphanRemoval` is a distinct, narrower mechanism specifically about children being **removed from the parent's collection** (or having their parent reference nulled) — with `orphanRemoval = true`, if a child is removed from the parent's `@OneToMany` collection (via `list.remove(child)`) or its parent reference is set to null, Hibernate deletes that now-'orphaned' child from the database at flush time, **even though no explicit remove/delete operation was called on the child itself** — the mere act of disassociating it from its parent is what triggers deletion. This matters specifically for genuine parent-owned, 'child cannot meaningfully exist without this specific parent' relationships (order items belonging to exactly one order) — without `orphanRemoval`, removing an item from an order's `items` collection only breaks the *in-memory* association (and, per question 29, only if the owning side is also updated); the child row would otherwise remain in the database, now an orphaned, dangling row referencing a relationship it's no longer conceptually part of."
 
 **Code:**
 
@@ -846,7 +1295,7 @@ I'd bring up the important distinction that `CascadeType.REMOVE` and `orphanRemo
 
 ---
 
-## 20. How Does Optimistic Locking Work?
+### 32. How Does Optimistic Locking Work?
 
 **Answer:**
 
@@ -889,7 +1338,7 @@ I'd bring up that handling `OptimisticLockException` correctly requires actual a
 
 ---
 
-## 21. When Should Pessimistic Locking Be Used?
+### 33. When Should Pessimistic Locking Be Used?
 
 **Answer:**
 
@@ -930,11 +1379,11 @@ I'd bring up the real cost pessimistic locking trades in for its stronger guaran
 
 ---
 
-## 22. What Happens When Bulk JPQL Updates Bypass the Persistence Context?
+### 34. What Happens When Bulk JPQL Updates Bypass the Persistence Context?
 
 **Answer:**
 
-"A bulk JPQL/Criteria `UPDATE`/`DELETE` (`UPDATE Order o SET o.status = 'archived' WHERE o.createdAt < :cutoff`) is translated **directly** into a single SQL `UPDATE`/`DELETE` statement executed against the database — it deliberately bypasses the persistence context entirely, never loading affected rows as managed entities, never running dirty checking, never triggering any entity lifecycle callbacks (`@PreUpdate`, `@PostUpdate`) or cascade behavior. This is exactly why bulk operations are dramatically more efficient than loading N entities and modifying them individually (question 23) — a single SQL statement handles potentially millions of rows in one round trip, versus loading and dirty-checking each one individually.
+"A bulk JPQL/Criteria `UPDATE`/`DELETE` (`UPDATE Order o SET o.status = 'archived' WHERE o.createdAt < :cutoff`) is translated **directly** into a single SQL `UPDATE`/`DELETE` statement executed against the database — it deliberately bypasses the persistence context entirely, never loading affected rows as managed entities, never running dirty checking, never triggering any entity lifecycle callbacks (`@PreUpdate`, `@PostUpdate`) or cascade behavior. This is exactly why bulk operations are dramatically more efficient than loading N entities and modifying them individually (question 35) — a single SQL statement handles potentially millions of rows in one round trip, versus loading and dirty-checking each one individually.
 
 The real danger this creates: if any of the rows a bulk update/delete affects **happen to already be loaded as managed entities in the current persistence context**, those in-memory managed entities are now **silently stale** — the database has been updated directly, but the already-loaded Java objects in the persistence context still hold their old, pre-update field values, and Hibernate has no mechanism to automatically detect or reconcile this divergence, since the bulk operation never went through the entity-tracking machinery at all. Code that performs a bulk update and then continues working with previously-loaded entities of the same type, assuming they reflect current state, is operating on stale data without any warning."
 
@@ -974,13 +1423,13 @@ I'd bring up that `@Modifying(clearAutomatically = true)` on a Spring Data JPA b
 
 ---
 
-## 23. How Would You Process Millions of Records Without Exhausting Memory?
+### 35. How Would You Process Millions of Records Without Exhausting Memory?
 
 **Answer:**
 
-"The core problem, if approached naively (`findAll()` and iterate), is that the persistence context accumulates a managed reference **and** a dirty-checking snapshot for every single loaded entity, for the entire duration of the transaction — loading millions of rows this way means holding millions of managed entities and their snapshots in memory simultaneously, which is both a genuine memory-exhaustion risk and, per question 3, an increasingly expensive dirty-checking comparison cost as the managed set grows.
+"The core problem, if approached naively (`findAll()` and iterate), is that the persistence context accumulates a managed reference **and** a dirty-checking snapshot for every single loaded entity, for the entire duration of the transaction — loading millions of rows this way means holding millions of managed entities and their snapshots in memory simultaneously, which is both a genuine memory-exhaustion risk and, per question 15, an increasingly expensive dirty-checking comparison cost as the managed set grows.
 
-My approach: process in **bounded batches**, using `flush()` + `clear()` (question 4/5) periodically to release both the pending-SQL backlog and the accumulated managed-entity/snapshot memory, rather than holding the entire dataset's entities in the persistence context at once. For genuinely enormous datasets, I'd also avoid loading the full result set into a `List` upfront at all — using a `ScrollableResults`/streaming query (or Spring Data's `Stream<T>` query return type, consumed and closed properly) to read and process rows incrementally from the JDBC `ResultSet` itself, rather than materializing every row as a Java object simultaneously before processing begins. And for truly bulk, mechanical transformations that don't need entity-level behavior at all (no cascades, no lifecycle callbacks needed), I'd strongly prefer a bulk JPQL/native SQL update (question 22) over loading and modifying entities individually in the first place — it's both faster and inherently memory-bounded, since it never materializes entities at all."
+My approach: process in **bounded batches**, using `flush()` + `clear()` (question 16/17) periodically to release both the pending-SQL backlog and the accumulated managed-entity/snapshot memory, rather than holding the entire dataset's entities in the persistence context at once. For genuinely enormous datasets, I'd also avoid loading the full result set into a `List` upfront at all — using a `ScrollableResults`/streaming query (or Spring Data's `Stream<T>` query return type, consumed and closed properly) to read and process rows incrementally from the JDBC `ResultSet` itself, rather than materializing every row as a Java object simultaneously before processing begins. And for truly bulk, mechanical transformations that don't need entity-level behavior at all (no cascades, no lifecycle callbacks needed), I'd strongly prefer a bulk JPQL/native SQL update (question 34) over loading and modifying entities individually in the first place — it's both faster and inherently memory-bounded, since it never materializes entities at all."
 
 **Code:**
 
@@ -1016,17 +1465,17 @@ void processWithStreaming() {
 
 **Follow-up:**
 
-I'd bring up that the right `batchSize` for the flush+clear pattern is itself a tuning trade-off worth measuring, not guessing — too small and you're paying more round-trip overhead than necessary (defeating some of JDBC batching's benefit, question 16); too large and you're back to significant memory pressure and long-held transaction/lock durations, which can itself cause contention with other concurrent operations on the same table. I'd also mention that for the very largest-scale batch/ETL-style workloads, a dedicated batch-processing framework (Spring Batch) is usually the more mature, correct answer than hand-rolling the flush/clear loop — it provides chunk-oriented processing with this exact pattern built in, plus restart-from-checkpoint on failure (genuinely important for a multi-hour job that shouldn't have to restart from scratch after failing at record 9 million of 10 million), retry/skip policies for individual bad records, and structured, observable progress tracking that a hand-rolled loop would need to be built from scratch to match.
+I'd bring up that the right `batchSize` for the flush+clear pattern is itself a tuning trade-off worth measuring, not guessing — too small and you're paying more round-trip overhead than necessary (defeating some of JDBC batching's benefit, question 28); too large and you're back to significant memory pressure and long-held transaction/lock durations, which can itself cause contention with other concurrent operations on the same table. I'd also mention that for the very largest-scale batch/ETL-style workloads, a dedicated batch-processing framework (Spring Batch) is usually the more mature, correct answer than hand-rolling the flush/clear loop — it provides chunk-oriented processing with this exact pattern built in, plus restart-from-checkpoint on failure (genuinely important for a multi-hour job that shouldn't have to restart from scratch after failing at record 9 million of 10 million), retry/skip policies for individual bad records, and structured, observable progress tracking that a hand-rolled loop would need to be built from scratch to match.
 
 **Source:** [Hibernate ORM User Guide — Batch Processing](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#batch), [Spring Batch Reference Documentation](https://docs.spring.io/spring-batch/reference/index.html)
 
 ---
 
-## 24. How Do JDBC Batching and Ordered Inserts Improve Throughput?
+### 36. How Do JDBC Batching and Ordered Inserts Improve Throughput?
 
 **Answer:**
 
-"JDBC batching (question 16) reduces network round trips by grouping multiple `INSERT`/`UPDATE` statements into a single batch sent to the database at once, rather than one round trip per statement — for high-volume writes, network round-trip latency is very often the dominant cost, not the database's actual per-row processing time, so cutting round trips by a factor of the batch size is a substantial, measurable throughput win.
+"JDBC batching (question 28) reduces network round trips by grouping multiple `INSERT`/`UPDATE` statements into a single batch sent to the database at once, rather than one round trip per statement — for high-volume writes, network round-trip latency is very often the dominant cost, not the database's actual per-row processing time, so cutting round trips by a factor of the batch size is a substantial, measurable throughput win.
 
 **Ordered inserts/updates** (`hibernate.order_inserts=true`, `hibernate.order_updates=true`) address a related but distinct problem: by default, Hibernate issues statements in the order operations happen to occur in application code, which — for a mixed batch involving multiple different entity types, or entities with different table targets — can force JDBC batching to break into many small batches (a batch can typically only contain consecutive statements against the *same* table/statement shape; if the application interleaves `Order` inserts with `OrderItem` inserts, alternating types, batching can't group same-table statements together efficiently unless they're reordered first). Enabling statement ordering has Hibernate group and reorder same-table statements together **before** sending them, so JDBC batching can actually achieve its full grouping potential regardless of the order the application happened to perform operations in."
 
@@ -1060,19 +1509,19 @@ for (Order order : orders) {
 
 **Follow-up:**
 
-I'd bring up that verifying batching is actually happening — rather than assuming a configuration flag alone guarantees it — is worth doing explicitly via SQL statement logging or a JDBC-proxy tool like `datasource-proxy`/`p6spy`, since the interaction between ID generation strategy (question 15/16), entity relationships, and statement ordering can produce surprising, silent non-batching in specific configurations that look correct on paper. I'd also mention that this entire category of optimization matters most for genuinely high-volume write workloads (bulk imports, high-throughput event processing) — for typical low-to-moderate-volume application CRUD operations, the throughput difference from batching configuration is unlikely to be the actual bottleneck, and I'd be wary of a team spending significant tuning effort here without first measuring that write throughput is actually the constraint, rather than optimizing a part of the system that isn't where the real cost lives.
+I'd bring up that verifying batching is actually happening — rather than assuming a configuration flag alone guarantees it — is worth doing explicitly via SQL statement logging or a JDBC-proxy tool like `datasource-proxy`/`p6spy`, since the interaction between ID generation strategy (question 27/28), entity relationships, and statement ordering can produce surprising, silent non-batching in specific configurations that look correct on paper. I'd also mention that this entire category of optimization matters most for genuinely high-volume write workloads (bulk imports, high-throughput event processing) — for typical low-to-moderate-volume application CRUD operations, the throughput difference from batching configuration is unlikely to be the actual bottleneck, and I'd be wary of a team spending significant tuning effort here without first measuring that write throughput is actually the constraint, rather than optimizing a part of the system that isn't where the real cost lives.
 
 **Source:** [Hibernate ORM User Guide — Batching](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#batch), [Vlad Mihalcea — How to Batch INSERT and UPDATE statements](https://vladmihalcea.com/how-to-batch-insert-and-update-statements-with-hibernate/)
 
 ---
 
-## 25. How Would You Diagnose a Query That Is Fast in SQL Tooling But Slow Through Hibernate?
+### 37. How Would You Diagnose a Query That Is Fast in SQL Tooling But Slow Through Hibernate?
 
 **Answer:**
 
 "First step is always confirming the *actual* SQL Hibernate is sending is identical to what's being tested directly in SQL tooling — a surprisingly common root cause is that they're not actually the same query at all: Hibernate might be generating a different, less efficient SQL shape than what a developer hand-wrote and tested directly (an unexpected join, a different predicate structure, parameters bound in a way that defeats an index that a literal-value tested query would use). Enabling SQL logging (`hibernate.show_sql`, or better, `logging.level.org.hibernate.SQL=DEBUG` plus binding-parameter logging) and comparing the *exact* generated SQL against what was tested directly is the first, most important diagnostic step, not an afterthought.
 
-If the SQL genuinely is identical, the next suspect is **parameter binding and query plan caching interaction** — some databases (notably older PostgreSQL/certain JDBC driver configurations) can choose a different, worse execution plan for a *parameterized* query than for the equivalent query with literal values, particularly for skewed data distributions where the optimizer's generic plan (built without knowing the actual parameter value) differs from the specific plan it would choose knowing the literal value directly. Beyond the SQL/plan level, I'd also suspect something happening in the *Hibernate layer itself* around the query — N+1 queries being triggered by post-processing entity results (question 7), unexpected additional flush-triggered queries (question 4), or second-level cache interactions producing extra round trips — none of which would show up at all when testing the same SQL directly against the database, since those costs are specific to how Hibernate processes results, not the query's own execution time."
+If the SQL genuinely is identical, the next suspect is **parameter binding and query plan caching interaction** — some databases (notably older PostgreSQL/certain JDBC driver configurations) can choose a different, worse execution plan for a *parameterized* query than for the equivalent query with literal values, particularly for skewed data distributions where the optimizer's generic plan (built without knowing the actual parameter value) differs from the specific plan it would choose knowing the literal value directly. Beyond the SQL/plan level, I'd also suspect something happening in the *Hibernate layer itself* around the query — N+1 queries being triggered by post-processing entity results (question 19), unexpected additional flush-triggered queries (question 16), or second-level cache interactions producing extra round trips — none of which would show up at all when testing the same SQL directly against the database, since those costs are specific to how Hibernate processes results, not the query's own execution time."
 
 **Code:**
 
@@ -1104,13 +1553,13 @@ I'd bring up that Hibernate's own statistics API (`SessionFactory.getStatistics(
 
 ---
 
-## 26. When Should You Use Native SQL or JDBC Instead of JPA?
+### 38. When Should You Use Native SQL or JDBC Instead of JPA?
 
 **Answer:**
 
 "JPA/Hibernate is the right default for typical entity-oriented CRUD and business-logic-driven operations — where managed-entity behavior (dirty checking, cascading, lifecycle callbacks, the persistence-context identity guarantee) genuinely adds value and the abstraction over a specific database's SQL dialect is worth having. I'd reach for native SQL or plain JDBC specifically when: the operation needs a database-specific feature JPQL/Criteria can't express at all (window functions, database-specific full-text search, recursive CTEs, `JSON`/array column operations specific to PostgreSQL, etc.) — JPQL is deliberately database-agnostic, so it structurally can't expose every database's specific SQL capabilities; when performance-critical bulk/reporting queries need very precise control over the exact generated SQL (a specific join strategy, a specific index hint) that Hibernate's query generation might not produce on its own even with the best available JPQL/Criteria expression; or when the operation is fundamentally read-only, reporting-style, and doesn't benefit at all from entity/persistence-context machinery — a DTO-projection-returning native query is often simpler and just as efficient as a JPQL DTO projection for these cases, and sometimes clearer to write directly in SQL for genuinely complex reporting queries.
 
-I'd generally avoid reaching for native SQL by default or 'just because SQL feels more direct/familiar' — losing JPA's database-portability, its integration with the persistence context (native queries interact with dirty-checking/caching less cleanly, question 4's auto-flush-before-query heuristic is notably less reliable for native SQL), and its type-safety (Criteria API, or even just JPQL's compile-time-checkable-with-tooling structure) is a real cost that should be paid deliberately for a specific need, not as a default preference."
+I'd generally avoid reaching for native SQL by default or 'just because SQL feels more direct/familiar' — losing JPA's database-portability, its integration with the persistence context (native queries interact with dirty-checking/caching less cleanly, question 16's auto-flush-before-query heuristic is notably less reliable for native SQL), and its type-safety (Criteria API, or even just JPQL's compile-time-checkable-with-tooling structure) is a real cost that should be paid deliberately for a specific need, not as a default preference."
 
 **Code:**
 
@@ -1134,13 +1583,13 @@ List<CustomerSpendSummary> findHighVolumeCustomers();
 
 **Follow-up:**
 
-I'd bring up that mixing native SQL and JPA entity operations within the *same* transaction requires real care around flush timing specifically (question 4's point about native queries being less reliably auto-flush-triggering than JPQL) — an explicit `entityManager.flush()` before a native query that depends on seeing pending entity-level changes is worth adding defensively rather than assuming Hibernate's auto-flush heuristic will catch the dependency the way it more reliably does for JPQL. I'd also mention that this decision isn't binary/permanent per codebase — a healthy pattern is JPA/entities for the bulk of typical business-logic-driven CRUD, with native SQL used surgically, in specific, well-isolated repository methods, for the specific queries that genuinely need it — rather than either dogmatically avoiding native SQL entirely (fighting the database to force everything through JPQL, sometimes producing worse, harder-to-optimize generated SQL than a hand-written query would) or defaulting to native SQL broadly and losing JPA's benefits for the majority of operations that don't actually need to bypass them.
+I'd bring up that mixing native SQL and JPA entity operations within the *same* transaction requires real care around flush timing specifically (question 16's point about native queries being less reliably auto-flush-triggering than JPQL) — an explicit `entityManager.flush()` before a native query that depends on seeing pending entity-level changes is worth adding defensively rather than assuming Hibernate's auto-flush heuristic will catch the dependency the way it more reliably does for JPQL. I'd also mention that this decision isn't binary/permanent per codebase — a healthy pattern is JPA/entities for the bulk of typical business-logic-driven CRUD, with native SQL used surgically, in specific, well-isolated repository methods, for the specific queries that genuinely need it — rather than either dogmatically avoiding native SQL entirely (fighting the database to force everything through JPQL, sometimes producing worse, harder-to-optimize generated SQL than a hand-written query would) or defaulting to native SQL broadly and losing JPA's benefits for the majority of operations that don't actually need to bypass them.
 
 **Source:** [Jakarta Persistence Specification §3.9 — Native Queries](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html), [Spring Data JPA Reference — Native Queries](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html#jpa.query-methods.at-query)
 
 ---
 
-## 27. How Do Database Indexes Interact With Generated Hibernate Queries?
+### 39. How Do Database Indexes Interact With Generated Hibernate Queries?
 
 **Answer:**
 
@@ -1171,19 +1620,19 @@ CREATE INDEX idx_orders_status_created_at ON orders (status, created_at);
 
 **Follow-up:**
 
-I'd bring up that `EXPLAIN ANALYZE` on the *actual* generated SQL (captured via the logging approach from question 25) against production-representative data volume, run as a routine part of reviewing any new query method — not just when something is already reported slow — is the actual discipline that prevents this class of problem from reaching production in the first place. I'd also mention that JPA/Hibernate's abstraction level makes it *easier* than raw SQL to lose sight of index implications, precisely because method-name-derived queries and JPQL both hide the literal SQL from the primary place a developer is looking (the entity/repository interface) — which is exactly why I'd treat "what does this actually compile to, and is it properly indexed" as a required, explicit review question for new query methods in a JPA codebase, rather than assuming the abstraction handles performance concerns as well as correctness ones.
+I'd bring up that `EXPLAIN ANALYZE` on the *actual* generated SQL (captured via the logging approach from question 37) against production-representative data volume, run as a routine part of reviewing any new query method — not just when something is already reported slow — is the actual discipline that prevents this class of problem from reaching production in the first place. I'd also mention that JPA/Hibernate's abstraction level makes it *easier* than raw SQL to lose sight of index implications, precisely because method-name-derived queries and JPQL both hide the literal SQL from the primary place a developer is looking (the entity/repository interface) — which is exactly why I'd treat "what does this actually compile to, and is it properly indexed" as a required, explicit review question for new query methods in a JPA codebase, rather than assuming the abstraction handles performance concerns as well as correctness ones.
 
 **Source:** [PostgreSQL Documentation — Indexes](https://www.postgresql.org/docs/current/indexes.html), [Use the Index, Luke](https://use-the-index-luke.com/)
 
 ---
 
-## 28. How Would You Safely Migrate a Heavily Used Entity Relationship?
+### 40. How Would You Safely Migrate a Heavily Used Entity Relationship?
 
 **Answer:**
 
 "I'd treat this the same way I'd treat any zero-downtime schema migration (the Transactions category covers the general expand/contract pattern in depth) but with extra care specific to JPA/Hibernate's own caching and mapping layers. Concretely, for something like changing a `@ManyToOne` relationship to a different target entity, or splitting a table a relationship points at: **expand** — add the new relationship/column alongside the existing one, keep both populated (via application code writing to both, or a database trigger/backfill job) for a transition period, without removing or repurposing the old mapping yet. **Migrate reads gradually** — update read paths to use the new relationship behind a feature flag or gradual rollout, verifying correctness against the still-present old relationship as a safety net for comparison. **Contract** — once every consumer is confirmed migrated (verified via the same kind of usage-measurement discipline as the REST API deprecation question) and a safe rollback window has passed, remove the old mapping/column entirely.
 
-The JPA-specific wrinkle worth being deliberate about: the **second-level cache** (question 6) needs explicit consideration during this process — cached entities from before the migration reflect the old mapping shape, and simply changing the entity's Java mapping without accounting for already-cached, now-stale entries can produce confusing, inconsistent behavior during the transition; I'd generally either evict the relevant cache regions explicitly as part of the migration rollout, or version the cache region names so old and new mapping shapes never collide in the same cache namespace."
+The JPA-specific wrinkle worth being deliberate about: the **second-level cache** (question 18) needs explicit consideration during this process — cached entities from before the migration reflect the old mapping shape, and simply changing the entity's Java mapping without accounting for already-cached, now-stale entries can produce confusing, inconsistent behavior during the transition; I'd generally either evict the relevant cache regions explicitly as part of the migration rollout, or version the cache region names so old and new mapping shapes never collide in the same cache namespace."
 
 **Code:**
 
@@ -1218,19 +1667,19 @@ Account resolveAccount(Order order) {
 
 **Follow-up:**
 
-I'd bring up that this exact expand/migrate/contract discipline needs to be paired with explicit second-level cache region management, since it's the JPA-specific detail that's easy to overlook amid the general schema-migration playbook — a mid-migration deploy that changes an entity's mapping shape while stale, pre-migration entries for that same entity type are still sitting in a shared second-level cache can produce genuinely confusing bugs that don't correlate cleanly with the actual code deploy timeline, since the cache's staleness window is independent of and can outlast the deployment itself. I'd also mention that for relationship changes affecting a very heavily-queried entity, I'd want the query-plan/index verification from question 27 run explicitly against both the old and new relationship shapes before, during, and after the migration — a relationship change can silently invalidate an existing index's usefulness or require a new one, and discovering that gap only after the contract phase has already removed the old, previously-indexed path is a much more painful place to find it.
+I'd bring up that this exact expand/migrate/contract discipline needs to be paired with explicit second-level cache region management, since it's the JPA-specific detail that's easy to overlook amid the general schema-migration playbook — a mid-migration deploy that changes an entity's mapping shape while stale, pre-migration entries for that same entity type are still sitting in a shared second-level cache can produce genuinely confusing bugs that don't correlate cleanly with the actual code deploy timeline, since the cache's staleness window is independent of and can outlast the deployment itself. I'd also mention that for relationship changes affecting a very heavily-queried entity, I'd want the query-plan/index verification from question 39 run explicitly against both the old and new relationship shapes before, during, and after the migration — a relationship change can silently invalidate an existing index's usefulness or require a new one, and discovering that gap only after the contract phase has already removed the old, previously-indexed path is a much more painful place to find it.
 
 **Source:** [Martin Fowler & Pramod Sadalage — Evolutionary Database Design](https://martinfowler.com/articles/evodb.html), [Hibernate ORM User Guide — Caching](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#caching)
 
 ---
 
-## 29. How Do You Avoid Leaking Persistence Models Into API Contracts?
+### 41. How Do You Avoid Leaking Persistence Models Into API Contracts?
 
 **Answer:**
 
 "I'd never return a JPA entity directly from a REST controller as the response body, even though it's technically easy to do and often 'just works' via Jackson serialization — because it silently couples the API's external contract to the database mapping's internal shape, and every one of those two things changes for different reasons and at different rates. An entity's fields reflect database/persistence concerns (an `@Version` field, a `@ManyToOne` foreign-key relationship that's really an implementation detail of how orders relate to customers in *this specific database schema*), while an API response's shape should reflect what *consumers* actually need, and those two things drifting apart over time is normal and expected — coupling them means every schema refactor risks becoming an accidental, unintended API-breaking change (tying directly to the REST API Design file's backward-compatibility discussion), and every desired API shape change risks awkwardly distorting the entity mapping to accommodate it.
 
-Beyond the coupling problem, returning entities directly creates real, concrete bugs: lazy-loaded associations serialized outside an active transaction throw `LazyInitializationException` at serialization time (question 11, now surfacing as a confusing 500 error deep in Jackson's serialization internals rather than in application code); bidirectional relationships can cause infinite recursion during JSON serialization unless carefully annotated (`@JsonIgnore`/`@JsonManagedReference`); and sensitive or internal-only fields (an internal cost basis, an audit field, a `@Version` value nobody external needs) get exposed by default unless explicitly excluded, which is the wrong default for a security-conscious API — explicit inclusion (a DTO listing exactly what's exposed) is a much safer posture than implicit inclusion with manual exclusions bolted on."
+Beyond the coupling problem, returning entities directly creates real, concrete bugs: lazy-loaded associations serialized outside an active transaction throw `LazyInitializationException` at serialization time (question 23, now surfacing as a confusing 500 error deep in Jackson's serialization internals rather than in application code); bidirectional relationships can cause infinite recursion during JSON serialization unless carefully annotated (`@JsonIgnore`/`@JsonManagedReference`); and sensitive or internal-only fields (an internal cost basis, an audit field, a `@Version` value nobody external needs) get exposed by default unless explicitly excluded, which is the wrong default for a security-conscious API — explicit inclusion (a DTO listing exactly what's exposed) is a much safer posture than implicit inclusion with manual exclusions bolted on."
 
 **Code:**
 
@@ -1265,19 +1714,19 @@ OrderResponse getOrder(@PathVariable Long id) {
 
 **Follow-up:**
 
-I'd bring up that this mapping layer, done manually as shown above, is a real, if modest, amount of ongoing boilerplate — and mapping libraries (MapStruct is the common choice, generating the mapping code at compile time rather than via reflection at runtime) exist specifically to reduce that friction without giving up the actual architectural benefit (explicit, deliberate, decoupled DTO shapes) — I'd be wary of a team skipping the DTO layer entirely purely to avoid writing mapping code, since the coupling and security-exposure risks of returning entities directly are real production concerns, not just architectural purism. I'd also mention that this same discipline applies symmetrically on the *request* side — accepting a request body that maps directly onto an entity (rather than a dedicated request DTO, validated independently) has the same coupling problem in reverse, and is exactly the shape of bug that caused the `merge()`-wiping-fields issue from question 14 in codebases that map incoming requests directly onto entity instances.
+I'd bring up that this mapping layer, done manually as shown above, is a real, if modest, amount of ongoing boilerplate — and mapping libraries (MapStruct is the common choice, generating the mapping code at compile time rather than via reflection at runtime) exist specifically to reduce that friction without giving up the actual architectural benefit (explicit, deliberate, decoupled DTO shapes) — I'd be wary of a team skipping the DTO layer entirely purely to avoid writing mapping code, since the coupling and security-exposure risks of returning entities directly are real production concerns, not just architectural purism. I'd also mention that this same discipline applies symmetrically on the *request* side — accepting a request body that maps directly onto an entity (rather than a dedicated request DTO, validated independently) has the same coupling problem in reverse, and is exactly the shape of bug that caused the `merge()`-wiping-fields issue from question 26 in codebases that map incoming requests directly onto entity instances.
 
 **Source:** [MapStruct documentation](https://mapstruct.org/), [Vlad Mihalcea — Why you should NOT use entities as DTOs](https://vladmihalcea.com/the-best-way-to-map-a-onetomany-relationship-with-jpa-and-hibernate/)
 
 ---
 
-## 30. Describe a Production Hibernate Performance Incident and Its Resolution
+### 42. Describe a Production Hibernate Performance Incident and Its Resolution
 
 **Answer:**
 
-"I'd walk through a representative shape rather than claim one universal story, since the specifics vary, but the pattern I've seen (and would run a postmortem for) goes like this: a previously-fine endpoint's response time gradually degraded over several weeks as a specific customer's order history grew, eventually crossing a threshold where p99 latency alerts fired. The initial symptom looked like 'the database is slow,' but query-level investigation (question 25's discipline — checking the actual generated SQL first) revealed it wasn't one slow query at all: it was a classic N+1 (question 7) that had always been present in the code, just never severe enough to notice when every customer had a handful of orders — as one specific high-volume customer's order count grew into the thousands, the same N+1 pattern that was previously '20 extra queries, imperceptible' became 'thousands of extra queries, clearly visible in both latency and database connection-pool saturation,' since every one of those N+1 queries also had to check out and return a pooled database connection.
+"I'd walk through a representative shape rather than claim one universal story, since the specifics vary, but the pattern I've seen (and would run a postmortem for) goes like this: a previously-fine endpoint's response time gradually degraded over several weeks as a specific customer's order history grew, eventually crossing a threshold where p99 latency alerts fired. The initial symptom looked like 'the database is slow,' but query-level investigation (question 37's discipline — checking the actual generated SQL first) revealed it wasn't one slow query at all: it was a classic N+1 (question 19) that had always been present in the code, just never severe enough to notice when every customer had a handful of orders — as one specific high-volume customer's order count grew into the thousands, the same N+1 pattern that was previously '20 extra queries, imperceptible' became 'thousands of extra queries, clearly visible in both latency and database connection-pool saturation,' since every one of those N+1 queries also had to check out and return a pooled database connection.
 
-Root-causing followed the standard diagnostic sequence: SQL logging confirmed the actual query count for a single request (using Hibernate's statistics API, question 25), tracing directly to a specific service method iterating over an order's items inside a loop and lazily triggering a query per item for a related lookup. The fix was a straightforward `@BatchSize` addition as an immediate mitigation (question 8's pragmatic fallback), followed by a more deliberate DTO-projection redesign (question 8/29) for that specific high-traffic endpoint as the durable fix, since the endpoint didn't actually need full managed entities at all — it was a pure read/display use case."
+Root-causing followed the standard diagnostic sequence: SQL logging confirmed the actual query count for a single request (using Hibernate's statistics API, question 37), tracing directly to a specific service method iterating over an order's items inside a loop and lazily triggering a query per item for a related lookup. The fix was a straightforward `@BatchSize` addition as an immediate mitigation (question 20's pragmatic fallback), followed by a more deliberate DTO-projection redesign (question 20/41) for that specific high-traffic endpoint as the durable fix, since the endpoint didn't actually need full managed entities at all — it was a pure read/display use case."
 
 **Code:**
 
@@ -1296,7 +1745,7 @@ Postmortem structure I'd actually use for this:
 3. CONTRIBUTING FACTORS — why did this take weeks of gradual degradation to
    notice rather than being caught earlier: was there no per-endpoint query-
    count monitoring/alerting? Was this specific endpoint not covered by the
-   query-count integration tests (question 7's testing discipline) that
+   query-count integration tests (question 19's testing discipline) that
    would have caught an N+1 regression at merge time, since this wasn't a
    REGRESSION at all — it had ALWAYS been an N+1, just below a visible
    threshold until data volume grew?
@@ -1308,7 +1757,7 @@ Postmortem structure I'd actually use for this:
 5. ACTION ITEMS:
    - Immediate: the @BatchSize mitigation, deployed same-day
    - Durable: the DTO-projection redesign for this specific endpoint
-   - Systemic: add automated query-count assertions (question 7) to the
+   - Systemic: add automated query-count assertions (question 19) to the
      test suite for high-traffic endpoints generally, specifically to catch
      N+1 patterns BEFORE they ship, regardless of whether current test data
      volume happens to make them visible yet
