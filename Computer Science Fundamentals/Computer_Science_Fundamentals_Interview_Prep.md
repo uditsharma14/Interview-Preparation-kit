@@ -26,6 +26,24 @@ How to use this: unlike most guides in this kit, this one is deliberately **Basi
   - [13. What Is Big-O Notation, and Why Does It Matter?](#13-what-is-big-o-notation-and-why-does-it-matter)
   - [14. What's the Difference Between SQL and NoSQL Databases?](#14-whats-the-difference-between-sql-and-nosql-databases)
   - [15. What Is an API, and How Does It Differ From a Web Service?](#15-what-is-an-api-and-how-does-it-differ-from-a-web-service)
+- [Data Structures & Algorithms](#data-structures--algorithms)
+  - [16. What Is a Stack, and What Is a Queue?](#16-what-is-a-stack-and-what-is-a-queue)
+  - [17. What's the Difference Between a Tree and a Graph?](#17-whats-the-difference-between-a-tree-and-a-graph)
+  - [18. What Is Recursion, and What Is a Base Case?](#18-what-is-recursion-and-what-is-a-base-case)
+- [Programming Languages & OOP](#programming-languages--oop)
+  - [19. What Are the Four Pillars of Object-Oriented Programming?](#19-what-are-the-four-pillars-of-object-oriented-programming)
+  - [20. What's the Difference Between a Compiled and an Interpreted Language?](#20-whats-the-difference-between-a-compiled-and-an-interpreted-language)
+  - [21. What's the Difference Between Static and Dynamic Typing?](#21-whats-the-difference-between-static-and-dynamic-typing)
+- [Operating Systems](#operating-systems)
+  - [22. What Is an Operating System, and What Does the Kernel Do?](#22-what-is-an-operating-system-and-what-does-the-kernel-do)
+  - [23. What Is Virtual Memory, and What Is Paging?](#23-what-is-virtual-memory-and-what-is-paging)
+  - [24. What Is CPU Caching, and Why Does It Matter for Performance?](#24-what-is-cpu-caching-and-why-does-it-matter-for-performance)
+- [Databases](#databases)
+  - [25. What Is Database Normalization, and What Do 1NF, 2NF, and 3NF Mean?](#25-what-is-database-normalization-and-what-do-1nf-2nf-and-3nf-mean)
+  - [26. What Is a Database Index, and Why Does It Speed Up Queries?](#26-what-is-a-database-index-and-why-does-it-speed-up-queries)
+- [Software Engineering Practices](#software-engineering-practices)
+  - [27. What Is Version Control, and What Does Git Actually Track?](#27-what-is-version-control-and-what-does-git-actually-track)
+  - [28. What's the Difference Between Unit, Integration, and End-to-End Tests?](#28-whats-the-difference-between-unit-integration-and-end-to-end-tests)
 - [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
 
 <!-- /toc -->
@@ -499,6 +517,444 @@ I'd mention that within "web service," there have historically been multiple com
 
 ---
 
+## Data Structures & Algorithms
+
+### 16. What Is a Stack, and What Is a Queue?
+
+**Answer:**
+
+"These are two of the most fundamental abstract data types, defined purely by their access order, independent of any specific language's implementation. A **stack** is LIFO — Last In, First Out — the most recently added element is always the first one removed, like a physical stack of plates: you add to the top and remove from the top. A **queue** is FIFO — First In, First Out — the first element added is the first one removed, like a line at a store: whoever got in line first gets served first.
+
+Both are used constantly in real systems: a stack models function-call bookkeeping (the JVM's own call stack, covered in the [Java JVM & GC guide](../Language/Java_JVM_GC_Interview_Prep.md), works exactly this way — the most recently called function is the first one to return), undo/redo functionality, and depth-first traversal; a queue models task processing in arrival order, breadth-first traversal, and any producer-consumer pipeline, covered concretely with `BlockingQueue` in the [Java Concurrency guide](../Language/Java_Concurrency_Interview_Prep.md)."
+
+**Code:**
+
+```text
+STACK (LIFO) — push/pop from the SAME end:
+  push(1) push(2) push(3)  ->  [1, 2, 3]
+  pop() -> 3  (most recently added comes out FIRST)
+  pop() -> 2
+
+QUEUE (FIFO) — add at one end, remove from the other:
+  enqueue(1) enqueue(2) enqueue(3)  ->  [1, 2, 3]
+  dequeue() -> 1  (first added comes out FIRST)
+  dequeue() -> 2
+```
+
+**Follow-up:**
+
+I'd flag "stack" specifically as overloaded terminology worth being precise about: this data-structure meaning (LIFO access order) is a completely different concept from "stack memory" (the per-thread call-frame region covered in the [Java JVM & GC guide](../Language/Java_JVM_GC_Interview_Prep.md)) — they share a name because stack memory happens to *behave* like the LIFO data structure (frames are pushed and popped in strict call/return order), but one is an abstract data type and the other is a specific region of a running program's memory; conflating them in an answer is a common, easy-to-avoid mix-up.
+
+**Source:** [MIT OpenCourseWare — Introduction to Algorithms, Stacks and Queues](https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/)
+
+---
+
+### 17. What's the Difference Between a Tree and a Graph?
+
+**Answer:**
+
+"Both are data structures built from **nodes** connected by **edges**, but a tree is a specific, more constrained kind of graph. A **tree** has exactly one root node, every other node has exactly one parent, there's exactly one path between any two nodes, and — critically — it has no cycles (you can't follow edges and end up back where you started). A **graph** is the more general structure: nodes can connect to any number of other nodes in any pattern, cycles are allowed, and there's no requirement of a single root or a unique path between any two nodes at all.
+
+Put differently: every tree is technically a graph (a constrained, cycle-free, single-rooted one), but most graphs are not trees. Trees show up constantly in this kit — `TreeMap`/`TreeSet`'s red-black tree (covered in the [Java Collections guide](../Language/Java_Collections_Interview_Prep.md)), a database's B-tree index (covered later in this guide) — while graphs model genuinely many-to-many relationships: a social network's connections, a service-dependency map in a microservices architecture, or the entity-relationship graph a `@ManyToMany` mapping represents (covered in the [JPA & Hibernate guide](../Frameworks/JPA_Hibernate_Interview_Prep.md))."
+
+**Code:**
+
+```text
+TREE — one root, no cycles, exactly one path between any two nodes:
+        A
+       / \
+      B   C
+     /
+    D
+
+GRAPH — any connection pattern, cycles allowed, no single required root:
+    A---B
+    |   |
+    C---D    (A-B-D-C-A is a CYCLE — impossible in a tree)
+```
+
+**Follow-up:**
+
+I'd mention that this distinction matters directly for traversal strategy: both trees and graphs are traversed via depth-first search (DFS, using a stack — explicitly or via recursion's own call stack) or breadth-first search (BFS, using a queue), but graph traversal specifically needs to track **visited nodes** explicitly to avoid infinite loops around a cycle, which a tree traversal never has to worry about at all, since a tree's acyclic structure guarantees a traversal can never revisit the same node by construction.
+
+**Source:** [MIT OpenCourseWare — Introduction to Algorithms, Graphs](https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/)
+
+---
+
+### 18. What Is Recursion, and What Is a Base Case?
+
+**Answer:**
+
+"Recursion is when a function solves a problem by calling *itself* on a smaller version of the same problem, progressively shrinking the problem until it reaches a case simple enough to answer directly without any further recursive calls — that simplest, directly-answerable case is the **base case**. Without a correctly-defined base case (or with one that's never actually reached because of a logic error), a recursive function calls itself forever, which in practice means it keeps pushing new stack frames onto the call stack until it exhausts available stack space and throws `StackOverflowError`, covered in the [Java JVM & GC guide](../Language/Java_JVM_GC_Interview_Prep.md).
+
+Every correct recursive function needs exactly two things: a base case that terminates the recursion, and a recursive case that makes genuine progress toward that base case on every call (not the same problem size again, or the recursion never terminates even with a technically-correct base case defined)."
+
+**Code:**
+
+```java
+// Classic example: factorial
+int factorial(int n) {
+    if (n <= 1) return 1;           // BASE CASE — no further recursion needed
+    return n * factorial(n - 1);    // RECURSIVE CASE — smaller problem (n-1), makes progress
+}
+
+factorial(5) 
+  -> 5 * factorial(4)
+       -> 4 * factorial(3)
+            -> 3 * factorial(2)
+                 -> 2 * factorial(1)
+                      -> 1  (BASE CASE reached — starts returning back up)
+```
+
+**Follow-up:**
+
+I'd bring up tail recursion and its practical limitation in Java specifically: some languages automatically optimize a recursive call that's the very last operation in a function ('tail position') into a loop internally, avoiding growing the call stack at all — but the JVM does **not** perform this optimization, so a deeply recursive Java function, even a "tail-recursive-shaped" one, still risks `StackOverflowError` for large enough input, which is exactly why an iterative (loop-based) rewrite is often the practical, production-safe choice for genuinely deep recursion in Java, rather than trusting the compiler to optimize it away the way it might in a language like Scheme or Scala.
+
+**Source:** [MIT OpenCourseWare — Introduction to Algorithms, Recursion](https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/)
+
+---
+
+## Programming Languages & OOP
+
+### 19. What Are the Four Pillars of Object-Oriented Programming?
+
+**Answer:**
+
+"**Encapsulation** — bundling an object's data (fields) together with the methods that operate on it, and restricting direct external access to that data (via `private` fields and `public` methods), so the object controls how its own state can be read or changed rather than exposing raw internals for anyone to mutate freely. **Inheritance** — a class can derive from (extend) another class, automatically gaining its parent's fields and methods while adding or overriding its own, letting a hierarchy of related types share common behavior without duplicating it. **Polymorphism** — objects of different classes can be treated through a common interface/supertype, and the *specific* behavior that actually runs is determined by the object's real, runtime type, not the declared type of the variable referring to it ('virtual method invocation'). **Abstraction** — exposing only the essential, relevant details of an object's behavior through a simplified interface, while hiding the complex implementation details behind it, so a caller can use something correctly without needing to understand how it works internally.
+
+These four aren't independent, unrelated rules — they reinforce each other: encapsulation is what makes abstraction possible (hiding internals is how you expose only what's essential), and polymorphism is what makes inheritance genuinely useful beyond code reuse (letting different subclasses respond differently to the same method call)."
+
+**Code:**
+
+```java
+abstract class Shape {                 // ABSTRACTION — a simplified common interface
+    abstract double area();             // callers don't need to know HOW each shape computes area
+}
+
+class Circle extends Shape {           // INHERITANCE — Circle IS-A Shape
+    private double radius;              // ENCAPSULATION — radius is private, controlled access only
+
+    Circle(double radius) { this.radius = radius; }
+
+    @Override
+    double area() { return Math.PI * radius * radius; } // POLYMORPHISM — Circle's OWN implementation
+}
+
+class Square extends Shape {
+    private double side;
+    Square(double side) { this.side = side; }
+    @Override
+    double area() { return side * side; }                // a DIFFERENT implementation, same method name
+}
+
+Shape s = new Circle(5);
+s.area(); // calls Circle's area() — determined by the ACTUAL object type, not the declared "Shape" type
+```
+
+**Follow-up:**
+
+I'd connect this directly to where these pillars show up throughout the rest of this kit rather than leaving them purely theoretical: Spring's dependency injection (covered in the [Spring Boot Internals guide](../Frameworks/Spring_Boot_Internals_Interview_Prep.md)) leans heavily on polymorphism and abstraction — injecting a class against an *interface* type, with the concrete implementation swappable, is exactly the "program to the abstraction, not the implementation" principle these pillars enable; and `equals()`/`hashCode()` overriding, covered in the [Java Collections guide](../Language/Java_Collections_Interview_Prep.md), is a direct, everyday application of polymorphism — a collection calling `equals()` on an object gets whatever behavior that object's *actual* class defines, not `Object`'s default.
+
+**Source:** [Oracle Java Tutorials — Object-Oriented Programming Concepts](https://docs.oracle.com/javase/tutorial/java/concepts/index.html), [Oracle Java Tutorials — Polymorphism](https://docs.oracle.com/javase/tutorial/java/IandI/polymorphism.html)
+
+---
+
+### 20. What's the Difference Between a Compiled and an Interpreted Language?
+
+**Answer:**
+
+"A **compiled** language is translated, ahead of time, from source code directly into machine code (or another lower-level form) *before* the program ever runs — the compiler does the translation work once, upfront, producing an executable that runs directly on the target hardware without needing the original source code or the compiler present at runtime (C and C++ are the classic examples). An **interpreted** language is translated and executed line-by-line (or statement-by-statement) *at runtime*, by a separate program (the interpreter) that reads the source and carries out its instructions on the fly, with no separate compilation step producing a standalone executable (classic Python and Ruby usage are common examples).
+
+In practice, this binary compiled-vs-interpreted framing is an oversimplification for many modern languages, including Java specifically — Java source is *compiled* (via `javac`) to an intermediate form (bytecode), but that bytecode is then *interpreted* (and, for hot code paths, further JIT-compiled to real machine code at runtime) by the JVM, covered in depth in the [Java JVM & GC guide](../Language/Java_JVM_GC_Interview_Prep.md) — Java is genuinely both, at different stages, which is exactly why 'is Java compiled or interpreted' is a common but slightly trick interview question."
+
+**Code:**
+
+```text
+COMPILED (e.g., C):
+  source.c --[compiler, ONCE, ahead of time]--> machine code executable
+  Running it later needs NO compiler present at all — just the executable.
+
+INTERPRETED (e.g., classic Python usage):
+  source.py --[interpreter reads and executes EACH LINE, at runtime]--> program behavior
+  The interpreter must be present every time the program runs.
+
+JAVA (genuinely BOTH, at different stages):
+  source.java --[javac, ahead of time]--> bytecode (.class)
+  bytecode --[JVM interprets, then JIT-compiles hot paths]--> actual execution
+```
+
+**Follow-up:**
+
+I'd mention the practical trade-off this distinction is really getting at: ahead-of-time compilation to native machine code generally gives faster startup and predictable peak performance with no runtime translation overhead, while interpretation trades some raw performance for portability and development convenience (no separate compile step to run/test a change) — and I'd bring up GraalVM's native-image compilation (mentioned in the [Java JVM & GC guide](../Language/Java_JVM_GC_Interview_Prep.md)) as a modern example of applying ahead-of-time compilation *to* Java specifically, trading away the JIT's warmup-then-peak-throughput behavior for near-instant startup, which matters for short-lived workloads like serverless functions.
+
+**Source:** [Oracle Java Tutorials — javac and the JVM](https://docs.oracle.com/javase/tutorial/getStarted/intro/definition.html)
+
+---
+
+### 21. What's the Difference Between Static and Dynamic Typing?
+
+**Answer:**
+
+"In a **statically-typed** language (Java, C++), every variable's type is fixed and checked at **compile time** — the compiler verifies that every operation is valid for the declared types before the program ever runs, and a type mismatch (assigning a `String` to an `int` variable) is a compile error, caught before deployment, not a runtime surprise. In a **dynamically-typed** language (Python, JavaScript), a variable's type isn't fixed at all — the same variable name can hold an integer at one point and a string moments later — and type checking happens at **runtime**, as each operation actually executes, so a type mismatch only surfaces as an error when that specific line of code actually runs, potentially in production, if the code path wasn't exercised during testing.
+
+The trade-off: static typing catches a real class of bugs earlier (at compile time, the cheapest point to fix them) and lets tooling (IDEs, refactoring tools) reason precisely about a codebase, at the cost of more verbose declarations; dynamic typing is more flexible and typically faster to write quickly, at the cost of type-related bugs only surfacing when the specific buggy code path actually executes, which is exactly why comprehensive test coverage matters even more in dynamically-typed codebases."
+
+**Code:**
+
+```java
+// Statically typed (Java) — caught at COMPILE TIME, before the program ever runs
+int count = 5;
+count = "hello"; // COMPILE ERROR — incompatible types, caught immediately, never even builds
+```
+
+```python
+# Dynamically typed (Python) — no error until this specific line actually RUNS
+count = 5
+count = "hello"       # perfectly legal — count just now holds a string instead
+result = count + 10   # RUNTIME error — only surfaces IF and WHEN this line executes
+```
+
+**Follow-up:**
+
+I'd mention TypeScript as a genuinely relevant, increasingly common middle ground worth knowing about: it adds an optional static type-checking layer on top of JavaScript (which is dynamically typed), catching type errors at compile/build time while still compiling down to plain, dynamically-typed JavaScript for actual execution — a deliberate attempt to get static typing's earlier-error-detection benefit in an ecosystem that's historically been dynamically typed, without abandoning JavaScript's runtime and ecosystem entirely.
+
+**Source:** [JLS §4 — Types, Values, and Variables](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html)
+
+---
+
+## Operating Systems
+
+### 22. What Is an Operating System, and What Does the Kernel Do?
+
+**Answer:**
+
+"An operating system is the software layer that manages a computer's hardware resources (CPU, memory, storage, network devices) and provides a consistent, higher-level interface for applications to use those resources, without every single application needing to know how to directly control the underlying hardware itself. The **kernel** is the OS's core — the part with direct, privileged access to hardware, responsible for the most fundamental resource-management decisions: which process gets the CPU next (scheduling), which physical memory a process can access (covered in the virtual-memory question next), and mediating every application's access to hardware devices.
+
+The kernel runs in a privileged execution mode ('kernel space') that regular application code ('user space') cannot directly access — an application requests kernel services (reading a file, allocating memory, sending network data) through a controlled interface called a **system call**, rather than touching hardware or protected memory directly; this separation is a deliberate security and stability boundary, preventing one misbehaving application from corrupting the kernel or directly interfering with other applications' resources."
+
+**Code:**
+
+```text
+User space (applications):     Your Java app, a web browser, a text editor
+                                   |
+                                   |  system calls (read, write, malloc, etc.)
+                                   v
+Kernel space (privileged):     Process scheduling, memory management,
+                                device drivers, filesystem, networking
+
+User-space code CANNOT directly touch hardware or another process's memory —
+it must go THROUGH the kernel via a system call, which enforces the boundary.
+```
+
+**Follow-up:**
+
+I'd connect this directly to the JVM's own position in this stack, since it's a concrete, already-covered example: the JVM itself is a user-space application running on top of the OS — when Java code allocates an object on the heap, the JVM (not the application code directly) is the one making the underlying system calls to request memory from the OS kernel, and this OS-level process/memory management is a genuinely separate layer beneath everything the [Java JVM & GC guide](../Language/Java_JVM_GC_Interview_Prep.md) covers about the JVM's *own* internal heap/stack/generation management — the JVM manages memory *within* the chunk the OS kernel has already granted it, not the machine's physical memory directly.
+
+**Source:** [Operating Systems: Three Easy Pieces — Remzi H. Arpaci-Dusseau & Andrea C. Arpaci-Dusseau](https://pages.cs.wisc.edu/~remzi/OSTEP/)
+
+---
+
+### 23. What Is Virtual Memory, and What Is Paging?
+
+**Answer:**
+
+"Virtual memory is an abstraction the OS provides so that every process believes it has its own large, private, contiguous address space, completely isolated from every other process's memory — even though the underlying physical RAM is actually a shared, finite resource split across every running process (and possibly not even large enough to hold everything every process thinks it has). The OS (with hardware support) translates each process's virtual addresses to actual physical memory addresses transparently, and this indirection is exactly what makes one process's memory bugs unable to directly corrupt another process's memory, or the kernel's own memory.
+
+**Paging** is the specific mechanism most modern OSes use to implement virtual memory: physical memory is divided into fixed-size chunks called **pages** (commonly 4KB), and a process's virtual address space is divided into pages of the same size, with a **page table** mapping each virtual page to a physical page frame. Critically, not every virtual page needs to be backed by physical memory *simultaneously* — a page not currently in active use can be swapped out to disk, freeing physical memory for pages that are actually needed right now, and transparently swapped back in (a 'page fault,' handled by the kernel) the moment the process actually accesses that virtual address again."
+
+**Code:**
+
+```text
+Process A's virtual address space:        Physical RAM (shared, limited):
+  [page 0] -----------> maps to -------->  [physical frame 12]
+  [page 1] -----------> maps to -------->  [physical frame 4]
+  [page 2] -----------> SWAPPED OUT to disk (not currently in physical RAM at all)
+
+Process B's virtual address space:
+  [page 0] -----------> maps to -------->  [physical frame 7]
+  (Process B's "page 0" and Process A's "page 0" are DIFFERENT physical
+   locations — each process's virtual address space is fully isolated)
+```
+
+**Follow-up:**
+
+I'd tie this directly to a concrete failure mode covered elsewhere in this kit: when a containerized JVM's memory footprint (heap plus metaspace plus thread stacks plus everything else, covered in the [Java JVM & GC guide](../Language/Java_JVM_GC_Interview_Prep.md)) exceeds the container's memory limit, the container runtime's OOM killer terminates the process — that's a *cgroup*-enforced limit sitting on top of this virtual-memory system, a genuinely different mechanism from the OS swapping individual pages to disk under normal memory pressure, worth not conflating: a container getting OOM-killed isn't the OS "running out of virtual memory," it's the container's own configured resource limit being exceeded.
+
+**Source:** [Operating Systems: Three Easy Pieces — Paging chapters](https://pages.cs.wisc.edu/~remzi/OSTEP/)
+
+---
+
+### 24. What Is CPU Caching, and Why Does It Matter for Performance?
+
+**Answer:**
+
+"CPU caching is small, extremely fast memory built directly into (or very close to) the processor, sitting between the CPU and main RAM, holding copies of recently/frequently-accessed data so the CPU doesn't have to wait for the comparatively much slower trip to main memory on every single access. Modern CPUs have multiple cache levels — L1 (smallest, fastest, per-core), L2 (larger, still per-core or shared between a couple of cores), L3 (largest, shared across all cores) — each level trading capacity for speed, with main RAM as the final, much slower fallback if data isn't found in any cache level ('a cache miss').
+
+This matters for performance far beyond just 'caches make things faster' as a vague idea — it directly explains a genuinely counterintuitive result covered concretely in the [Java Collections guide](../Language/Java_Collections_Interview_Prep.md): `ArrayList`'s contiguous memory layout means sequentially accessing its elements tends to pull several useful elements into cache at once (good 'locality of reference'), while `LinkedList`'s scattered, individually-heap-allocated nodes mean each element access is likely a fresh cache miss requiring a trip to main memory — which is exactly why `LinkedList`'s theoretical Big-O insertion advantage often loses to `ArrayList` in real, measured performance, despite what the raw complexity analysis alone would suggest."
+
+**Code:**
+
+```text
+CPU  <-> L1 cache (~1ns access)   <- smallest, fastest, per-core
+     <-> L2 cache (~4ns access)   <- larger, still fast
+     <-> L3 cache (~15ns access)  <- largest, shared across cores
+     <-> Main RAM (~100ns access) <- MUCH slower — the fallback on a cache miss
+
+Sequential array access: elements are CONTIGUOUS in memory ->
+  accessing element[0] pulls element[1], [2], [3]... into cache too (good locality)
+
+Linked-list traversal: each node is a SEPARATE heap allocation, scattered in memory ->
+  accessing each node is likely a FRESH cache miss — no benefit from the previous access
+```
+
+**Follow-up:**
+
+I'd mention that this is a case where understanding the underlying hardware behavior directly changes a design decision that pure algorithmic (Big-O) analysis alone would get wrong — the [Java Collections guide](../Language/Java_Collections_Interview_Prep.md)'s `ArrayList` vs. `LinkedList` comparison is the concrete worked example, and the general lesson worth carrying forward: for anything but very large N, cache-friendliness (data locality, sequential access patterns) frequently dominates real-world performance more than asymptotic complexity does, which is exactly why "measure, don't just theorize" is the right instinct once a genuine performance question is on the table.
+
+**Source:** [Operating Systems: Three Easy Pieces — Remzi H. Arpaci-Dusseau & Andrea C. Arpaci-Dusseau](https://pages.cs.wisc.edu/~remzi/OSTEP/)
+
+---
+
+## Databases
+
+### 25. What Is Database Normalization, and What Do 1NF, 2NF, and 3NF Mean?
+
+**Answer:**
+
+"Normalization is the process of organizing a relational database's tables and columns specifically to reduce data redundancy and avoid update/insert/delete anomalies — situations where the same fact is stored in multiple places, and those copies can drift out of sync with each other, or where you can't insert one piece of information without also being forced to insert an unrelated one. It's expressed as a series of increasingly strict rules called normal forms.
+
+**1NF (First Normal Form)**: every column holds a single, atomic value — no repeating groups or comma-separated lists crammed into one column (a `phone_numbers` column holding `"555-1234, 555-5678"` violates 1NF; it should be a separate related table instead). **2NF**: satisfies 1NF, and every non-key column depends on the *entire* primary key, not just part of it — relevant specifically for tables with a composite key (covered in the [JPA & Hibernate guide](../Frameworks/JPA_Hibernate_Interview_Prep.md)), where a column depending on only one part of a multi-column key is a 2NF violation. **3NF**: satisfies 2NF, and no non-key column depends on *another non-key column* (a 'transitive dependency') — storing both `zip_code` and `city` in an `orders` table, where `city` is actually fully determined by `zip_code` rather than by the order itself, is a classic 3NF violation, since updating one order's zip code without also updating its city risks the two falling out of sync."
+
+**Code:**
+
+```text
+1NF VIOLATION: repeating values crammed into one column
+  | order_id | items                        |
+  | 1        | "widget, gadget, gizmo"       |   <- NOT atomic, violates 1NF
+
+1NF FIX: a separate related table, one row per item
+  orders: | order_id |          order_items: | order_id | item   |
+          | 1        |                       | 1        | widget |
+                                               | 1        | gadget |
+
+3NF VIOLATION: city is TRANSITIVELY dependent on zip_code, not on order_id directly
+  | order_id | zip_code | city     |
+  | 1        | 10001    | New York |   <- if zip_code determines city, storing
+  | 2        | 10001    | New York |      BOTH here risks them drifting out of sync
+
+3NF FIX: city belongs in a separate zip_code -> city lookup table instead
+```
+
+**Follow-up:**
+
+I'd give the practical, staff-level framing rather than presenting normalization as an unconditional goal: fully normalized schemas minimize redundancy and anomaly risk, but every join required to reassemble related data back together at query time has a real performance cost — which is exactly why **denormalization** (deliberately reintroducing some redundancy, for read performance) is a legitimate, common trade-off for read-heavy workloads, not a mistake — the [REST API Design guide](../System%20Design/REST_API_Design_Interview_Prep.md)'s composite/aggregate-endpoint question and the general caching material in the [Redis & Caching guide](../System%20Design/Redis_Caching_Interview_Prep.md) both cover different angles of this same normalized-versus-denormalized trade-off.
+
+**Source:** [MIT OpenCourseWare — Database, Internet, and Systems Integration Technologies, Data Normalization](https://ocw.mit.edu/courses/1-264j-database-internet-and-systems-integration-technologies-fall-2013/resources/mit1_264jf13_lect_11/)
+
+---
+
+### 26. What Is a Database Index, and Why Does It Speed Up Queries?
+
+**Answer:**
+
+"Without an index, finding rows matching a condition (`WHERE email = 'alice@example.com'`) requires the database to scan every single row in the table, checking each one — a 'full table scan,' whose cost grows linearly with table size (O(n), covered in the Big-O question earlier in this guide). An index is a separate, auxiliary data structure — typically a B-tree, a balanced, sorted tree structure (tying to the tree-vs-graph question earlier in this guide) — built on one or more columns, that lets the database jump almost directly to matching rows instead of scanning everything, turning an O(n) lookup into roughly O(log n).
+
+This isn't free, though: an index has to be **maintained** — kept up to date — on every `INSERT`, `UPDATE`, or `DELETE` affecting an indexed column, which adds real write overhead, and the index itself consumes additional storage space. The practical trade-off: indexes are worth adding for columns genuinely queried/filtered/joined-on frequently (especially in read-heavy workloads), but indexing every column reflexively 'just in case' pays a real, ongoing write-performance and storage cost for indexes that may rarely, if ever, actually get used by a query."
+
+**Code:**
+
+```sql
+-- WITHOUT an index: full table scan — checks EVERY row, O(n)
+SELECT * FROM users WHERE email = 'alice@example.com';
+
+-- Add an index on the column actually being filtered on:
+CREATE INDEX idx_users_email ON users(email);
+
+-- The SAME query now seeks directly via the index's B-tree structure — roughly O(log n),
+-- instead of scanning every row in the table
+SELECT * FROM users WHERE email = 'alice@example.com';
+```
+
+**Follow-up:**
+
+I'd connect this directly to the [JPA & Hibernate guide](../Frameworks/JPA_Hibernate_Interview_Prep.md)'s question on how database indexes interact with Hibernate-generated queries specifically — an ORM can generate a query that's logically correct but doesn't actually use an available index efficiently (a function applied to the indexed column in the `WHERE` clause, for instance, can prevent the database from using a plain index on that column at all) — which is exactly why checking the *actual generated SQL* and its query plan, not just assuming "I added an index, so it must be fast now," is the real staff-level diagnostic discipline once a query is underperforming.
+
+**Source:** [PostgreSQL Documentation — Indexes](https://www.postgresql.org/docs/current/indexes.html)
+
+---
+
+## Software Engineering Practices
+
+### 27. What Is Version Control, and What Does Git Actually Track?
+
+**Answer:**
+
+"Version control is a system for tracking changes to a set of files over time, letting you see history, revert to a previous state, and — critically for team development — let multiple people work on the same codebase concurrently without simply overwriting each other's changes. Git is by far the dominant modern version control system, and it's specifically **distributed**: every clone of a repository has the *entire* project history locally, not just the current state, unlike older centralized systems that required contacting a central server for most operations (viewing history, committing).
+
+The detail worth knowing precisely: Git doesn't track changes as a list of line-by-line diffs the way older systems (Subversion, CVS) conceptually do — it tracks a **series of snapshots**. Every commit is essentially a complete snapshot of every tracked file at that moment (though Git optimizes storage internally, avoiding literally duplicating unchanged files) — a genuinely different underlying model from delta-based tracking, even though the day-to-day experience of writing and reviewing a `diff` looks similar either way."
+
+**Code:**
+
+```bash
+git init                          # start tracking a project
+git add file.txt                  # stage a change for the next commit
+git commit -m "Add feature"       # SNAPSHOT the current state of all staged files
+
+git branch feature-x              # create an independent line of development
+git checkout feature-x            # switch to it — work without affecting main
+git merge feature-x                # bring feature-x's changes back into the current branch
+
+# Every clone has the FULL history locally — no central server needed to view it:
+git log
+```
+
+**Follow-up:**
+
+I'd mention branching strategy as the practical, team-level concern that sits on top of Git's own mechanics — trunk-based development, Git Flow, and various other conventions all answer the same underlying question (how do multiple people's concurrent work get integrated safely and reviewably) differently, and the specific strategy a team uses matters far more day-to-day than Git's internal snapshot-vs-delta model; I'd also note that a pull/merge request — the review gate most teams put in front of merging a branch — is a workflow convention layered on top of Git by hosting platforms (GitHub, GitLab), not a feature of Git itself.
+
+**Source:** [Git — Getting Started: What is Git?](https://git-scm.com/book/en/v2/Getting-Started-What-is-Git%3F)
+
+---
+
+### 28. What's the Difference Between Unit, Integration, and End-to-End Tests?
+
+**Answer:**
+
+"These form what's commonly called the 'test pyramid,' differing in scope and what they're actually verifying. **Unit tests** verify a single, small unit of code (one method, one class) in isolation, with any external dependencies (a database, a network call) replaced by a mock/stub — they're fast, cheap to run in large numbers, and pinpoint exactly which unit broke when one fails. **Integration tests** verify that multiple units, or an application and a real external dependency (an actual database, a real message broker), work correctly *together* — slower and more expensive than unit tests, but they catch a real category of bug unit tests structurally can't: two units that each pass their own unit tests in isolation, but don't actually integrate correctly together. **End-to-end (E2E) tests** verify a complete, real user-facing workflow through the *entire* running system (often literally driving a browser against a fully-deployed application) — the slowest and most expensive of the three, but the closest to actually verifying 'does this work correctly for a real user.'
+
+The 'pyramid' shape describes the recommended proportion: many fast unit tests as the foundation, a moderate number of integration tests, and comparatively few E2E tests — inverting that shape (many slow E2E tests, few unit tests) is a common, real anti-pattern that produces a slow, flaky, expensive-to-maintain test suite."
+
+**Code:**
+
+```text
+        /\
+       /E2E\        <- FEW: slow, expensive, tests the whole real system end to end
+      /------\
+     /  Integ  \    <- SOME: tests real interaction between components/external systems
+    /------------\
+   /     Unit      \ <- MANY: fast, cheap, tests one isolated unit at a time
+  /------------------\
+```
+
+```java
+// Unit test — OrderService tested in ISOLATION, PaymentGateway is a mock
+@Test
+void placesOrderSuccessfully() {
+    PaymentGateway mockGateway = mock(PaymentGateway.class);
+    when(mockGateway.charge(any())).thenReturn(success());
+    OrderService service = new OrderService(mockGateway);
+    // ... assert on OrderService's behavior alone, no real payment gateway involved
+}
+```
+
+**Follow-up:**
+
+I'd bring up test flakiness as the practical, staff-level reason the pyramid shape matters beyond just "unit tests are faster" — E2E tests, by nature of exercising the entire real system (network calls, timing, a real browser), are inherently more prone to intermittent, non-deterministic failures unrelated to an actual bug, and a test suite dominated by flaky E2E tests erodes a team's trust in CI signal over time (people start re-running failed builds reflexively rather than investigating), which is a genuine, common, and expensive organizational problem — not just a testing-strategy nitpick.
+
+**Source:** [Martin Fowler — The Practical Test Pyramid](https://martinfowler.com/articles/practical-test-pyramid.html)
+
+---
+
 ## Sources & Further Reading — Consolidated
 
 | Topic | Link |
@@ -520,3 +976,12 @@ I'd mention that within "web service," there have historically been multiple com
 | PostgreSQL Documentation | https://www.postgresql.org/docs/current/ |
 | MongoDB Documentation — Data Modeling Introduction | https://www.mongodb.com/docs/manual/core/data-modeling-introduction/ |
 | W3C — Web Services Architecture | https://www.w3.org/TR/ws-arch/ |
+| Oracle Java Tutorials — Object-Oriented Programming Concepts | https://docs.oracle.com/javase/tutorial/java/concepts/index.html |
+| Oracle Java Tutorials — Polymorphism | https://docs.oracle.com/javase/tutorial/java/IandI/polymorphism.html |
+| Oracle Java Tutorials — javac and the JVM | https://docs.oracle.com/javase/tutorial/getStarted/intro/definition.html |
+| JLS §4 — Types, Values, and Variables | https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html |
+| Operating Systems: Three Easy Pieces (Arpaci-Dusseau) | https://pages.cs.wisc.edu/~remzi/OSTEP/ |
+| MIT OpenCourseWare — Database, Internet, and Systems Integration Technologies, Data Normalization | https://ocw.mit.edu/courses/1-264j-database-internet-and-systems-integration-technologies-fall-2013/resources/mit1_264jf13_lect_11/ |
+| PostgreSQL Documentation — Indexes | https://www.postgresql.org/docs/current/indexes.html |
+| Git — Getting Started: What is Git? | https://git-scm.com/book/en/v2/Getting-Started-What-is-Git%3F |
+| Martin Fowler — The Practical Test Pyramid | https://martinfowler.com/articles/practical-test-pyramid.html |
