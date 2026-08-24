@@ -1,6 +1,6 @@
 # Computer Science Fundamentals — Interview Prep (Basic Level, with Code & Sources)
 
-> **Target level:** Basic (foundational — no graduation to Staff in this guide; see "How to use this" below) · **Baseline:** HTTP semantics per RFC 9110, TLS 1.3 per RFC 8446, DNS per RFC 1035 · **Last verified:** 2026-08-23 · **Prerequisites:** none — this is the foundational layer the rest of InterviewSmith assumes
+> **Target level:** Basic (foundational — no graduation to Staff in this guide; see "How to use this" below) · **Baseline:** HTTP semantics per RFC 9110, HTTP/1.1 message syntax per RFC 9112, TLS 1.3 per RFC 8446, DNS per RFC 1035 · **Last verified:** 2026-08-23 · **Prerequisites:** none — this is the foundational layer the rest of InterviewSmith assumes
 
 How to use this: unlike most guides in InterviewSmith, this one is deliberately **Basic-only** — networking, security, and general CS terminology genuinely foundational enough that every other guide here assumes it without re-explaining it. If a term in another guide (TLS, symmetric encryption, TCP, Big-O) isn't landing, it's worth checking here first. Each question has **the answer the way I'd actually say it out loud**, a **code/diagram snippet** to back it up, and a **Follow-up** pointing to where the *real* depth on that topic lives elsewhere in InterviewSmith — this guide intentionally stays shallow so those other guides don't have to re-teach the basics every time.
 
@@ -56,7 +56,7 @@ How to use this: unlike most guides in InterviewSmith, this one is deliberately 
 
 **Answer:**
 
-"Both are transport-layer protocols that sit on top of IP, but they make opposite trade-offs between reliability and speed. **TCP** (Transmission Control Protocol) is connection-oriented and reliable: before any data flows, client and server perform a handshake to establish a connection, and TCP guarantees delivered data arrives complete, in order, and without duplication — retransmitting anything lost and reassembling anything that arrived out of order. That reliability costs latency (the handshake itself, plus retransmission delays when packets are lost) and overhead (sequencing and acknowledgment bookkeeping on every packet).
+"Both are transport-layer protocols that sit on top of IP, but they make opposite trade-offs between reliability and speed. **TCP** (Transmission Control Protocol) is connection-oriented and reliable: before any data flows, client and server perform a handshake to establish a connection. Within that connection, TCP guarantees that whatever data actually arrives is complete, in order, and without duplication — retransmitting anything lost and reassembling anything that arrived out of order. That's a narrower promise than 'delivery no matter what,' though: TCP doesn't retry forever, so if the path is genuinely broken or the remote host is unreachable, the connection eventually fails outright and TCP reports that failure back to the application (a timeout or a connection reset) rather than either delivering the data some other way or staying silent about it. That reliability — and honest failure reporting — costs latency (the handshake itself, plus retransmission delays when packets are lost) and overhead (sequencing and acknowledgment bookkeeping on every packet).
 
 **UDP** (User Datagram Protocol) is connectionless and makes no reliability guarantee at all — a packet ('datagram') is just fired off, with no handshake, no guaranteed delivery, no ordering, and no automatic retransmission. That sounds strictly worse, but it's exactly right for use cases where a lost or late packet is worthless anyway (a live video frame, a real-time game position update) and low latency matters more than perfect delivery — retransmitting a video frame that's already too old to display would be pure wasted effort."
 
@@ -67,19 +67,22 @@ TCP: [SYN] -> [SYN-ACK] -> [ACK]  (handshake, THEN data flows)
      -> data packet 1 (acknowledged)
      -> data packet 2 (lost — automatically RETRANSMITTED)
      -> data packet 3 (acknowledged)
-     Application sees: 1, 2, 3 — in order, complete, guaranteed
+     Application sees: 1, 2, 3 — in order, complete, no duplicates
+     If the peer is genuinely unreachable, TCP does NOT retry forever —
+     it eventually reports a connection error (timeout/reset) instead.
 
 UDP: -> datagram 1 (delivered)
      -> datagram 2 (lost — GONE, no retransmission, no notification)
      -> datagram 3 (delivered)
-     Application sees: 1, 3 — whatever arrived, in whatever order it arrived
+     Application sees: 1, 3 — whatever arrived, in whatever order it arrived,
+     with no error reported even when a datagram never showed up at all.
 ```
 
 **Follow-up:**
 
 I'd mention that most application-layer protocols InterviewSmith covers are built on TCP — HTTP, and therefore essentially every REST API and web request in the [REST API Design guide](../System%20Design/REST_API_Design_Interview_Prep.md), rides on TCP specifically because losing or reordering part of an API response would be unacceptable. UDP shows up more in specialized cases: DNS (covered next) uses UDP for its typically-small queries (falling back to TCP for larger responses), and QUIC — the transport HTTP/3 is built on, covered later in this guide — is UDP-based despite HTTP/3 still needing reliability, because QUIC reimplements reliability *itself* on top of UDP rather than using TCP, specifically to fix a TCP limitation covered in the HTTP/3 question.
 
-**Source:** [RFC 9293 — Transmission Control Protocol (TCP)](https://datatracker.ietf.org/doc/html/rfc9293), [RFC 768 — User Datagram Protocol](https://datatracker.ietf.org/doc/html/rfc768)
+**Source:** [RFC 9293 §3.6 — Closing a Connection (reliable delivery is conditional on the connection closing successfully)](https://datatracker.ietf.org/doc/html/rfc9293#section-3.6), [RFC 768 — User Datagram Protocol](https://datatracker.ietf.org/doc/html/rfc768)
 
 ---
 
@@ -126,10 +129,10 @@ Together, an IP address plus a port number form a **socket** — the actual endp
 ```text
 One machine, IP address 93.184.216.34, running THREE services simultaneously:
 
-93.184.216.34:80    -> web server (HTTP)
-93.184.216.34:443   -> web server (HTTPS)
-93.184.216.34:5432  -> PostgreSQL database
-93.184.216.34:22    -> SSH daemon
+93.184.216.34:80    -> web server (HTTP)     [System/well-known port: 0-1023]
+93.184.216.34:443   -> web server (HTTPS)    [System/well-known port: 0-1023]
+93.184.216.34:5432  -> PostgreSQL database   [User/registered port: 1024-49151]
+93.184.216.34:22    -> SSH daemon            [System/well-known port: 0-1023]
 
 Same IP address for all four — the PORT is what routes an incoming
 connection to the correct listening application on that machine.
@@ -137,7 +140,7 @@ connection to the correct listening application on that machine.
 
 **Follow-up:**
 
-I'd mention that ports below 1024 are conventionally reserved as "well-known ports" (80, 443, 22, 5432 among them) and, on most operating systems, require elevated privileges to bind to — which is exactly why a web server sometimes needs to run as root (or, more safely, use a reverse proxy or capability grant) just to listen on port 80/443 directly, and why containerized services often listen on a higher, unprivileged port internally (8080) with the container platform mapping that to the standard external port instead, covered in the [Docker & Kubernetes guide](../Kubernetes%2C%20Docker%20%26%20Cloud/Kubernetes_Docker_Interview_Prep.md).
+I'd mention that IANA splits the port space into three ranges, and the boundary matters in practice: **System Ports** (0–1023, colloquially "well-known ports" — 80, 443, and 22 among them) require elevated privileges to bind to on most operating systems, which is exactly why a web server sometimes needs to run as root (or, more safely, use a reverse proxy or capability grant) just to listen on port 80/443 directly, and why containerized services often listen on a higher, unprivileged port internally (8080) with the container platform mapping that to the standard external port instead, covered in the [Docker & Kubernetes guide](../Kubernetes%2C%20Docker%20%26%20Cloud/Kubernetes_Docker_Interview_Prep.md). PostgreSQL's 5432 is a useful contrast, not another example of the same thing: it falls in the **User Ports** range (1024–49151), so it does *not* need any special privilege to bind to — which is exactly why a PostgreSQL server normally runs under an ordinary, unprivileged OS account with no root/capability workaround needed at all.
 
 **Source:** [IANA — Service Name and Transport Protocol Port Number Registry](https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml)
 
@@ -168,9 +171,9 @@ URI (umbrella term): any resource identifier
 
 **Follow-up:**
 
-I'd connect this directly to REST API design, since it's where this distinction actually shows up in practice: every REST endpoint discussed in the [REST API Design guide](../System%20Design/REST_API_Design_Interview_Prep.md) (`GET /orders/123`) is really a URL — a locator that both identifies the `Order` resource and tells the client exactly how to fetch it — which is precisely the "URI as locator" role, not the "URI as pure name" role a URN plays; REST's resource-oriented design leans on URLs specifically because dereferenceability (being able to actually act on the identifier, not just name the thing) is the whole point.
+I'd connect this directly to REST API design, since it's where this distinction actually shows up in practice: every REST endpoint discussed in the [REST API Design guide](../System%20Design/REST_API_Design_Interview_Prep.md) (`GET /orders/123`) is really a URL — a locator that both identifies the `Order` resource and tells the client exactly how to fetch it — which is precisely the "URI as locator" role, not the "URI as pure name" role a URN plays; REST's resource-oriented design leans on URLs specifically because dereferenceability (being able to actually act on the identifier, not just name the thing) is the whole point. Worth knowing the RFC's own position too: RFC 3986 §1.1.3 explicitly recommends that "future specifications and related documentation should use the general term 'URI' rather than the more restrictive terms 'URL' and 'URN'" — so the everyday habit of saying 'URL' loosely for 'URI' isn't just common practice, it's close to what the spec itself now suggests, even though the locator/name distinction underneath is still worth knowing precisely.
 
-**Source:** [RFC 3986 — Uniform Resource Identifier (URI): Generic Syntax](https://datatracker.ietf.org/doc/html/rfc3986)
+**Source:** [RFC 3986 §1.1.3 — URI, URL, and URN](https://datatracker.ietf.org/doc/html/rfc3986#section-1.1.3)
 
 ---
 
@@ -210,16 +213,19 @@ I'd tie this directly to why session-based authentication and token-based authen
 
 **Answer:**
 
-"**HTTP/1.1** sends requests as plain text over a TCP connection, and its major limitation is **head-of-line blocking**: while multiple requests can technically share one TCP connection, they're processed strictly one at a time in order — a slow response blocks every response queued behind it on that same connection, which is why browsers historically opened several parallel TCP connections per domain just to work around this. **HTTP/2** fixes that specific problem at the HTTP layer: it introduces binary framing and true **multiplexing** — many requests and responses can be interleaved concurrently over a single TCP connection, so one slow response no longer blocks the others behind it on the same connection.
+"**HTTP/1.1** sends requests as plain text over a TCP connection. The spec (RFC 9112) technically allows a client to **pipeline** requests — sending several without waiting for each response — but a server must still send the responses back in the exact order the requests were received, so a slow response still blocks every faster response queued behind it on that same connection. In practice, pipelining was rarely deployed at all: buggy intermediaries and servers made it unreliable enough that major browsers eventually dropped support for it, so most real HTTP/1.1 connections just handle one full request/response cycle at a time instead — which produces the identical bottleneck, since the next request can't even be sent until the current response finishes. Either way, RFC 9112 itself names this the **head-of-line blocking** problem and says plainly that it's exactly why clients open multiple simultaneous connections — the real-world workaround browsers actually used, historically several parallel TCP connections per domain. **HTTP/2** fixes that specific problem at the HTTP layer: it introduces binary framing and true **multiplexing** — many requests and responses can be interleaved concurrently over a single TCP connection, so one slow response no longer blocks the others behind it on the same connection.
 
 **HTTP/3** goes a step further by replacing the transport underneath entirely: instead of TCP, it runs over **QUIC**, a UDP-based transport — this eliminates a *different*, lower-level head-of-line blocking problem that HTTP/2 still has (a single lost TCP packet blocks *every* multiplexed stream on that connection, since TCP itself guarantees strict in-order delivery across the whole connection); QUIC implements its own reliability *per-stream*, so one stream's lost packet no longer stalls the others."
 
 **Code:**
 
 ```text
-HTTP/1.1: one request/response processed at a time PER connection
+HTTP/1.1: one request/response handled at a time PER connection (the common case)
           [req A] --wait for response A--> [req B] --wait--> [req C]
-          (workaround: browsers open several parallel TCP connections)
+          (pipelining CAN send A, B, C without waiting — but responses must
+           still return in order A, B, C, and pipelining was rarely used in
+           practice; workaround either way: browsers open several parallel
+           TCP connections)
 
 HTTP/2:   many requests MULTIPLEXED over ONE TCP connection
           [req A, req B, req C all in flight simultaneously, interleaved]
@@ -234,7 +240,7 @@ HTTP/3:   runs over QUIC (UDP-based) instead of TCP
 
 I'd mention that HTTP/2 and HTTP/3 are both essentially transparent to application code written against a standard HTTP client/server library — a Spring Boot REST controller doesn't need to know or care which HTTP version actually carried a given request, since the version negotiation and framing differences are handled entirely at the transport/protocol layer beneath the application. What *does* change in practice is deployment and infrastructure configuration (TLS is effectively mandatory for HTTP/2 and HTTP/3 in virtually every real deployment, even though the spec doesn't strictly require it for HTTP/2) and performance characteristics under real-world packet loss, not anything about how you'd design a REST API's resources or semantics, covered in the [REST API Design guide](../System%20Design/REST_API_Design_Interview_Prep.md).
 
-**Source:** [RFC 9113 — HTTP/2](https://datatracker.ietf.org/doc/html/rfc9113), [RFC 9114 — HTTP/3](https://datatracker.ietf.org/doc/html/rfc9114)
+**Source:** [RFC 9112 §9.3.2 — Pipelining](https://datatracker.ietf.org/doc/html/rfc9112#section-9.3.2), [RFC 9112 §9.4 — Concurrency (head-of-line blocking)](https://datatracker.ietf.org/doc/html/rfc9112#section-9.4), [RFC 9113 — HTTP/2](https://datatracker.ietf.org/doc/html/rfc9113), [RFC 9114 — HTTP/3](https://datatracker.ietf.org/doc/html/rfc9114)
 
 ---
 
@@ -460,7 +466,7 @@ I'd connect this directly to concrete examples elsewhere in InterviewSmith rathe
 
 **Answer:**
 
-"**SQL (relational) databases** (PostgreSQL, MySQL) store data in tables with a fixed, predefined schema — every row in a table has the same set of columns, relationships between tables are expressed via foreign keys, and the database enforces the schema and referential integrity for you. They're queried with SQL, support complex multi-table joins natively, and virtually all of them provide strong ACID transaction guarantees, covered in depth in the [Transactions guide](../System%20Design/Transactions_Interview_Prep.md).
+"**SQL (relational) databases** (PostgreSQL, MySQL) store data in tables with a fixed, predefined schema — every row in a table has the same set of columns, relationships between tables are expressed via foreign keys, and the database enforces the schema and referential integrity for you. They're queried with SQL, support complex multi-table joins natively, and virtually all of them provide strong ACID transaction guarantees, covered in depth in the [Transactions guide](../System%20Design/Transactions_Interview_Prep.md). (Most mainstream SQL databases, including PostgreSQL, also let you store a flexible JSON blob in a single column — Postgres's `jsonb` type is the common example — but that's a deliberate escape hatch for one column's contents, not a way around the table having a fixed set of columns overall.)
 
 **NoSQL** is a broad umbrella term covering several genuinely different data models, not one single alternative to SQL: **document stores** (MongoDB) store flexible, JSON-like documents with no enforced schema across documents; **key-value stores** (Redis, covered in depth in the [Redis & Caching guide](../System%20Design/Redis_Caching_Interview_Prep.md)) store simple key-to-value pairs, optimized for extremely fast lookups; **wide-column stores** (Cassandra) are built for very high write throughput across huge, horizontally-distributed datasets; **graph databases** (Neo4j) are optimized specifically for traversing richly-interconnected relationships. What most NoSQL options actually trade away, relative to a traditional SQL database, is some combination of strict schema enforcement, native multi-record join support, and (for many, though not all) full ACID guarantees — in exchange for easier horizontal scaling, more flexible/evolvable schemas, or a data model that fits a specific access pattern more naturally than tables and joins would."
 
@@ -485,7 +491,7 @@ NoSQL document store — flexible, no enforced cross-document schema:
 
 I'd give the practical decision framing rather than presenting this as "NoSQL is more modern/better": the right choice genuinely depends on the actual access pattern and consistency requirements — a payments/financial system almost always wants a SQL database's strong transactional guarantees (covered in the [Transactions guide](../System%20Design/Transactions_Interview_Prep.md)), while a system needing to horizontally scale writes across many nodes with a simpler, more flexible data model might be a better fit for a NoSQL option — and I'd mention that many real production systems use *both*, deliberately, for different parts of the same system, rather than treating it as an all-or-nothing architectural commitment.
 
-**Source:** [PostgreSQL Documentation](https://www.postgresql.org/docs/current/), [MongoDB Documentation — Data Modeling Introduction](https://www.mongodb.com/docs/manual/core/data-modeling-introduction/)
+**Source:** [PostgreSQL Documentation](https://www.postgresql.org/docs/current/), [PostgreSQL Documentation — JSON Types](https://www.postgresql.org/docs/current/datatype-json.html), [MongoDB Documentation — Data Modeling Introduction](https://www.mongodb.com/docs/manual/core/data-modeling-introduction/)
 
 ---
 
@@ -663,9 +669,9 @@ I'd connect this directly to where these pillars show up throughout the rest of 
 
 **Answer:**
 
-"A **compiled** language is translated, ahead of time, from source code directly into machine code (or another lower-level form) *before* the program ever runs — the compiler does the translation work once, upfront, producing an executable that runs directly on the target hardware without needing the original source code or the compiler present at runtime (C and C++ are the classic examples). An **interpreted** language is translated and executed line-by-line (or statement-by-statement) *at runtime*, by a separate program (the interpreter) that reads the source and carries out its instructions on the fly, with no separate compilation step producing a standalone executable (classic Python and Ruby usage are common examples).
+"A **compiled** language is translated, ahead of time, from source code directly into machine code (or another lower-level form) *before* the program ever runs — the compiler does the translation work once, upfront, producing an executable that runs directly on the target hardware without needing the original source code or the compiler present at runtime (C and C++ are the classic examples). An **interpreted** language is translated and executed *at runtime* by a separate program (the interpreter), with no separate compilation step producing a standalone machine-code executable ahead of time. That doesn't mean there's zero translation step at all, though — CPython, for instance, first compiles Python source into an internal **bytecode** representation (caching it in `.pyc` files so it doesn't have to redo that step next time), and it's *that* bytecode the interpreter actually executes, not the raw source text line-by-line. The defining trait is still what's absent: no standalone executable is produced for later independent use, and the interpreter (plus whatever internal compiler it uses) has to be present every time the program runs (classic Python and Ruby usage are common examples).
 
-In practice, this binary compiled-vs-interpreted framing is an oversimplification for many modern languages, including Java specifically — Java source is *compiled* (via `javac`) to an intermediate form (bytecode), but that bytecode is then *interpreted* (and, for hot code paths, further JIT-compiled to real machine code at runtime) by the JVM, covered in depth in the [Java JVM & GC guide](../Language/Java_JVM_GC_Interview_Prep.md) — Java is genuinely both, at different stages, which is exactly why 'is Java compiled or interpreted' is a common but slightly trick interview question."
+In practice, this binary compiled-vs-interpreted framing is an oversimplification for many modern languages — Python's own bytecode-compile-then-interpret model above is a mild version of the same blurring, and Java pushes it further still: Java source is *compiled* (via `javac`) to an intermediate form (bytecode), but that bytecode is then *interpreted* (and, for hot code paths, further JIT-compiled to real machine code at runtime) by the JVM, covered in depth in the [Java JVM & GC guide](../Language/Java_JVM_GC_Interview_Prep.md) — Java is genuinely both, at different stages, which is exactly why 'is Java compiled or interpreted' is a common but slightly trick interview question."
 
 **Code:**
 
@@ -675,8 +681,9 @@ COMPILED (e.g., C):
   Running it later needs NO compiler present at all — just the executable.
 
 INTERPRETED (e.g., classic Python usage):
-  source.py --[interpreter reads and executes EACH LINE, at runtime]--> program behavior
-  The interpreter must be present every time the program runs.
+  source.py --[compiled to bytecode (.pyc), THEN interpreted, at runtime]--> program behavior
+  No standalone executable is produced — the interpreter (and its bytecode
+  compiler) must be present every time the program runs.
 
 JAVA (genuinely BOTH, at different stages):
   source.java --[javac, ahead of time]--> bytecode (.class)
@@ -687,7 +694,7 @@ JAVA (genuinely BOTH, at different stages):
 
 I'd mention the practical trade-off this distinction is really getting at: ahead-of-time compilation to native machine code generally gives faster startup and predictable peak performance with no runtime translation overhead, while interpretation trades some raw performance for portability and development convenience (no separate compile step to run/test a change) — and I'd bring up GraalVM's native-image compilation (mentioned in the [Java JVM & GC guide](../Language/Java_JVM_GC_Interview_Prep.md)) as a modern example of applying ahead-of-time compilation *to* Java specifically, trading away the JIT's warmup-then-peak-throughput behavior for near-instant startup, which matters for short-lived workloads like serverless functions.
 
-**Source:** [Oracle Java Tutorials — javac and the JVM](https://docs.oracle.com/javase/tutorial/getStarted/intro/definition.html)
+**Source:** [Oracle Java Tutorials — javac and the JVM](https://docs.oracle.com/javase/tutorial/getStarted/intro/definition.html), [Python Glossary — bytecode](https://docs.python.org/3/glossary.html#term-bytecode)
 
 ---
 
@@ -965,6 +972,7 @@ I'd bring up test flakiness as the practical, staff-level reason the pyramid sha
 | IANA — Service Name and Transport Protocol Port Number Registry | https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml |
 | RFC 3986 — URI Generic Syntax | https://datatracker.ietf.org/doc/html/rfc3986 |
 | RFC 9110 — HTTP Semantics | https://datatracker.ietf.org/doc/html/rfc9110 |
+| RFC 9112 — HTTP/1.1 | https://datatracker.ietf.org/doc/html/rfc9112 |
 | RFC 9113 — HTTP/2 | https://datatracker.ietf.org/doc/html/rfc9113 |
 | RFC 9114 — HTTP/3 | https://datatracker.ietf.org/doc/html/rfc9114 |
 | NIST — Cryptographic Standards and Guidelines | https://csrc.nist.gov/projects/cryptographic-standards-and-guidelines |
@@ -974,12 +982,14 @@ I'd bring up test flakiness as the practical, staff-level reason the pyramid sha
 | RFC 5280 — Internet X.509 Public Key Infrastructure Certificate | https://datatracker.ietf.org/doc/html/rfc5280 |
 | MIT OpenCourseWare — Introduction to Algorithms | https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/ |
 | PostgreSQL Documentation | https://www.postgresql.org/docs/current/ |
+| PostgreSQL Documentation — JSON Types | https://www.postgresql.org/docs/current/datatype-json.html |
 | MongoDB Documentation — Data Modeling Introduction | https://www.mongodb.com/docs/manual/core/data-modeling-introduction/ |
 | W3C — Web Services Architecture | https://www.w3.org/TR/ws-arch/ |
 | Oracle Java Tutorials — Object-Oriented Programming Concepts | https://docs.oracle.com/javase/tutorial/java/concepts/index.html |
 | Oracle Java Tutorials — Polymorphism | https://docs.oracle.com/javase/tutorial/java/IandI/polymorphism.html |
 | Oracle Java Tutorials — javac and the JVM | https://docs.oracle.com/javase/tutorial/getStarted/intro/definition.html |
 | JLS §4 — Types, Values, and Variables | https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html |
+| Python Glossary — bytecode | https://docs.python.org/3/glossary.html#term-bytecode |
 | Operating Systems: Three Easy Pieces (Arpaci-Dusseau) | https://pages.cs.wisc.edu/~remzi/OSTEP/ |
 | MIT OpenCourseWare — Database, Internet, and Systems Integration Technologies, Data Normalization | https://ocw.mit.edu/courses/1-264j-database-internet-and-systems-integration-technologies-fall-2013/resources/mit1_264jf13_lect_11/ |
 | PostgreSQL Documentation — Indexes | https://www.postgresql.org/docs/current/indexes.html |

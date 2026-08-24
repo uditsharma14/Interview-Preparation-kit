@@ -34,7 +34,7 @@ How to use this: this is deliberately a **glossary, not a guide** — no code, n
 
 **Operating system** — The software layer that manages hardware resources (CPU, memory, storage, devices) and provides a consistent interface for applications to use them, without each application needing to control hardware directly. *See: [Computer Science Fundamentals Q22](Computer_Science_Fundamentals_Interview_Prep.md#22-what-is-an-operating-system-and-what-does-the-kernel-do).*
 
-**CPU** (Central Processing Unit) — The hardware component that actually executes instructions — fetching, decoding, and running each one, one at a time per core (modern CPUs have multiple cores, each executing independently).
+**CPU** (Central Processing Unit) — The hardware component that executes instructions: fetching, decoding, and running them. Real cores don't strictly run "one at a time" either — pipelining and superscalar/out-of-order execution let a single core have several instructions in flight per cycle, and most CPUs have multiple independent cores besides.
 
 **RAM** (Random Access Memory) — Fast, volatile (cleared on power loss) memory holding data and instructions a running program is actively using. "Volatile" is the key word — unlike storage, nothing in RAM survives a restart.
 
@@ -58,15 +58,15 @@ How to use this: this is deliberately a **glossary, not a guide** — no code, n
 
 **Syntax** — The set of rules defining what counts as a structurally valid statement in a given language — the "grammar." Code that violates syntax rules fails to even parse, let alone run.
 
-**Compiler** — A program that translates source code into a lower-level form (often machine code) *ahead of time*, before the program runs, producing an artifact that can then be executed independently. *See: [Computer Science Fundamentals Q20](Computer_Science_Fundamentals_Interview_Prep.md#20-whats-the-difference-between-a-compiled-and-an-interpreted-language).*
+**Compiler** — A program that translates source code into a lower-level form *ahead of time*, before the program runs. That output isn't always a standalone, independently-runnable executable — `javac` compiles Java to bytecode, which still needs the JVM to run it. *See: [Computer Science Fundamentals Q20](Computer_Science_Fundamentals_Interview_Prep.md#20-whats-the-difference-between-a-compiled-and-an-interpreted-language).*
 
-**Interpreter** — A program that reads and executes source code (or an intermediate form) directly, line by line, at runtime, rather than producing a separate standalone executable ahead of time. *See: [Computer Science Fundamentals Q20](Computer_Science_Fundamentals_Interview_Prep.md#20-whats-the-difference-between-a-compiled-and-an-interpreted-language).*
+**Interpreter** — A program that translates and executes code *at runtime* rather than producing a standalone executable ahead of time. This is rarely literal line-by-line translation of source text — CPython, for instance, compiles source to bytecode first, then interprets that. *See: [Computer Science Fundamentals Q20](Computer_Science_Fundamentals_Interview_Prep.md#20-whats-the-difference-between-a-compiled-and-an-interpreted-language).*
 
 **Runtime** — Broadly, "while the program is actually executing" (as opposed to compile time). Also refers specifically to the environment/support system (like the JVM) a program needs present in order to run.
 
-**Variable** — A named, mutable storage location holding a value that can change over the course of a program's execution.
+**Variable** — A named storage location holding a value. Despite the name, not every "variable" is actually mutable — many languages let you declare one that can only be assigned once (Java `final`, Kotlin `val`), blurring the line with a constant.
 
-**Constant** — A named value that, once set, cannot be reassigned — the compiler or runtime enforces that attempting to change it is an error.
+**Constant** — A named value that, once set, cannot be reassigned. Enforcement varies by language: some catch a reassignment at compile time (Java `final`, C `const`), others only at runtime (JavaScript `const`), and some (classic Python) don't enforce it at all — it's just a naming convention.
 
 **Data type** — A classification defining what kind of value a variable can hold and what operations are valid on it — `int`, `String`, `boolean`, and so on. Determines both the value's representation in memory and what the language allows you to do with it.
 
@@ -76,9 +76,9 @@ How to use this: this is deliberately a **glossary, not a guide** — no code, n
 
 **Statement** — A complete, executable instruction — an assignment, a loop, a function call used for its side effect. A statement performs an action; it doesn't necessarily produce a usable value the way an expression does.
 
-**Function** — A named, reusable block of code that performs a specific task, optionally taking inputs and optionally producing an output. The general term; "method" (below) is the specific term for a function attached to an object/class.
+**Function** — A named, reusable block of code that performs a task, optionally taking inputs and optionally producing an output. "Method" (below) is the OOP-specific term for one attached to a class; the two are used almost interchangeably in most languages, including Java.
 
-**Method** — A function defined as part of a class, operating on (or associated with) instances of that class. Every method is a function; not every function is a method (a free-standing function isn't).
+**Method** — A function defined as part of a class, operating on (or associated with) instances of that class. Most languages call any class member function a "method" regardless of return type, though some formal traditions reserve "function" for one that returns a value and "procedure" for one that doesn't (a `void` method).
 
 **Parameter** — A named placeholder in a function's definition representing a value the caller will supply — `void greet(String name)`, where `name` is the parameter.
 
@@ -164,7 +164,7 @@ How to use this: this is deliberately a **glossary, not a guide** — no code, n
 
 **Object** — A specific instance of a class, with its own actual field values, created via that class's constructor.
 
-**Constructor** — A special method invoked when an object is created, responsible for initializing its fields to a valid starting state.
+**Constructor** — A special class member invoked when an object is created, responsible for initializing its fields to a valid starting state. In Java specifically, a constructor is formally *not* a method — it has no return type and, per the JLS, is not a class member and is therefore not inherited ([JLS §8.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.2)).
 
 **Encapsulation** — Bundling an object's data together with the methods that operate on it, and restricting direct external access to that data, so the object controls how its own state can be read or changed. *See: [Computer Science Fundamentals Q19](Computer_Science_Fundamentals_Interview_Prep.md#19-what-are-the-four-pillars-of-object-oriented-programming).*
 
@@ -178,7 +178,7 @@ How to use this: this is deliberately a **glossary, not a guide** — no code, n
 
 **Composition** — Building a class by including instances of other classes as fields ("has-a" relationships), rather than extending them ("is-a," via inheritance) — often the more flexible, less tightly-coupled design choice.
 
-**Immutable object** — An object whose state cannot change after construction — every field is set once, in the constructor, and never reassigned. Immutable objects are inherently thread-safe, since there's no mutable state to race on.
+**Immutable object** — An object whose own fields are set once, in the constructor, and never reassigned. That guarantees thread safety only if every referenced field is *also* immutable (or defensively copied) — a `final` field pointing to a mutable `List`, for instance, can still have its contents change out from under you.
 
 ---
 
@@ -202,7 +202,7 @@ How to use this: this is deliberately a **glossary, not a guide** — no code, n
 
 **Stack memory** — Per-thread memory holding method call frames, each with that method's local variables — popped automatically the instant its method returns. *See: [Java JVM & GC Interview Prep Q2](../Language/Java_JVM_GC_Interview_Prep.md#2-whats-the-difference-between-stack-memory-and-heap-memory).*
 
-**Heap memory** — Memory shared across all threads in a process, where every object created with `new` actually lives, reclaimed only once nothing references it anymore (garbage collection). *See: [Java JVM & GC Interview Prep Q2](../Language/Java_JVM_GC_Interview_Prep.md#2-whats-the-difference-between-stack-memory-and-heap-memory).*
+**Heap memory** — Memory shared across all threads in a process, where objects created with `new` conventionally live, reclaimed once nothing references them anymore (garbage collection). Not an absolute rule at runtime, though: a JIT compiler can use escape analysis to prove an object never leaves its creating method and skip the heap allocation entirely. *See: [Java JVM & GC Interview Prep Q2](../Language/Java_JVM_GC_Interview_Prep.md#2-whats-the-difference-between-stack-memory-and-heap-memory) and [Q16 — Escape Analysis](../Language/Java_JVM_GC_Interview_Prep.md#16-what-are-escape-analysis-scalar-replacement-and-lock-elimination).*
 
 **Garbage collection** — The automatic process of reclaiming heap memory occupied by objects no longer reachable from any live reference, so the application never has to explicitly free memory itself. *See: [Java JVM & GC Interview Prep Q3](../Language/Java_JVM_GC_Interview_Prep.md#3-what-is-garbage-collection-and-why-does-java-need-it).*
 
@@ -224,7 +224,7 @@ How to use this: this is deliberately a **glossary, not a guide** — no code, n
 
 **Primary key** — The column (or combination of columns) uniquely identifying each row in a table — no two rows can share the same primary key value.
 
-**Foreign key** — A column in one table that references the primary key of another table, expressing a relationship between the two and letting the database enforce referential integrity.
+**Foreign key** — A column in one table that references another table's row, expressing a relationship and letting the database enforce referential integrity. The referenced column doesn't have to be that table's primary key specifically — any column (or set of columns) with a `UNIQUE` constraint qualifies ([PostgreSQL — Foreign Keys](https://www.postgresql.org/docs/current/ddl-constraints.html)).
 
 **SQL** (Structured Query Language) — The standard language for querying and manipulating data in a relational database — `SELECT`, `INSERT`, `UPDATE`, `DELETE`, and schema-definition statements.
 
@@ -236,9 +236,9 @@ How to use this: this is deliberately a **glossary, not a guide** — no code, n
 
 **Transaction** — A sequence of database operations treated as a single atomic unit — either every operation in it succeeds and is committed, or none of them take effect at all. *See: [Transactions Interview Prep](../System%20Design/Transactions_Interview_Prep.md).*
 
-**Commit** — Finalizing a transaction, making all its changes permanent and visible to other transactions.
+**Commit** — Finalizing a transaction, making all its changes permanent. *When* other transactions can see those changes depends on their own isolation level — a transaction already mid-flight under snapshot/repeatable-read isolation may not see a commit that happened after its own snapshot was taken. *See: [Transactions Interview Prep — isolation levels](../System%20Design/Transactions_Interview_Prep.md#2-what-anomalies-are-possible-at-each-isolation-level).*
 
-**Rollback** — Undoing all of a transaction's changes, restoring the database to the state it was in before the transaction began — typically triggered by an error partway through.
+**Rollback** — Undoing a transaction's changes, restoring the database to an earlier state — typically triggered by an error. That earlier state isn't always "before the transaction began": rolling back to a **savepoint** undoes only the work since that point, leaving the rest of the transaction intact. *See: [Transactions Interview Prep — NESTED propagation](../System%20Design/Transactions_Interview_Prep.md#6-explain-required-requiresnew-nested-and-notsupported).*
 
 **ACID** — The four guarantees a transactional database provides: **A**tomicity (all-or-nothing), **C**onsistency (valid state to valid state), **I**solation (concurrent transactions don't interfere), **D**urability (committed data survives a crash). *See: [Transactions Interview Prep](../System%20Design/Transactions_Interview_Prep.md).*
 
@@ -272,7 +272,7 @@ How to use this: this is deliberately a **glossary, not a guide** — no code, n
 
 **HTTPS** — HTTP running over a TLS-encrypted connection, protecting the request/response contents from being read or tampered with in transit. *See: [Computer Science Fundamentals Q11](Computer_Science_Fundamentals_Interview_Prep.md#11-what-is-tls-and-how-does-the-handshake-establish-a-secure-connection).*
 
-**TCP** — A connection-oriented, reliable transport-layer protocol — guarantees delivered data arrives complete, in order, and without duplication, at the cost of handshake and retransmission overhead. *See: [Computer Science Fundamentals Q1](Computer_Science_Fundamentals_Interview_Prep.md#1-whats-the-difference-between-tcp-and-udp).*
+**TCP** — A connection-oriented, reliable transport-layer protocol: whatever data arrives is complete, in order, and without duplication, at the cost of handshake and retransmission overhead. That's conditional on the connection succeeding, though — TCP doesn't retry forever; it eventually reports a failure rather than guaranteeing delivery no matter what. *See: [Computer Science Fundamentals Q1](Computer_Science_Fundamentals_Interview_Prep.md#1-whats-the-difference-between-tcp-and-udp).*
 
 **UDP** — A connectionless transport-layer protocol with no delivery, ordering, or retransmission guarantees — lower overhead, used where a late/lost packet is worthless anyway (real-time video, DNS queries). *See: [Computer Science Fundamentals Q1](Computer_Science_Fundamentals_Interview_Prep.md#1-whats-the-difference-between-tcp-and-udp).*
 
@@ -354,7 +354,7 @@ How to use this: this is deliberately a **glossary, not a guide** — no code, n
 
 **Merge** — Combining the changes from one Git branch into another, integrating independently-developed work back together.
 
-**CI/CD** (Continuous Integration / Continuous Delivery or Deployment) — The practice of automatically building, testing, and (for CD) deploying code on every change, rather than manually and infrequently — catches integration problems early and makes releases routine rather than risky events.
+**CI/CD** (Continuous Integration / Continuous Delivery or Deployment) — CI automatically builds and tests every change, catching integration problems early. The two CDs aren't the same: **Continuous Delivery** keeps every passing change deployment-ready with a human still approving the release; **Continuous Deployment** skips that gate and ships every passing change to production automatically ([Martin Fowler — Continuous Delivery](https://martinfowler.com/bliki/ContinuousDelivery.html)).
 
 **Deployment** — The process of releasing a new version of software into an environment where it actually runs and serves real traffic/users.
 
@@ -370,11 +370,11 @@ How to use this: this is deliberately a **glossary, not a guide** — no code, n
 
 **Encoding** — Transforming data into a different representation for compatibility or transport reasons (base64, URL encoding) — **not** for secrecy; encoding is trivially reversible by anyone, with no key involved at all.
 
-**Hashing** — A one-way transformation producing a fixed-size digest from any input, with no way to recover the original input from the digest — used for integrity checks and password verification, not confidentiality. *See: [Computer Science Fundamentals Q10](Computer_Science_Fundamentals_Interview_Prep.md#10-whats-the-difference-between-encryption-and-hashing).*
+**Hashing** — A one-way transformation producing a fixed-size digest from any input, used for integrity checks and password verification, not confidentiality. "No way to recover the input" means computationally infeasible for a well-designed hash and non-trivial input, not mathematically impossible — a short or predictable input can still be found via brute force or a precomputed table, which is why passwords also need salting. *See: [Computer Science Fundamentals Q10](Computer_Science_Fundamentals_Interview_Prep.md#10-whats-the-difference-between-encryption-and-hashing).*
 
 **Token** — An opaque or structured piece of data representing an authenticated session or granted access, presented on subsequent requests instead of re-sending credentials every time — a JWT is one common token format.
 
-**Session** — Server-side state associated with a particular client over the course of their interaction with an application, typically identified via a session ID stored in a cookie.
+**Session** — State associated with a particular client's ongoing interaction with an application. Commonly stored server-side and keyed by a session ID in a cookie, but not necessarily — a stateless/client-side session encodes the state directly into a signed or encrypted token the client holds instead.
 
 **Cookie** — A small piece of data the server asks the browser to store and automatically resend on subsequent requests to that domain — the standard mechanism for carrying a session ID (or other small state) across HTTP's otherwise-stateless requests.
 
@@ -396,7 +396,7 @@ How to use this: this is deliberately a **glossary, not a guide** — no code, n
 
 **Proxy** — An intermediary that sits between a client and a server, forwarding requests on the client's behalf — a *forward* proxy represents clients to servers; a *reverse* proxy represents servers to clients.
 
-**Message queue** — A component that holds messages/tasks in order until a consumer is ready to process them, decoupling producers from consumers in time and load.
+**Message queue** — A component that holds messages/tasks until a consumer is ready to process them, decoupling producers from consumers in time and load. Strict ordering isn't universal — many implementations only preserve order within a single partition/queue instance (or trade it away entirely for throughput), not across the whole queue. *See: [Kafka Deep-Dive Interview Prep](../System%20Design/Kafka_Interview_Prep.md#2-what-ordering-does-kafka-guarantee).*
 
 **Event** — A record that something happened — an order was placed, a user signed up — typically published to interested consumers rather than the producer calling each consumer directly.
 
@@ -468,4 +468,4 @@ How to use this: this is deliberately a **glossary, not a guide** — no code, n
 
 **Idempotent operation** — An operation that produces the same end result no matter how many times it's performed — the specific property that makes automatic retries safe. *See: [REST API Design Interview Prep](../System%20Design/REST_API_Design_Interview_Prep.md).*
 
-**Distributed transaction** — A transaction spanning multiple, independent systems/databases that must all commit or all roll back together — genuinely hard to achieve reliably, which is exactly why patterns like the saga and the transactional outbox exist as alternatives to a literal distributed transaction. *See: [Transactions Interview Prep](../System%20Design/Transactions_Interview_Prep.md).*
+**Distributed transaction** — A transaction spanning multiple database nodes or systems — whether genuinely separate databases or shards of one distributed database — that must all commit or all roll back together. Genuinely hard to achieve reliably (classic two-phase commit has its own failure modes), which is exactly why patterns like the saga and the transactional outbox exist as alternatives. *See: [Transactions Interview Prep](../System%20Design/Transactions_Interview_Prep.md).*
