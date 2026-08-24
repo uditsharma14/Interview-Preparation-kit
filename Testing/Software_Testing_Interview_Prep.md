@@ -2,7 +2,7 @@
 
 > **Target level:** Basic → Staff (graduated — see below) · **Baseline:** ISTQB Certified Tester Foundation Level (CTFL) v4.0.1 terminology for testing fundamentals · JUnit 6.x (Jupiter programming model — unchanged from JUnit 5, but JUnit 6 requires Java 17+ and is the current major version) · Mockito 5.x (inline mock maker is the default mock maker as of Mockito 5.0.0) · Spring Framework 6.x/Spring Boot 3.4+ testing support (`@MockitoBean`, the current annotation — the older `@MockBean` was deprecated in Spring Boot 3.4) · Testcontainers · Apache Kafka 4.x (KRaft-only, no ZooKeeper) for the embedded-broker/Testcontainers Kafka questions · Selenium 4.x WebDriver · REST Assured · Cucumber/Gherkin · Apache JMeter/Gatling · jqwik (property-based testing) · PIT/PITest (mutation testing) · **Last verified:** 2026-08-23 · **Prerequisites:** none for the testing-fundamentals and types-of-testing questions at the start of the Basic section; [Java Collections](../Language/Java_Collections_Interview_Prep.md) becomes relevant once the guide moves into JUnit/Mockito, [Spring Boot Internals](../Frameworks/Spring_Boot_Internals_Interview_Prep.md) helpful from the Intermediate section onward, [JPA & Hibernate](../Frameworks/JPA_Hibernate_Interview_Prep.md) helpful for the `@DataJpaTest`/Testcontainers questions
 
-How to use this: each question is broken into six parts — a **core answer** (100–180 words, the version you'd actually say out loud in an interview), a **staff-level extension** covering the deeper judgment and trade-offs the core answer leaves out, a concrete **example** (code or scenario), common **failure modes**, **follow-up questions** an interviewer might ask next, and **sources**. The guide starts with QA/SDET testing fundamentals and types of testing (no code required), moves into Java/Spring-specific testing mechanics (JUnit, Mockito, Spring Boot test slices), then SDET automation tooling (Selenium, API testing, BDD/Cucumber, the test pyramid), and finishes with Staff-level scenario-based questions. The later sections assume the earlier ones as background and don't re-explain them.
+How to use this: each question is broken into six parts — a **core answer** (100–180 words, the version you'd actually say out loud in an interview), a **staff-level extension** covering the deeper judgment and trade-offs the core answer leaves out, a concrete **example** (code or scenario), common **failure modes**, **follow-up questions** an interviewer might ask next, and **sources**. The guide starts with QA/SDET testing fundamentals and types of testing (no code required), moves into Java/Spring-specific testing mechanics (JUnit, Mockito, Spring Boot test slices), then SDET automation tooling (Selenium, API testing, BDD/Cucumber, the test pyramid), and finishes with Staff-level scenario-based questions. The later sections assume the earlier ones as background and don't re-explain them. A note on the Example code blocks: most are deliberately partial — they illustrate one pattern using representative types (`Order`, `PaymentGateway`, `Calculator`, and similar) that aren't defined in the snippet itself, on the assumption of a surrounding test class, mocked dependencies, and framework imports not shown. They're excerpts to sketch on a whiteboard, not copy-paste-ready files; a block that's genuinely self-contained and compilable, or one that's deliberately showing code that fails (a compile error, a thrown exception, a flaky anti-pattern), says so directly in its own comments.
 
 <!-- toc -->
 ## Table of Contents
@@ -1443,7 +1443,8 @@ For a higher-fidelity integration test — verifying the application's actual co
 // Producer — MockProducer, no real broker, verifies exactly what was published
 @Test
 void publishOrderCreated_sendsToCorrectTopicWithCorrectKey() {
-    MockProducer<String, OrderEvent> mockProducer = new MockProducer<>(true, new StringSerializer(), new OrderEventSerializer());
+    MockProducer<String, OrderEvent> mockProducer =
+        new MockProducer<>(true, null, new StringSerializer(), new OrderEventSerializer()); // (autoComplete, partitioner, keySerializer, valueSerializer)
     OrderEventPublisher publisher = new OrderEventPublisher(mockProducer);
 
     publisher.publishOrderCreated(new Order("order-123", "SKU-1"));
@@ -1533,13 +1534,13 @@ This same dependency-injection principle generalizes well beyond just the clock:
 
 ```java
 // HARD TO TEST — calls Instant.now() directly, buried inside the business logic
-class SessionValidator {
+class SessionValidatorBeforeFix {
     boolean isExpired(Session session) {
         return session.getExpiresAt().isBefore(Instant.now()); // non-deterministic in a test
     }
 }
 
-// TESTABLE — Clock is injected, not called globally/statically
+// TESTABLE — same class, refactored so Clock is injected instead of called globally/statically
 class SessionValidator {
     private final Clock clock;
     SessionValidator(Clock clock) { this.clock = clock; }
@@ -1707,7 +1708,9 @@ CI pipeline, tiered:
   Stage 1: Unit tests           (seconds)    -> every commit, every PR — fast, cheap gate
   Stage 2: Integration tests    (minutes)    -> every PR — Testcontainers-backed, real dependencies
   Stage 3: E2E tests            (10s of min) -> on merge to main, or nightly — slowest, most flake-prone
+```
 
+```bash
 # Parallelizing WITHIN a stage — splitting the suite across multiple workers:
 ./gradlew test --tests "*ServiceTest" &
 ./gradlew test --tests "*RepositoryTest" &

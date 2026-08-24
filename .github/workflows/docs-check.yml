@@ -40,6 +40,8 @@ jobs:
           python-version: "3.x"
       - run: python3 scripts/check_internal_links.py
       - run: python3 scripts/check_duplicate_headings.py
+      - name: Code fence check (missing language tags; ambiguous blocks reported, not failed)
+        run: python3 scripts/check_code_fences.py
 
   external-links:
     runs-on: ubuntu-latest

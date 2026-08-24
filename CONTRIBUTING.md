@@ -58,12 +58,56 @@ log stays accurate.
    A real contributor fills it in with something that actually happened to
    them, or leaves it as a visible placeholder rather than a fabricated
    story.
-7. **Verify code examples.** A code block should be one of: compilable code
-   (and ideally actually compiled/run before submitting), clearly marked
-   pseudocode, valid configuration, valid SQL, a decision framework, or an
-   incident-investigation sequence. Don't present incomplete pseudocode as
-   if it were production-ready. If you can't verify a snippet compiles,
-   label it as conceptual rather than asserting it works.
+7. **Classify every code block, and verify it accordingly.** Before adding
+   or reviewing a fenced code block, decide which of these five kinds it
+   is — the fence's language tag and the surrounding prose should make the
+   choice unambiguous to a reader, not just to you:
+   - **Compilable example** — a self-contained unit (every type it uses is
+     either standard library or defined in the same block) that actually
+     compiles/runs as shown. Verify this for real before submitting —
+     `javac`/`java`, `python3`, or the equivalent for the language — don't
+     assert it compiles from memory. If you touch an existing block in this
+     category, re-verify it; don't assume it still compiles unchanged.
+   - **Partial illustrative snippet** — a fragment that assumes context
+     not shown (a domain type like `OrderService` or `PaymentGateway`, a
+     surrounding test class, framework imports) and isn't meant to compile
+     standalone. This is the right, honest category for most Example
+     blocks in an interview-prep guide — it's not a lesser tier, it's the
+     accurate one for a snippet that's teaching a pattern rather than
+     shipping a file. **Do not invent a domain class purely to make the
+     snippet compile** — a fabricated `OrderService` with a fake `process()`
+     method that exists only to satisfy a compiler doesn't make the example
+     more correct, it just adds invented behavior nobody asked for. If a
+     block in this category couldn't practically be made self-contained,
+     say so directly — a short comment or a sentence in the prose noting
+     what it assumes — rather than presenting it as if it were complete.
+     Even a partial snippet must still get its actual API calls,
+     annotations, and method signatures right against a primary source;
+     "it's just illustrative" is not an excuse for a wrong API.
+   - **Pseudocode** — a diagram, flowchart, or comparison sketch (ASCII art,
+     a labeled sequence, a before/after table) that isn't in any real
+     programming language at all. Tag it `text` (or the closest fit) rather
+     than a real language tag, since it was never meant to run.
+   - **Configuration** — YAML/JSON/properties/`.feature` files and similar:
+     valid as configuration syntax, not executed as a program. Verify the
+     syntax and keys are real for the tool/version referenced, not
+     invented-sounding.
+   - **Shell command** — an actual command line (`git`, `docker`, `kubectl`,
+     `curl`, a build tool invocation). Verify the flags and command shape
+     are real for the tool's current version, and that it would do what the
+     surrounding prose says it does.
+
+   A block that reads like it should compile but can't be verified to
+   (undefined types aside, an incorrect API, a missing import) isn't
+   automatically "partial illustrative" — check whether it's actually a bug
+   (fix it: correct the import, annotation, or API call) versus genuinely
+   assuming external context (leave it partial, but label it as such).
+   `scripts/check_code_fences.py`, wired into `docs-check.yml`, catches two
+   mechanical symptoms of this policy not being followed — a fenced block
+   with no language tag at all, and a block tagged `text` whose content
+   nonetheless reads like real, executable syntax — but it can't tell a
+   diagram that merely resembles code from an under-tagged real snippet;
+   that classification call is yours.
 8. **No AI-conversation artifacts.** This includes meta-commentary directed
    at whoever is editing the file rather than at an interview candidate —
    "let me know if you'd like me to restructure this," "happy to expand on
@@ -81,7 +125,7 @@ should stay internally consistent with the same shape:
   in an interview; long enough to be complete, short enough to say in
   roughly 30–90 seconds.
 - **Code** — a snippet, config, SQL, sketch, or decision framework backing
-  the answer up.
+  the answer up, classified per the code-example policy above.
 - **Follow-up** — what a Staff-level interviewer probes next: failure modes,
   trade-offs, scale, what breaks and how the design would change.
 - **Source** — the authoritative reference(s) for the important claims made

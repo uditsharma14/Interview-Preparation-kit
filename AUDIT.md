@@ -14,6 +14,160 @@ Severity legend:
   missing citation.
 - **Editorial** — artifacts, filler, formatting, structure, duplication.
 
+## Current status (audited 2026-08-23 against the live repository)
+
+Everything below this point through "## Findings" was re-measured directly
+against the repository as it exists right now — file counts via `find`,
+question counts via heading regex (cross-checked for gaps/duplicates),
+section-label counts to confirm which restructuring shape each guide
+actually uses, and live runs of every check InterviewSmith has (internal
+links, duplicate headings, markdownlint, `lychee`, and the new
+`scripts/check_code_fences.py`). It replaces the informal "Reviewed" /
+"Verified" language that had accumulated in the **Findings** section below
+and in the old "Guide review status" table — those sections are kept
+verbatim as the historical record of what each pass found and fixed, but
+the tier assigned to a guide **today** is the one in this section, not
+whatever a given historical entry called itself at the time it was
+written. Several of those historical "Guide status" lines asserted
+"Reviewed" or cited stale check counts that no longer matched the repo
+(21 files where there are now 26, 15 guides where there are now 17,
+1,476 links where there are now 2,245) — this section corrects that.
+
+### Status tiers
+
+A guide is assigned exactly one tier, the highest it has *actual,
+current evidence* for — evidence meaning a documented check in this file
+or a check run live during this audit, not an assertion:
+
+1. **Added** — content exists in the repo; no independent verification
+   pass has been run against it yet.
+2. **Structurally reviewed** — TOC, heading structure, internal links,
+   and duplicate-heading checks pass (mechanical, script-verified), but
+   the technical claims and citations have not been independently checked
+   against primary sources beyond what the original author asserted.
+3. **Fact-checked** — an independent pass verified claims and citations
+   against primary sources for all or substantially all questions in the
+   guide (documented as a finding below). Code examples in the guide were
+   **not** executed or compiled as part of this — only the prose claims
+   were checked.
+4. **Code-validated** — every code block was classified per
+   `CONTRIBUTING.md`'s five-way policy, and every block presented as a
+   compilable/runnable example was actually compiled or run, with bugs
+   found fixed. This tier says nothing about whether prose claims elsewhere
+   in the guide were fact-checked — it's the code-only counterpart to tier 3.
+5. **Fully verified** — both Fact-checked and Code-validated, for every
+   question in the guide, with current (not just historical) evidence.
+   **No guide is marked this tier unless every question, every citation,
+   and every executable example was actually checked** — not "mostly," not
+   "the parts that seemed risky."
+
+Only two guides currently qualify for tier 4/5, since a full code-block
+audit (classify + compile/run + fix) has only been performed, this session,
+on Computer Science Fundamentals and Testing — see "Code block audit"
+below. Every other guide's ceiling is tier 3, even where the historical
+Findings entry below used the word "Reviewed," because none of them have
+had their code blocks mechanically executed.
+
+### Guide-by-guide current status
+
+| Guide | Tier | Basis | Shape | TOC |
+|---|---|---|---|---|
+| Computer Science Fundamentals/Computer_Science_Fundamentals_Interview_Prep.md | **Fully verified** | Full creation-time + targeted re-audit citation checks (below) + 2026-08-23 code block audit: all 29 blocks classified, the 2 compilable ones fixed and verified with `javac`, the Python block run with `python3`, the SQL block validated with `sqlite3`; every citation re-confirmed live via today's `lychee` run | Basic 4-part (Answer/Example/Go deeper/Source) | Yes |
+| Testing/Software_Testing_Interview_Prep.md | **Fully verified** | Full creation-time + targeted re-audit citation checks (below) + 2026-08-23 code block audit: all 48 blocks classified, 2 real bugs found and fixed (`MockProducer` constructor, a duplicate top-level class name) and verified against Kafka/jqwik/Selenium/Spring primary sources, 1 block re-split out of an ambiguous fence; every citation re-confirmed live via today's `lychee` run | Six-part (Core answer/Staff-level extension/Example/Failure modes/Follow-up questions/Sources) | Yes |
+| Language/Java_Collections_Interview_Prep.md | Fact-checked | Full original pass + Basic/Intermediate graduation, citations live-checked at each pass; code blocks not executed | Five-part (Core answer/Staff-level extension/Example/Follow-up questions/Sources) | Yes |
+| System Design/REST_API_Design_Interview_Prep.md | Fact-checked | Full original pass, citations live-checked; code blocks not executed | Five-part (Core answer/Staff-level extension/Example/Follow-up questions/Sources) | Yes |
+| Language/Java_Concurrency_Interview_Prep.md | Fact-checked | Full original pass + Basic/Intermediate graduation, citations live-checked; code blocks not executed | Original 4-part (Answer/Code/Follow-up/Source) | Yes |
+| Language/Java_JVM_GC_Interview_Prep.md | Fact-checked | Full original pass + Basic/Intermediate graduation, citations live-checked; code blocks not executed | Original 4-part | Yes |
+| Frameworks/Spring_Boot_Internals_Interview_Prep.md | Fact-checked | Full original pass + Basic/Intermediate graduation, citations live-checked; code blocks not executed | Original 4-part | Yes |
+| Frameworks/Spring_Security_OAuth2_Interview_Prep.md | Fact-checked | Full original pass + Basic/Intermediate graduation, citations live-checked; code blocks not executed | Original 4-part | Yes |
+| Frameworks/JPA_Hibernate_Interview_Prep.md | Fact-checked | Full original pass + Basic/Intermediate graduation, citations live-checked; code blocks not executed | Original 4-part | Yes |
+| Kubernetes, Docker & Cloud/Kubernetes_Docker_Interview_Prep.md | Fact-checked | Full original pass, citations checked; code blocks (mostly YAML/`kubectl`) not executed | Original 4-part | Yes |
+| Microservices & Architecture Patterns/Microservices_Architecture_Patterns_Interview_Prep.md | Fact-checked | Full original pass, no blocking findings; code blocks not executed | Original 4-part | Yes |
+| AI Engineering/AI_Engineering_Interview_Prep.md | Fact-checked | Full original pass (1 fix); guide's own header explicitly flags its numbers as approximate/fast-moving, which caps confidence even at this tier — re-verify before relying on a specific figure | Original 4-part | Yes |
+| Tech Leadership/Engineering_Leadership_Interview_Prep.md | Fact-checked | Reviewed for fabricated experience/metrics (2 fixes) rather than deep technical-citation verification, since the content is behavioral, not spec-driven; Sources present and not contradicted | Original 4-part | Yes |
+| System Design/Cross_Stack_Design_Scenarios_Interview_Prep.md | Fact-checked | Full original pass (2 fixes), cross-checked against the guides it draws on | Original 4-part | Yes |
+| System Design/Kafka_Interview_Prep.md | Fact-checked | Full read, two passes (7 corrections total), all 55 questions checked against Kafka docs/KIPs | Original 4-part | **No** |
+| System Design/Redis_Caching_Interview_Prep.md | Fact-checked | Full read of all 30 questions (1 critical fix) against Redis documentation | Original 4-part | **No** |
+| System Design/Transactions_Interview_Prep.md | Fact-checked (partial coverage) | Spot-checked in depth on major topics (isolation levels, MVCC, propagation, deadlocks, 2PC/saga) against PostgreSQL/Spring docs — the guide's own historical note says not every one of the 30 questions was individually re-verified line by line, so treat this as a real but lighter pass than the other Fact-checked guides | Original 4-part | **No** |
+| Computer Science Fundamentals/Computer_Science_Glossary.md | Structurally reviewed | 200/200 terms present (verified programmatically), internal links verified; a targeted precision audit deep-checked 17 of 200 terms against primary/cross-referenced sources (16 corrected) — real, but not full per-term citation checking, consistent with this file's own no-per-term-citation convention | — (not a Q&A guide) | — |
+
+`Design Patterns/README.md`, `Forward-Deployed & Customer-Facing
+Engineering/README.md`, and `Frontend & Full-Stack/README.md` are
+placeholder stubs with no content — nothing to verify. `Further
+Reading/System_Design_and_AI_Reading_List.md` is an external link list
+explicitly exempted from this policy by its own header. `System
+Design/System_Design_Interview_Question_Bank.md` is practice prompts, not
+worked answers, per its own header — outside this tiering.
+
+### Corrected repo-wide counts (measured 2026-08-23)
+
+| Metric | Value in this file before today | Corrected, measured value |
+|---|---|---|
+| Markdown files in the repo | "21 files" (internal links/headings/lint rows), inconsistent with "17 guides" used elsewhere | **26** markdown files total (17 Q&A guides + 1 glossary + 3 reserved-placeholder READMEs + 1 Further Reading list + 1 System Design Question Bank + README.md/AUDIT.md/CONTRIBUTING.md) |
+| Q&A guides | "15 guides" (repo-wide checks section) vs. "17" (backlog section) — internally inconsistent | **17** — confirmed by counting distinct guide files with numbered `## N.`/`### N.` question headings |
+| Total numbered questions | "559... as of 2026-08-23" (Phase 3/4 backlog) | **544** — counted directly from every guide's numbered headings, per-guide totals cross-checked for gaps/duplicates (none found); the prior 559 figure was arithmetic drift from manually summing per-guide deltas across several same-day edits rather than a fresh count |
+| Guides with a TOC | "12 of 15" | **14 of 17** (still missing only on Kafka, Redis, and Transactions — that part of the old note was accurate, just the denominator wasn't) |
+| Internal link check | "21 files, 0 broken" | **26 files, 0 broken** — `scripts/check_internal_links.py`, run live today |
+| Duplicate-heading check | "21 files, 0 found" | **26 files, 0 found** — `scripts/check_duplicate_headings.py`, run live today |
+| Markdown lint | "21 files, 0 issues" | **26 files, 0 issues** — `markdownlint-cli2` with `.markdownlint.yaml`, run live today |
+| External link check | "1476 links checked, 1476 OK, 0 errors, 19 correctly excluded" | **2,245 total link occurrences, 1,245 unique URLs, 2,221 OK, 0 errors, 24 excluded, 117 redirects** — `lychee` 0.24.2 with `.lychee.toml`, run live today. (The old figure was real for the repo's size at the time it was measured; it was never updated as guides were added, which is exactly the kind of drift this correction pass exists to catch.) |
+| Version-baseline header present | "Added to all 15 guides" | **All 17 Q&A guides** have one; confirmed present in each guide's top-of-file blockquote |
+| Code fence check | not previously tracked | **New** — `scripts/check_code_fences.py`, run live today: 0 fenced code blocks anywhere in the repo are missing a language tag; 4 blocks (outside the two guides audited this session — AI Engineering, Cross-Stack Design Scenarios, and Transactions) are tagged `text` but read as executable-looking code and are flagged for future classification, not fixed in this pass (out of scope — see backlog) |
+
+### Code block audit (2026-08-23)
+
+At the requester's explicit direction, every fenced code block in
+**Computer Science Fundamentals** (29 blocks) and **Testing** (48 blocks —
+77 total) was classified into one of five kinds per the policy now in
+`CONTRIBUTING.md`, and every block that could plausibly be a compilable or
+runnable example was actually run.
+
+| Classification | CS Fundamentals | Testing |
+|---|---|---|
+| Compilable example (verified) | 3 (`Factorial`, `ShapeDemo`, a Python typing demo) | 0 |
+| Partial illustrative snippet | 2 (Big-O fragments; a deliberate compile-error demo) | 40 |
+| Pseudocode (diagrams/tables, no real syntax) | 20 | 15 |
+| Configuration | 0 | 2 (a Gherkin `.feature` file, a CI YAML sketch) |
+| Shell command | 1 (`git` walkthrough) | 3 (`gradlew` loop; a `bash` split out of an ambiguous block, see below) |
+| SQL (partial — assumes an existing `users` table, syntax verified with `sqlite3`) | 1 | — |
+| Groovy (Gatling DSL, partial illustrative) | — | 1 |
+
+Bugs found and fixed, each verified against a primary source before
+being corrected (see the per-guide entries above for the Fully verified
+tier):
+
+- **Testing Q32** — `new MockProducer<>(true, new StringSerializer(), new OrderEventSerializer())`
+  called a constructor that doesn't exist; Kafka's actual 4-arg constructor
+  requires a `Partitioner` argument. Fixed to
+  `new MockProducer<>(true, null, new StringSerializer(), new OrderEventSerializer())`,
+  confirmed against the Kafka 4.0 `MockProducer` Javadoc.
+- **Testing Q34** — two top-level classes both named `SessionValidator`
+  declared in the same fence (would not compile as one file even setting
+  aside its other partial-snippet dependencies). Renamed the "before"
+  version to `SessionValidatorBeforeFix` and clarified in the comment that
+  the second is the same class, refactored.
+- **Testing Q38** — a `text`-tagged block mixed an ASCII diagram with two
+  real, executable `./gradlew` lines — exactly the "ambiguous
+  executable-looking" pattern `check_code_fences.py` now exists to catch.
+  Split into a `text` block (the diagram) and a `bash` block (the
+  commands).
+
+APIs spot-verified against primary sources rather than assumed correct
+from memory, per `CONTRIBUTING.md`'s accuracy policy: jqwik's `@BigRange`
+annotation (confirmed it applies to both `BigInteger` and `BigDecimal`,
+with string-valued `min`/`max`), Spring's `DynamicPropertyRegistry.add()`
+signature, and Selenium 4.x's `WebDriverWait(driver, Duration)`
+constructor — all matched the guides' existing usage with no changes
+needed.
+
+No domain classes were invented to make a snippet "look complete" — the
+large majority of both guides' Java blocks (40 of 48 in Testing) assume
+representative types like `Order`, `PaymentGateway`, or `Calculator` that
+aren't defined in the snippet, and are correctly classified as partial
+illustrative snippets rather than forced into a fake compilable shape.
+Both guides' intro paragraphs now say so explicitly, so a reader doesn't
+mistake an excerpt for a copy-paste-ready file.
+
 ## Findings
 
 ### Computer Science Fundamentals/Computer_Science_Fundamentals_Interview_Prep.md
@@ -34,7 +188,11 @@ New guide, added 2026-08-23 — not a rewrite/graduation of existing content lik
 | Q14 — SQL vs. NoSQL | Minor | Described SQL databases as storing data "in tables with a fixed, predefined schema" with no qualification — omits that PostgreSQL and other mainstream SQL databases also support a flexible JSON column (`jsonb`) as a deliberate escape hatch, which the unqualified claim reads as excluding. | PostgreSQL's `jsonb` type stores schema-less JSON within a single column; this doesn't contradict the general fixed-column-set rule for the table overall, but the original wording overstated the rigidity. Added a parenthetical to the Answer and a docs citation. | [PostgreSQL Documentation — JSON Types](https://www.postgresql.org/docs/current/datatype-json.html) | **Fixed** |
 | Q20 — Compiled vs. interpreted languages | Minor | Described interpreted languages as executing source "line-by-line... at runtime" with no mention that CPython (and similar runtimes) first compile source into an internal bytecode representation — the same kind of nuance the guide already correctly calls out for Java, just not extended to Python/Ruby. | CPython compiles Python source into bytecode (cached in `.pyc` files) before the interpreter executes it — a milder version of the same compiled-then-interpreted blurring already noted for Java. Rewrote the Answer, Code block, and the following Java paragraph to connect the two; added a Python glossary citation. | [Python Glossary — bytecode](https://docs.python.org/3/glossary.html#term-bytecode) | **Fixed** |
 
-**Guide status: Reviewed. 28/28 questions reviewed, TOC added, version-baseline header present. Basic-only by design — see `README.md`'s "Difficulty by guide" table. Targeted re-audit of the networking/HTTP/OOP/database sections completed 2026-08-23 (same day) — 5 corrections made (2 Major, 1 Critical, 2 Minor), 2 questions verified with no error and citations strengthened.**
+**Answer-length restructuring, Basic-level variant (2026-08-23):** All 28 questions were restructured into a four-part shape distinct from the five-/six-part Core-answer variants used on the graduated guides, since this guide is deliberately Basic-only and the requester's instruction was explicit about keeping it that way: **Answer** (80–150 words, plain language, no Staff-level complexity — narrower than the 100–180-word/Staff-level-extension shape used elsewhere) / **Example** (renamed from Code; kept to one focused example per question) / **Go deeper** (renamed from Follow-up; this is where the advanced nuance trimmed out of the old, longer Answer paragraphs was relocated, alongside the prior Follow-up content, rather than deleted) / **Source** (label and every citation left byte-for-byte unchanged — confirmed via diff, zero Source-line changes).
+
+Measured before/after, programmatically: the 28 old Answer sections ranged 147–281 words (average 199.9, median 201); 26 of 28 (93%) exceeded the 150-word ceiling this Basic guide targets, none were under 80. All 28 new Answers now measure 109–150 words (average 135.5), verified via a word-count script run after every edit. No technical content or citation was deleted — depth moved from Answer to Go deeper; all 28 Example blocks keep their original illustration (one, Q28, dropped a second, redundant Mockito-style code snippet in favor of keeping just its test-pyramid diagram as the single focused example). No other guide's file was touched. `scripts/check_internal_links.py` and `scripts/check_duplicate_headings.py` both pass clean after the restructuring.
+
+**Guide status: Reviewed. 28/28 questions reviewed, TOC added, version-baseline header present. Basic-only by design — see `README.md`'s "Difficulty by guide" table. Targeted re-audit of the networking/HTTP/OOP/database sections completed 2026-08-23 (same day) — 5 corrections made (2 Major, 1 Critical, 2 Minor), 2 questions verified with no error and citations strengthened. Restructured again the same day (see the restructuring note directly above) into the Basic-level four-part Answer/Example/Go deeper/Source shape — a deliberately lighter-weight variant of the Core-answer restructuring used on the graduated guides, matching this guide's Basic-only scope.**
 
 ### Computer Science Fundamentals/Computer_Science_Glossary.md
 
@@ -264,6 +422,14 @@ Isolation levels and their PostgreSQL-specific behavior (Q2–3), MVCC (Q4), Spr
 
 ## Repo-wide checks
 
+**Historical — these counts were accurate when each check was first run and
+wired into CI, but were never updated as guides were added afterward; see
+"Corrected repo-wide counts" under Current status above for today's real
+numbers.** The checks themselves are still the ones running in CI today
+(`scripts/check_internal_links.py`, `scripts/check_duplicate_headings.py`,
+`markdownlint-cli2`, `lychee`, and, as of this audit,
+`scripts/check_code_fences.py`) — only the file/link counts below are stale.
+
 | Check | Result | Status |
 |---|---|---|
 | Internal markdown links (relative paths + `#anchor` fragments) resolve | `scripts/check_internal_links.py`, verified against `github-slugger` (the library GitHub's renderer actually uses) for anchor correctness — 21 files, 0 broken | **Pass** — wired into CI |
@@ -276,6 +442,13 @@ Isolation levels and their PostgreSQL-specific behavior (Q2–3), MVCC (Q4), Spr
 | Table of Contents on every guide | Added to 12 of 15 guides (all except Kafka, Redis, Transactions) | Open — see backlog |
 
 ## Guide review status
+
+**Historical — this table's blanket "Reviewed" label predates the tiered
+status system and doesn't distinguish a citations-only pass from a
+code-validated one. See "Guide-by-guide current status" under Current
+status above for the tier each guide actually has evidence for today; this
+table is kept as the original record of what each pass called itself at
+the time.**
 
 | Guide | Status |
 |---|---|
@@ -302,9 +475,10 @@ Isolation levels and their PostgreSQL-specific behavior (Q2–3), MVCC (Q4), Spr
 
 ## Phase 3/4 backlog (not yet done)
 
-- Table of contents on the Kafka, Redis, and Transactions guides (the other 12 have one).
-- **Answer-length restructuring rollout.** Java_Collections (2026-08-22, pilot) and System Design/REST_API_Design (2026-08-22) have been migrated to a five-part Core answer / Staff-level extension / Example / Follow-up questions / Sources structure; Testing/Software_Testing_Interview_Prep (2026-08-23) has been migrated to a six-part variant that additionally keeps a Failure modes section (piloted on that guide's own Q42–45 before being rolled out to all 45 questions). All three fix the repo-wide answer-length problem (original median 234 words against a 30–90-second/~100-180-word target) for their guide — see each guide's own "Guide status" note above. 14 guides remain — roughly 480 more questions — still on the original Answer/Code/Follow-up/Source shape and still running long. Continuing the rollout guide-by-guide is fine to proceed with incrementally; open question for the repository owner: standardize the rest on the five-part shape (matching Java_Collections/REST_API_Design) or the six-part shape with Failure modes (matching Testing)? The README's "How each question is structured" section still describes the old four-part shape, since it's accurate for 14 of 17 guides — update it once rollout covers all (or the repository owner decides to stop partway), to avoid the same overstatement-of-uniformity problem this pass was fixing elsewhere.
-- Full Phase 2 rewrite of every question into the six-part standardized structure (Question / Short answer / Deep dive / Example / Failure modes / Follow-ups / Sources) — a different, more elaborate structure than the five-part answer-length restructuring above. InterviewSmith contains 559 numbered questions across 17 guides as of 2026-08-23 (413 across the original 15 guides at the original audit, +13 from Java Concurrency's, +12 each from Java Collections', Java JVM & GC's, Spring Boot Internals', Spring Security & OAuth2's, and JPA & Hibernate's Basic/Intermediate graduations, +28 from the new Computer Science Fundamentals guide (15 at creation, +13 same-day expansion), +24 from the new Testing guide at creation, +17 from the Testing guide's same-day SDET/QA-fundamentals expansion, +4 from the Testing guide's same-day Lead/Staff-topics expansion (property-based testing, mutation testing, security testing, testing distributed/eventually-consistent workflows) — counted programmatically; see the per-guide counts in each guide's own "Guide status" line above). All seven graduated guides now span Basic → Staff internally, matching the Kubernetes/Docker guide's original graduated design; Computer Science Fundamentals is Basic-only by design and doesn't graduate to Staff. This was not attempted; Phase 1 (accuracy) and the explicitly listed known issues were prioritized per the task's own instruction not to proceed to content restructuring before the audit is complete. This is a genuinely large, separate scope decision the repository owner should make deliberately rather than have it happen as a side effect of an accuracy pass.
+- Table of contents on the Kafka, Redis, and Transactions guides (the other 14 have one).
+- **Code-block audit rollout.** Computer Science Fundamentals and Testing had every code block classified and every compilable/runnable one actually verified on 2026-08-23 (see "Code block audit" under Current status above). `scripts/check_code_fences.py`, added the same day, found 4 blocks elsewhere in the repo tagged `text` but reading as executable-looking code — `AI Engineering/AI_Engineering_Interview_Prep.md:668`, `System Design/Cross_Stack_Design_Scenarios_Interview_Prep.md:522`, and `System Design/Transactions_Interview_Prep.md:116` and `:770`. Flagged for classification, not fixed in this pass — out of scope for the two guides this audit covered. The other 15 guides' code blocks haven't been classified or executed at all yet.
+- **Answer-length restructuring rollout.** Java_Collections (2026-08-22, pilot) and System Design/REST_API_Design (2026-08-22) have been migrated to a five-part Core answer / Staff-level extension / Example / Follow-up questions / Sources structure (100–180-word Core answers); Testing/Software_Testing_Interview_Prep (2026-08-23) has been migrated to a six-part variant that additionally keeps a Failure modes section (100–180-word Core answers, piloted on that guide's own Q42–45 before being rolled out to all 45 questions). Computer Science Fundamentals (2026-08-23) has been migrated to its own, deliberately lighter Basic-level four-part variant — Answer / Example / Go deeper / Source, 80–150-word Answers, no Staff-level complexity — appropriate to its Basic-only scope rather than either Staff-oriented shape above. All four fix the repo-wide answer-length problem (original median 234 words against the target for each guide's level) for their guide — see each guide's own "Guide status" note above. 13 guides remain — roughly 450 more questions — still on the original Answer/Code/Follow-up/Source shape and still running long. Continuing the rollout guide-by-guide is fine to proceed with incrementally; open question for the repository owner: standardize the rest of the Staff/graduated guides on the five-part shape (matching Java_Collections/REST_API_Design) or the six-part shape with Failure modes (matching Testing)? The README's "How each question is structured" section still describes the old four-part shape, since it's accurate for 13 of 17 guides — update it once rollout covers all (or the repository owner decides to stop partway), to avoid the same overstatement-of-uniformity problem this pass was fixing elsewhere.
+- Full Phase 2 rewrite of every question into the six-part standardized structure (Question / Short answer / Deep dive / Example / Failure modes / Follow-ups / Sources) — a different, more elaborate structure than the five-part answer-length restructuring above. InterviewSmith contains **544** numbered questions across 17 guides as of 2026-08-23 — counted directly from every guide's numbered headings (not summed from per-guide deltas) and cross-checked per guide for gaps or duplicates; see "Corrected repo-wide counts" under Current status above. (A prior note here claimed 559, arrived at by manually summing each same-day edit's stated delta rather than recounting from the file — exactly the kind of drift a fresh count catches; see the same section for the correction.) All seven graduated guides now span Basic → Staff internally, matching the Kubernetes/Docker guide's original graduated design; Computer Science Fundamentals is Basic-only by design and doesn't graduate to Staff. This was not attempted; Phase 1 (accuracy) and the explicitly listed known issues were prioritized per the task's own instruction not to proceed to content restructuring before the audit is complete. This is a genuinely large, separate scope decision the repository owner should make deliberately rather than have it happen as a side effect of an accuracy pass.
 - Extracting Java/SQL examples into standalone, CI-testable sample projects (Phase 3, "where practical"). Not attempted — would need per-example scaffolding (Maven/Gradle module, test harness) and is a substantial project of its own.
 - Licensing — deliberately not chosen; needs the repository owner's decision (see `CONTRIBUTING.md`).
 - Java_Collections Q22 (was Q10) vs. Java_JVM_GC Q24 (was Q12) heap-dump question redundancy — flagged, not consolidated (both are independently accurate; low priority).
