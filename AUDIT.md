@@ -1,499 +1,116 @@
-# Audit Log
+# Audit Status
 
-This file tracks the accuracy audit of every guide in InterviewSmith, per
-the repository's accuracy policy (see `CONTRIBUTING.md`). Each row is one
-finding. A guide is not considered "reviewed" until every Critical/Major
-row for that guide has `Status = Fixed` or `Status = Won't fix (documented)`.
+Current verification status for every guide in InterviewSmith. Detailed
+findings live in dated files under `audits/`; forward-looking work lives
+in `ROADMAP.md`. This file is a summary, not a log — it should stay short
+enough to read in one sitting.
 
-Severity legend:
+## What the columns mean
 
-- **Critical** — factually wrong, would mislead a candidate or embarrass
-  them in an interview.
-- **Major** — imprecise or missing an important qualifier/version boundary.
-- **Minor** — technically defensible but sloppy wording, weak example, or
-  missing citation.
-- **Editorial** — artifacts, filler, formatting, structure, duplication.
+- **Fact-audited** — technical claims and citations checked against
+  primary sources (Oracle/OpenJDK, Spring, Kafka, Redis, Kubernetes,
+  RFCs, and similar). `Yes` means all or substantially all questions;
+  `Partial` means a bounded subset — see the guide's linked audit file
+  for the exact scope.
+- **Code-tested** — every fenced code block classified (compilable
+  example, partial illustrative snippet, pseudocode, configuration, shell
+  command), and every block classified as compilable actually compiled
+  and executed. `N/A` where a guide has no real code to test.
+- **Structure-validated** — table of contents present, internal links
+  resolve, no duplicate headings. Mechanical, script-verified
+  (`scripts/check_internal_links.py`, `scripts/check_duplicate_headings.py`).
 
-## Current status (audited 2026-08-23 against the live repository)
+A guide is never marked fully audited across all three columns unless
+every question, citation, and executable example in it was actually
+checked — a `Partial` or `No` in any column is not a defect, it states
+what hasn't been done yet.
 
-Everything below this point through "## Findings" was re-measured directly
-against the repository as it exists right now — file counts via `find`,
-question counts via heading regex (cross-checked for gaps/duplicates),
-section-label counts to confirm which restructuring shape each guide
-actually uses, and live runs of every check InterviewSmith has (internal
-links, duplicate headings, markdownlint, `lychee`, and the new
-`scripts/check_code_fences.py`). It replaces the informal "Reviewed" /
-"Verified" language that had accumulated in the **Findings** section below
-and in the old "Guide review status" table — those sections are kept
-verbatim as the historical record of what each pass found and fixed, but
-the tier assigned to a guide **today** is the one in this section, not
-whatever a given historical entry called itself at the time it was
-written. Several of those historical "Guide status" lines asserted
-"Reviewed" or cited stale check counts that no longer matched the repo
-(21 files where there are now 26, 15 guides where there are now 17,
-1,476 links where there are now 2,245) — this section corrects that.
+## Guide status
 
-### Status tiers
-
-A guide is assigned exactly one tier, the highest it has *actual,
-current evidence* for — evidence meaning a documented check in this file
-or a check run live during this audit, not an assertion:
-
-1. **Added** — content exists in the repo; no independent verification
-   pass has been run against it yet.
-2. **Structurally reviewed** — TOC, heading structure, internal links,
-   and duplicate-heading checks pass (mechanical, script-verified), but
-   the technical claims and citations have not been independently checked
-   against primary sources beyond what the original author asserted.
-3. **Fact-checked** — an independent pass verified claims and citations
-   against primary sources for all or substantially all questions in the
-   guide (documented as a finding below). Code examples in the guide were
-   **not** executed or compiled as part of this — only the prose claims
-   were checked.
-4. **Code-validated** — every code block was classified per
-   `CONTRIBUTING.md`'s five-way policy, and every block presented as a
-   compilable/runnable example was actually compiled or run, with bugs
-   found fixed. This tier says nothing about whether prose claims elsewhere
-   in the guide were fact-checked — it's the code-only counterpart to tier 3.
-5. **Fully verified** — both Fact-checked and Code-validated, for every
-   question in the guide, with current (not just historical) evidence.
-   **No guide is marked this tier unless every question, every citation,
-   and every executable example was actually checked** — not "mostly," not
-   "the parts that seemed risky."
-
-Only two guides currently qualify for tier 4/5, since a full code-block
-audit (classify + compile/run + fix) has only been performed, this session,
-on Computer Science Fundamentals and Testing — see "Code block audit"
-below. Every other guide's ceiling is tier 3, even where the historical
-Findings entry below used the word "Reviewed," because none of them have
-had their code blocks mechanically executed.
-
-### Guide-by-guide current status
-
-| Guide | Tier | Basis | Shape | TOC |
+| Guide | Fact-audited | Code-tested | Structure-validated | Last reviewed |
 |---|---|---|---|---|
-| Computer Science Fundamentals/Computer_Science_Fundamentals_Interview_Prep.md | **Fully verified** | Full creation-time + targeted re-audit citation checks (below) + 2026-08-23 code block audit: all 29 blocks classified, the 2 compilable ones fixed and verified with `javac`, the Python block run with `python3`, the SQL block validated with `sqlite3`; every citation re-confirmed live via today's `lychee` run | Basic 4-part (Answer/Example/Go deeper/Source) | Yes |
-| Testing/Software_Testing_Interview_Prep.md | **Fully verified** | Full creation-time + targeted re-audit citation checks (below) + 2026-08-23 code block audit: all 48 blocks classified, 2 real bugs found and fixed (`MockProducer` constructor, a duplicate top-level class name) and verified against Kafka/jqwik/Selenium/Spring primary sources, 1 block re-split out of an ambiguous fence; every citation re-confirmed live via today's `lychee` run | Six-part (Core answer/Staff-level extension/Example/Failure modes/Follow-up questions/Sources) | Yes |
-| Language/Java_Collections_Interview_Prep.md | Fact-checked | Full original pass + Basic/Intermediate graduation, citations live-checked at each pass, plus a 2026-08-23 targeted correction pass on Q1/Q2/Q4 (Set/Map generalizations, ArrayDeque/List) against Java 21 Javadocs — that pass covered 3 of 27 questions, not the whole guide. **Code blocks are separately Code-validated as of 2026-08-23**: all 28 classified, all 24 self-contained/runnable ones compiled and executed successfully (1 bug found and fixed, Q20's CME demo) — see the guide's own Code-block audit entry below. Not Fully verified: only 3 of 27 questions' prose/citations were freshly re-checked, not all 27. | Five-part (Core answer/Staff-level extension/Example/Follow-up questions/Sources) | Yes |
-| System Design/REST_API_Design_Interview_Prep.md | Fact-checked | Full original pass, citations live-checked; code blocks not executed | Five-part (Core answer/Staff-level extension/Example/Follow-up questions/Sources) | Yes |
-| Language/Java_Concurrency_Interview_Prep.md | Fact-checked | Full original pass + Basic/Intermediate graduation, citations live-checked; code blocks not executed | Original 4-part (Answer/Code/Follow-up/Source) | Yes |
-| Language/Java_JVM_GC_Interview_Prep.md | Fact-checked | Full original pass + Basic/Intermediate graduation, citations live-checked; code blocks not executed | Original 4-part | Yes |
-| Frameworks/Spring_Boot_Internals_Interview_Prep.md | Fact-checked | Full original pass + Basic/Intermediate graduation, citations live-checked; code blocks not executed | Original 4-part | Yes |
-| Frameworks/Spring_Security_OAuth2_Interview_Prep.md | Fact-checked | Full original pass + Basic/Intermediate graduation, citations live-checked; code blocks not executed | Original 4-part | Yes |
-| Frameworks/JPA_Hibernate_Interview_Prep.md | Fact-checked | Full original pass + Basic/Intermediate graduation, citations live-checked; code blocks not executed | Original 4-part | Yes |
-| Kubernetes, Docker & Cloud/Kubernetes_Docker_Interview_Prep.md | Fact-checked | Full original pass, citations checked; code blocks (mostly YAML/`kubectl`) not executed | Original 4-part | Yes |
-| Microservices & Architecture Patterns/Microservices_Architecture_Patterns_Interview_Prep.md | Fact-checked | Full original pass, no blocking findings; code blocks not executed | Original 4-part | Yes |
-| AI Engineering/AI_Engineering_Interview_Prep.md | Fact-checked | Full original pass (1 fix); guide's own header explicitly flags its numbers as approximate/fast-moving, which caps confidence even at this tier — re-verify before relying on a specific figure | Original 4-part | Yes |
-| Tech Leadership/Engineering_Leadership_Interview_Prep.md | Fact-checked | Reviewed for fabricated experience/metrics (2 fixes) rather than deep technical-citation verification, since the content is behavioral, not spec-driven; Sources present and not contradicted | Original 4-part | Yes |
-| System Design/Cross_Stack_Design_Scenarios_Interview_Prep.md | Fact-checked | Full original pass (2 fixes), cross-checked against the guides it draws on | Original 4-part | Yes |
-| System Design/Kafka_Interview_Prep.md | Fact-checked | Full read, two passes (7 corrections total), all 55 questions checked against Kafka docs/KIPs | Original 4-part | **No** |
-| System Design/Redis_Caching_Interview_Prep.md | Fact-checked | Full read of all 30 questions (1 critical fix) against Redis documentation | Original 4-part | **No** |
-| System Design/Transactions_Interview_Prep.md | Fact-checked (partial coverage) | Spot-checked in depth on major topics (isolation levels, MVCC, propagation, deadlocks, 2PC/saga) against PostgreSQL/Spring docs — the guide's own historical note says not every one of the 30 questions was individually re-verified line by line, so treat this as a real but lighter pass than the other Fact-checked guides | Original 4-part | **No** |
-| Computer Science Fundamentals/Computer_Science_Glossary.md | Structurally reviewed | 200/200 terms present (verified programmatically), internal links verified; a targeted precision audit deep-checked 17 of 200 terms against primary/cross-referenced sources (16 corrected) — real, but not full per-term citation checking, consistent with this file's own no-per-term-citation convention | — (not a Q&A guide) | — |
+| Computer Science Fundamentals | Yes | Yes | Yes | 2026-08-23 |
+| Computer Science Glossary | Partial (17/200 terms) | N/A | Yes | 2026-08-23 |
+| Java Collections | Yes | Yes | Yes | 2026-08-23 |
+| Java Concurrency | Yes | No | Yes | 2026-08-23 |
+| Java JVM & GC | Yes | No | Yes | 2026-08-23 |
+| Spring Boot Internals | Yes | No | Yes | 2026-08-23 |
+| Spring Security & OAuth2 | Yes | No | Yes | 2026-08-23 |
+| JPA & Hibernate | Yes | No | Yes | 2026-08-23 |
+| Testing | Yes | Yes | Yes | 2026-08-23 |
+| REST API Design | Yes | No | Yes | 2026-08-22 |
+| Cross-Stack Design Scenarios | Yes | No | Yes | 2026-08-22 |
+| Microservices & Architecture Patterns | Yes | No | Yes | 2026-08-22 |
+| Kubernetes, Docker & Cloud | Yes | No | Yes | 2026-08-22 |
+| AI Engineering | Yes (content changes fast — re-verify figures before relying on them) | No | Yes | 2026-08-22 |
+| Tech Leadership | Yes (behavioral content — checked for fabricated experience, not spec citations) | N/A | Yes | 2026-08-22 |
+| Kafka | Yes | No | Yes | 2026-08-23 |
+| Redis & Caching | Yes | No | Yes | 2026-08-23 |
+| Transactions | Partial (spot-checked on major topics, not every question individually) | No | Yes | 2026-08-23 |
 
 `Design Patterns/README.md`, `Forward-Deployed & Customer-Facing
 Engineering/README.md`, and `Frontend & Full-Stack/README.md` are
-placeholder stubs with no content — nothing to verify. `Further
-Reading/System_Design_and_AI_Reading_List.md` is an external link list
-explicitly exempted from this policy by its own header. `System
-Design/System_Design_Interview_Question_Bank.md` is practice prompts, not
-worked answers, per its own header — outside this tiering.
-
-### Corrected repo-wide counts (measured 2026-08-23)
-
-| Metric | Value in this file before today | Corrected, measured value |
-|---|---|---|
-| Markdown files in the repo | "21 files" (internal links/headings/lint rows), inconsistent with "17 guides" used elsewhere | **26** markdown files total (17 Q&A guides + 1 glossary + 3 reserved-placeholder READMEs + 1 Further Reading list + 1 System Design Question Bank + README.md/AUDIT.md/CONTRIBUTING.md) |
-| Q&A guides | "15 guides" (repo-wide checks section) vs. "17" (backlog section) — internally inconsistent | **17** — confirmed by counting distinct guide files with numbered `## N.`/`### N.` question headings |
-| Total numbered questions | "559... as of 2026-08-23" (Phase 3/4 backlog) | **544** — counted directly from every guide's numbered headings, per-guide totals cross-checked for gaps/duplicates (none found); the prior 559 figure was arithmetic drift from manually summing per-guide deltas across several same-day edits rather than a fresh count |
-| Guides with a TOC | "12 of 15" | **14 of 17** (still missing only on Kafka, Redis, and Transactions — that part of the old note was accurate, just the denominator wasn't) |
-| Internal link check | "21 files, 0 broken" | **26 files, 0 broken** — `scripts/check_internal_links.py`, run live today |
-| Duplicate-heading check | "21 files, 0 found" | **26 files, 0 found** — `scripts/check_duplicate_headings.py`, run live today |
-| Markdown lint | "21 files, 0 issues" | **26 files, 0 issues** — `markdownlint-cli2` with `.markdownlint.yaml`, run live today |
-| External link check | "1476 links checked, 1476 OK, 0 errors, 19 correctly excluded" | **2,245 total link occurrences, 1,245 unique URLs, 2,221 OK, 0 errors, 24 excluded, 117 redirects** — `lychee` 0.24.2 with `.lychee.toml`, run live today. (The old figure was real for the repo's size at the time it was measured; it was never updated as guides were added, which is exactly the kind of drift this correction pass exists to catch.) |
-| Version-baseline header present | "Added to all 15 guides" | **All 17 Q&A guides** have one; confirmed present in each guide's top-of-file blockquote |
-| Code fence check | not previously tracked | **New** — `scripts/check_code_fences.py`, run live today: 0 fenced code blocks anywhere in the repo are missing a language tag; 4 blocks (outside the two guides audited this session — AI Engineering, Cross-Stack Design Scenarios, and Transactions) are tagged `text` but read as executable-looking code and are flagged for future classification, not fixed in this pass (out of scope — see backlog) |
-
-### Code block audit (2026-08-23)
-
-At the requester's explicit direction, every fenced code block in
-**Computer Science Fundamentals** (29 blocks) and **Testing** (48 blocks —
-77 total) was classified into one of five kinds per the policy now in
-`CONTRIBUTING.md`, and every block that could plausibly be a compilable or
-runnable example was actually run.
-
-| Classification | CS Fundamentals | Testing |
-|---|---|---|
-| Compilable example (verified) | 3 (`Factorial`, `ShapeDemo`, a Python typing demo) | 0 |
-| Partial illustrative snippet | 2 (Big-O fragments; a deliberate compile-error demo) | 40 |
-| Pseudocode (diagrams/tables, no real syntax) | 20 | 15 |
-| Configuration | 0 | 2 (a Gherkin `.feature` file, a CI YAML sketch) |
-| Shell command | 1 (`git` walkthrough) | 3 (`gradlew` loop; a `bash` split out of an ambiguous block, see below) |
-| SQL (partial — assumes an existing `users` table, syntax verified with `sqlite3`) | 1 | — |
-| Groovy (Gatling DSL, partial illustrative) | — | 1 |
-
-Bugs found and fixed, each verified against a primary source before
-being corrected (see the per-guide entries above for the Fully verified
-tier):
-
-- **Testing Q32** — `new MockProducer<>(true, new StringSerializer(), new OrderEventSerializer())`
-  called a constructor that doesn't exist; Kafka's actual 4-arg constructor
-  requires a `Partitioner` argument. Fixed to
-  `new MockProducer<>(true, null, new StringSerializer(), new OrderEventSerializer())`,
-  confirmed against the Kafka 4.0 `MockProducer` Javadoc.
-- **Testing Q34** — two top-level classes both named `SessionValidator`
-  declared in the same fence (would not compile as one file even setting
-  aside its other partial-snippet dependencies). Renamed the "before"
-  version to `SessionValidatorBeforeFix` and clarified in the comment that
-  the second is the same class, refactored.
-- **Testing Q38** — a `text`-tagged block mixed an ASCII diagram with two
-  real, executable `./gradlew` lines — exactly the "ambiguous
-  executable-looking" pattern `check_code_fences.py` now exists to catch.
-  Split into a `text` block (the diagram) and a `bash` block (the
-  commands).
-
-APIs spot-verified against primary sources rather than assumed correct
-from memory, per `CONTRIBUTING.md`'s accuracy policy: jqwik's `@BigRange`
-annotation (confirmed it applies to both `BigInteger` and `BigDecimal`,
-with string-valued `min`/`max`), Spring's `DynamicPropertyRegistry.add()`
-signature, and Selenium 4.x's `WebDriverWait(driver, Duration)`
-constructor — all matched the guides' existing usage with no changes
-needed.
-
-No domain classes were invented to make a snippet "look complete" — the
-large majority of both guides' Java blocks (40 of 48 in Testing) assume
-representative types like `Order`, `PaymentGateway`, or `Calculator` that
-aren't defined in the snippet, and are correctly classified as partial
-illustrative snippets rather than forced into a fake compilable shape.
-Both guides' intro paragraphs now say so explicitly, so a reader doesn't
-mistake an excerpt for a copy-paste-ready file.
-
-## Findings
-
-### Computer Science Fundamentals/Computer_Science_Fundamentals_Interview_Prep.md
-
-New guide, added 2026-08-23 — not a rewrite/graduation of existing content like the entries below, so there's no "before" state to diff against. 15 Basic-only questions (no Staff tier, by design) covering networking (TCP/UDP, DNS, IP/ports, URI/URL/URN), HTTP (statelessness, HTTP/1.1 vs. 2 vs. 3, status code categories, headers vs. body), encryption/security (symmetric vs. asymmetric, encryption vs. hashing, the TLS handshake, certificates/CAs), and general terminology (Big-O, SQL vs. NoSQL, API vs. web service). Every citation (mostly IETF RFCs — 9293, 768, 1035, 3986, 9110, 9113, 9114, 8446, 5280 — plus IANA, NIST, MIT OCW, PostgreSQL/MongoDB docs, W3C) was checked live before being included; 0 broken links. Cross-references into six other guides (Java Collections, REST API Design, Spring Security & OAuth2, Docker & Kubernetes, Transactions, Redis & Caching) were written descriptively (by guide name, not question number) specifically so they won't go stale if those guides are renumbered again in the future — a deliberate choice after the numbered-cross-reference maintenance burden encountered graduating the other six guides.
-
-**Expanded (2026-08-23, same day):** 13 more questions added, covering classic computer-science-degree curriculum terminology not otherwise in InterviewSmith — **Data Structures & Algorithms** (stack/queue, tree vs. graph, recursion/base case), **Programming Languages & OOP** (the four OOP pillars, compiled vs. interpreted, static vs. dynamic typing), **Operating Systems** (kernel/OS role, virtual memory/paging, CPU caching), **Databases** (normalization/1NF-2NF-3NF, indexes), and **Software Engineering Practices** (version control/Git, unit vs. integration vs. E2E tests). Appended after the existing 15 (numbered 16–28) rather than interleaved, so no renumbering of the original 15 was needed and no cross-references anywhere in the repo needed updating. New citations included Oracle Java Tutorials, the JLS, *Operating Systems: Three Easy Pieces* (a free, widely-used OS textbook), an MIT OCW database-normalization lecture, PostgreSQL's indexes documentation, the official Git book, and Martin Fowler's test-pyramid article — all checked live before inclusion; 0 broken links. Same descriptive (not numbered) cross-reference convention as the original 15 was continued.
-
-**Targeted re-audit (2026-08-23, same day):** networking/HTTP/OOP/database claims re-verified live against primary sources (RFC 9293, IANA's port registry, RFC 3986, RFC 9112, RFC 9110, PostgreSQL and MongoDB docs, the Python glossary) at the requester's explicit direction, focused on TCP reliability vs. guaranteed delivery, port ranges/PostgreSQL 5432, URI/URL/URN, HTTP/1.1 pipelining and head-of-line blocking, HTTP statelessness, compiled vs. interpreted languages, and SQL vs. NoSQL.
-
-| Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
-|---|---|---|---|---|---|
-| Q1 — TCP reliability vs. guaranteed delivery | Major | Stated TCP "guarantees delivered data arrives complete, in order, and without duplication" without qualifying that the guarantee is conditional on the connection succeeding — readable as "TCP guarantees delivery," which it doesn't. | TCP guarantees reliable, in-order, deduplicated delivery only for as long as the connection can be sustained; if the peer is genuinely unreachable, TCP does not retry forever — it eventually reports a connection error (timeout/reset) to the application instead of delivering the data some other way or failing silently. Added this distinction to the Answer and Code block. | [RFC 9293 §3.6 — Closing a Connection](https://datatracker.ietf.org/doc/html/rfc9293#section-3.6) | **Fixed** |
-| Q3 — Port ranges / PostgreSQL 5432 | Critical | Follow-up listed PostgreSQL's port 5432 alongside 80/443/22 as one of "the ports below 1024... conventionally reserved as 'well-known ports'" requiring elevated privileges to bind — 5432 is not below 1024, and binding to it needs no special privilege. | 5432 is an IANA User Port (1024–49151), not a System/well-known port (0–1023). Rewrote the Follow-up to name IANA's three port ranges explicitly and use PostgreSQL as a contrast case (runs unprivileged) rather than lumping it in with 80/443/22 (which do need elevated privilege). Also annotated the ranges directly in the Code block. | [IANA — Service Name and Transport Protocol Port Number Registry](https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml) | **Fixed** |
-| Q4 — URI/URL/URN | — | No factual error found — the "a URI can be a locator, a name, or both" framing matches RFC 3986 §1.1.3 verbatim. | Pinned the Source citation to the specific section and added the RFC's own recommendation ("future specifications... should use the general term 'URI' rather than the more restrictive terms 'URL' and 'URN'") to the Follow-up, since it directly supports the guide's existing "URL/URI used interchangeably in practice" point. | [RFC 3986 §1.1.3 — URI, URL, and URN](https://datatracker.ietf.org/doc/html/rfc3986#section-1.1.3) | Verified — no correctness issue, citation/content strengthened |
-| Q5 — HTTP statelessness | — | No factual error found — matches RFC 9110 §3.3's definition of HTTP as stateless ("each request message's semantics can be understood in isolation"). | No change made. | [RFC 9110 §3.3](https://datatracker.ietf.org/doc/html/rfc9110) | Verified — no change |
-| Q6 — HTTP/1.1 pipelining and head-of-line blocking | Major | Described HTTP/1.1 as processing requests "strictly one at a time in order" without ever naming pipelining (a real, spec-defined mechanism) or explaining the actual in-order-response-delivery rule that causes head-of-line blocking when it's used — and cited no HTTP/1.1-specific RFC at all (only RFC 9113/9114 for HTTP/2 and HTTP/3). | RFC 9112 §9.3.2 defines pipelining (a client MAY send multiple requests without waiting for each response) and requires responses to return in the same order the requests were received — which is exactly why a slow response still blocks faster ones behind it. §9.4 explicitly names "head-of-line blocking" as the reason clients open multiple connections. Rewrote the Answer and Code block to name pipelining, explain why it still blocks, and note it was rarely deployed in practice (most connections just run one request/response cycle at a time, with the same net effect); added RFC 9112 as a Source. | [RFC 9112 §9.3.2 — Pipelining](https://datatracker.ietf.org/doc/html/rfc9112#section-9.3.2), [RFC 9112 §9.4 — Concurrency](https://datatracker.ietf.org/doc/html/rfc9112#section-9.4) | **Fixed** |
-| Q14 — SQL vs. NoSQL | Minor | Described SQL databases as storing data "in tables with a fixed, predefined schema" with no qualification — omits that PostgreSQL and other mainstream SQL databases also support a flexible JSON column (`jsonb`) as a deliberate escape hatch, which the unqualified claim reads as excluding. | PostgreSQL's `jsonb` type stores schema-less JSON within a single column; this doesn't contradict the general fixed-column-set rule for the table overall, but the original wording overstated the rigidity. Added a parenthetical to the Answer and a docs citation. | [PostgreSQL Documentation — JSON Types](https://www.postgresql.org/docs/current/datatype-json.html) | **Fixed** |
-| Q20 — Compiled vs. interpreted languages | Minor | Described interpreted languages as executing source "line-by-line... at runtime" with no mention that CPython (and similar runtimes) first compile source into an internal bytecode representation — the same kind of nuance the guide already correctly calls out for Java, just not extended to Python/Ruby. | CPython compiles Python source into bytecode (cached in `.pyc` files) before the interpreter executes it — a milder version of the same compiled-then-interpreted blurring already noted for Java. Rewrote the Answer, Code block, and the following Java paragraph to connect the two; added a Python glossary citation. | [Python Glossary — bytecode](https://docs.python.org/3/glossary.html#term-bytecode) | **Fixed** |
-
-**Answer-length restructuring, Basic-level variant (2026-08-23):** All 28 questions were restructured into a four-part shape distinct from the five-/six-part Core-answer variants used on the graduated guides, since this guide is deliberately Basic-only and the requester's instruction was explicit about keeping it that way: **Answer** (80–150 words, plain language, no Staff-level complexity — narrower than the 100–180-word/Staff-level-extension shape used elsewhere) / **Example** (renamed from Code; kept to one focused example per question) / **Go deeper** (renamed from Follow-up; this is where the advanced nuance trimmed out of the old, longer Answer paragraphs was relocated, alongside the prior Follow-up content, rather than deleted) / **Source** (label and every citation left byte-for-byte unchanged — confirmed via diff, zero Source-line changes).
-
-Measured before/after, programmatically: the 28 old Answer sections ranged 147–281 words (average 199.9, median 201); 26 of 28 (93%) exceeded the 150-word ceiling this Basic guide targets, none were under 80. All 28 new Answers now measure 109–150 words (average 135.5), verified via a word-count script run after every edit. No technical content or citation was deleted — depth moved from Answer to Go deeper; all 28 Example blocks keep their original illustration (one, Q28, dropped a second, redundant Mockito-style code snippet in favor of keeping just its test-pyramid diagram as the single focused example). No other guide's file was touched. `scripts/check_internal_links.py` and `scripts/check_duplicate_headings.py` both pass clean after the restructuring.
-
-**Guide status: Reviewed. 28/28 questions reviewed, TOC added, version-baseline header present. Basic-only by design — see `README.md`'s "Difficulty by guide" table. Targeted re-audit of the networking/HTTP/OOP/database sections completed 2026-08-23 (same day) — 5 corrections made (2 Major, 1 Critical, 2 Minor), 2 questions verified with no error and citations strengthened. Restructured again the same day (see the restructuring note directly above) into the Basic-level four-part Answer/Example/Go deeper/Source shape — a deliberately lighter-weight variant of the Core-answer restructuring used on the graduated guides, matching this guide's Basic-only scope.**
-
-### Computer Science Fundamentals/Computer_Science_Glossary.md
-
-New file, added 2026-08-23 — a genuinely different content type from every other file in InterviewSmith: a 200-term quick-reference glossary (user-supplied term list, organized into 12 themed sections mirroring the interview-prep guide's own groupings), 2–3 lines per term, not full interview-answer format. No code, no Follow-up, no per-term citation — deliberately, since these are well-established, uncontroversial definitions (what a stack is, what ACID stands for), not the kind of version-scoped or implementation-specific claim the rest of InterviewSmith's citation policy is aimed at. Roughly 90 of the 200 terms carry a `See:` pointer into whichever guide covers that term with real interview depth (the Computer Science Fundamentals guide itself, Java Concurrency, Java JVM & GC, Transactions, REST API Design, Spring Security & OAuth2, Redis & Caching, Kafka, Microservices & Architecture Patterns, Docker & Kubernetes) — every one of those internal links was verified to resolve via `scripts/check_internal_links.py`. All 200 terms from the user-supplied list were confirmed present via a programmatic diff before publishing.
-
-**Precision audit (2026-08-23, same day):** at the requester's explicit direction, 17 named entries were re-checked against primary sources for over-absolute or technically-incomplete wording (glossary entries deliberately carry no per-term citation by default, per this file's own convention — a citation was added inline only where the correction is version-/implementation-specific or genuinely disputed).
-
-| Term | Severity | Problem | Correct interpretation | Authoritative source | Status |
-|---|---|---|---|---|---|
-| CPU execution | Minor | "Fetching, decoding, and running each one, one at a time per core" states strict serial execution as if it were universal. | Pipelining and superscalar/out-of-order execution let a single core have multiple instructions in flight per cycle; "one at a time" is only the simplest textbook model. | General computer-architecture fact — no single authoritative spec; not cited inline. | **Fixed** |
-| Variable and constant | Minor | "Variable" defined as unconditionally mutable, and "Constant" defined as always enforced by "the compiler or runtime" — not true for every language (e.g., Java `final` locals are variables that can't be reassigned; classic Python has no enforced constants at all). | Enforcement (compile-time, runtime, or none at all — a naming convention only) varies by language. | Cross-language behavior — no single spec; not cited inline. | **Fixed** |
-| Compiler and interpreter | Minor | "Compiler... producing an artifact that can then be executed independently" and "Interpreter... line by line" both overstate — `javac`'s bytecode output still needs the JVM, and CPython compiles to bytecode before interpreting it (same nuance already fixed in the main guide's Q20). | A compiled artifact isn't always standalone; "interpreted" execution is rarely literal line-by-line translation of source text. | Consistent with the already-corrected [Computer Science Fundamentals Q20](Computer%20Science%20Fundamentals/Computer_Science_Fundamentals_Interview_Prep.md#20-whats-the-difference-between-a-compiled-and-an-interpreted-language) (Python Glossary — bytecode). | **Fixed** |
-| Function and method | Minor | "Every method is a function" states the equivalence as an unqualified fact. | Most languages (including Java) do treat every method as a function informally, but some formal traditions reserve "function" for something that returns a value and "procedure" for one that doesn't (a `void` method) — worth knowing the distinction exists even though Java's own terminology doesn't draw it. | Formal PL terminology (function vs. procedure) — not cited inline. | **Fixed** |
-| Java constructor | Critical | Called a constructor "a special method" with no qualification — in Java, constructors are formally not methods. | Per the JLS, constructors are not class members and are therefore not inherited, and they have no return type — a genuinely different declaration kind from a method, despite looking similar. | [JLS §8.2 — Class Members](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.2): "Constructors, static initializers, and instance initializers are not members and therefore are not inherited." | **Fixed** |
-| Immutable object and deep mutability | Major | "Immutable objects are inherently thread-safe" stated unconditionally, ignoring shallow vs. deep immutability. | An object's own fields never being reassigned only guarantees thread safety if every referenced field is *also* immutable or defensively copied — a `final` field pointing to a mutable `List` can still change underneath you. Matches the shallow-immutability finding already on record for `Java_Collections_Interview_Prep.md` above. | Consistent with this file's existing Java Collections finding (records/shallow immutability). | **Fixed** |
-| Heap allocation and escape analysis | Major | "Every object created with `new` actually lives" on the heap, stated as an absolute rule. | A JIT compiler can use escape analysis to prove a non-escaping object never needs heap allocation at all (scalar replacement) — not a guarantee the JLS makes, but standard HotSpot behavior. | [Java JVM & GC Interview Prep Q16 — Escape Analysis, Scalar Replacement, and Lock Elimination](Language/Java_JVM_GC_Interview_Prep.md#16-what-are-escape-analysis-scalar-replacement-and-lock-elimination) (already cited there). | **Fixed** |
-| Foreign key targets | Critical | "References the primary key of another table" — stated as if the primary key is the only valid target. | A foreign key can reference any column (or column set) with a `UNIQUE` constraint, not only the primary key; the primary key is only the *default* target when no column list is given. | [PostgreSQL — Foreign Keys](https://www.postgresql.org/docs/current/ddl-constraints.html): "A foreign key must reference columns that either are a primary key or form a unique constraint." | **Fixed** |
-| Transaction commit visibility | Major | "Making all its changes permanent and visible to other transactions" implies immediate, universal visibility on commit. | Visibility to another transaction depends on that transaction's own isolation level and snapshot timing — a transaction already running under repeatable-read/snapshot isolation may not see a commit that happened after its snapshot was taken. | [Transactions Interview Prep Q2 — isolation levels](System%20Design/Transactions_Interview_Prep.md#2-what-anomalies-are-possible-at-each-isolation-level) (already cited there). | **Fixed** |
-| Rollback semantics | Minor | "Restoring the database to the state it was in before the transaction began" as the only kind of rollback. | A rollback to a **savepoint** undoes only the work since that savepoint, not the whole transaction. | [Transactions Interview Prep Q6 — `NESTED` propagation/savepoints](System%20Design/Transactions_Interview_Prep.md#6-explain-required-requiresnew-nested-and-notsupported) (already cited there). | **Fixed** |
-| NoSQL | — | No over-absolute or incomplete wording found — already hedged ("some combination of," "for many, though not all"), consistent with the already-verified main guide Q14. | — | — | Verified — no change |
-| TCP | Major | "Guarantees delivered data arrives complete, in order, and without duplication" without noting the guarantee is conditional on the connection succeeding — same issue already fixed in the main guide's Q1. | TCP does not retry forever; it reports a connection failure rather than guaranteeing eventual delivery. | Consistent with the already-corrected [Computer Science Fundamentals Q1](Computer%20Science%20Fundamentals/Computer_Science_Fundamentals_Interview_Prep.md#1-whats-the-difference-between-tcp-and-udp) (RFC 9293 §3.6). | **Fixed** |
-| Session | Minor | "Server-side state" stated as if sessions are always stored server-side. | A session is state tied to a client's ongoing interaction; it's commonly stored server-side and referenced by a cookie-borne ID, but a client-side/stateless session (a signed or encrypted token) is also a real, common implementation. | General web-architecture fact — not cited inline. | **Fixed** |
-| Hashing | Minor | "No way to recover the original input from the digest" stated as an absolute impossibility. | Recovery is computationally infeasible for a well-designed hash and non-trivial input, not mathematically impossible — collisions exist by the pigeonhole principle, and short/predictable inputs remain crackable via brute force or precomputed tables (why passwords need salting). | Consistent with the existing [Computer Science Fundamentals Q10](Computer%20Science%20Fundamentals/Computer_Science_Fundamentals_Interview_Prep.md#10-whats-the-difference-between-encryption-and-hashing) (NIST SP 800-107). | **Fixed** |
-| CI/CD | Major | Treated "Continuous Delivery" and "Continuous Deployment" as one undifferentiated "(for CD) deploying code on every change" concept. | Continuous Delivery keeps changes deployment-ready with a human still approving the release; Continuous Deployment removes that gate and ships automatically — a commonly conflated but genuinely different pair of practices. | [Martin Fowler — Continuous Delivery](https://martinfowler.com/bliki/ContinuousDelivery.html). | **Fixed** |
-| Message queue ordering | Major | "Holds messages/tasks in order" stated as if strict ordering were a universal property of message queues. | Ordering guarantees are implementation-specific — e.g., Kafka only guarantees order within a partition, and some queues (like SQS Standard) don't guarantee strict ordering at all. | [Kafka Deep-Dive Interview Prep Q2 — What Ordering Does Kafka Guarantee?](System%20Design/Kafka_Interview_Prep.md#2-what-ordering-does-kafka-guarantee) (already cited there). | **Fixed** |
-| Distributed transaction | Minor | "Multiple, independent systems/databases" implicitly excluded the common case of a single distributed database's internal cross-shard transaction. | A distributed transaction can span genuinely separate systems (the classic 2PC/XA case) or shards/nodes of one logically distributed database (Spanner, CockroachDB, etc.) — both are real cases. | General distributed-systems fact — not cited inline. | **Fixed** |
-
-**Guide status: Reviewed. 200/200 terms present (verified programmatically), internal links verified, TOC added, version-baseline header present. Not a Q&A guide — excluded from the "Difficulty by guide" table in `README.md` on that basis, same as the Further Reading list and the System Design Interview Question Bank. Precision audit of 17 named entries completed 2026-08-23 (same day) — 16 corrections made (2 Critical, 5 Major, 9 Minor), 1 term verified with no error.**
-
-### Language/Java_Collections_Interview_Prep.md
-
-| Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
-|---|---|---|---|---|---|
-| Q14 (was Q2 before the 2026-08-23 renumbering below) — Mutable HashMap key | Critical | Stated a mutated-key entry becomes "permanently unreachable through the API." | `get()`/`remove()` via a freshly computed hash fail, but the entry is still findable via iteration, and becomes `get()`-reachable again if the key's hash-relevant state is restored. | [`HashMap` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/HashMap.html) | **Fixed** |
-| Q14 follow-up — records as map keys (2026-08-22 pass) | Major | Claimed `record` types are a good fit as map/set keys "because they're immutable," without noting records are only shallowly immutable. | A record's component *references* can't be reassigned, but a mutable component's own state can still change, changing `hashCode()` — reproducing the exact bug the question demonstrates. Records work well as keys when all components are themselves immutable, or mutable inputs are defensively copied. | [`java.lang.Record` Javadoc — "a shallowly immutable, transparent carrier"](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html) | **Fixed** |
-| Q15 (was Q3 before the 2026-08-23 renumbering below) — Java 7 `ConcurrentHashMap` segments | Major | Claimed "16 fixed segments" unconditionally. | 16 was only the default `concurrencyLevel` for the no-arg constructor; actual segment count depended on the configured `concurrencyLevel`. | JDK 7 `ConcurrentHashMap` Javadoc | **Fixed** |
-| Q15 — synchronization claim | Major | Code comment: "no external synchronization needed, ever." | Individual operations and documented compound methods are atomic; multi-key/cross-resource invariants still need external coordination. | [`ConcurrentHashMap` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html) | **Fixed** |
-| End of file | Editorial | Leftover conversational artifact addressed to the repo author. | Remove. | — | **Fixed** |
-| Q22 (was Q10 before the 2026-08-23 renumbering below) vs JVM_GC heap-dump question | Editorial | Real redundancy: both fully explain the MAT/`jmap`/path-to-GC-roots workflow. | Worth consolidating in a future pass; not done here (small enough overlap, both versions are independently accurate). | — | Open (low priority) |
-| Guide graduated Basic → Staff (2026-08-23) | — | Guide was the answer-length-restructuring pilot but had no true entry-level on-ramp — all 15 questions already assumed familiarity with the collection types being compared. | Added 12 new questions — 7 Basic (framework/interface overview, `List`/`Set`/`Map` basics, the `equals()`/`hashCode()` contract, `HashSet`/`LinkedHashSet`/`TreeSet`, `Iterator` basics, iterating a `Map`, `Comparable` vs. `Comparator`) and 5 Intermediate (`ArrayList` vs. `LinkedList` basics, `Iterator` vs. `ListIterator`, `Queue` vs. `Deque`, choosing among `HashMap`/`LinkedHashMap`/`TreeMap`, `Collection` vs. `Collections`) — as new `## Basic`/`## Intermediate` sections before the existing 15 questions, now wrapped in `## Staff Level`, using the same five-part (Core answer/Staff-level extension/Example/Follow-up questions/Sources) structure already established by the pilot. The original 15 questions were renumbered 1–15 → 13–27; the two internal self-references ("from question 3," "from question 10") and one cross-file reference (Java_Concurrency's "question 11 in the collections file") were updated to the new numbers. No existing question content was altered beyond the number/heading-level change. All 12 new Core answers measure 109–158 words (within the established 100–180 range); all citations verified live before writing. | — | **Added** |
-| Q2 — `Set` duplicate-detection stated as a blanket `equals()`/`hashCode()` mechanism | Major | "`Set` is the mathematical-set abstraction: no duplicates (adding an element already present is a no-op, determined via `equals()`/`hashCode()`)" — true for `HashSet`/`LinkedHashSet`, false for `TreeSet`. | `TreeSet` performs all element comparisons via `compareTo()` (or a supplied `Comparator`); two elements are treated as the same whenever that returns zero, independent of `equals()`. Reworded Q2's Core answer to state the mechanism per-implementation instead of as one blanket rule. | [`TreeSet` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/TreeSet.html): "a `TreeSet` instance performs all element comparisons using its `compareTo` (or `compare`) method" | **Fixed** |
-| Q4 — `HashSet`/`LinkedHashSet`/`TreeSet` comparison never named the duplicate-detection mechanism at all | Major | Core answer compared the three purely on ordering/performance, leaving "how is a duplicate decided" unstated — the same gap as the Q2 finding above, in the question most likely to be asked this directly. | Added the `hashCode()`/`equals()` (`HashSet`/`LinkedHashSet`) vs. natural-ordering/`Comparator` (`TreeSet`) distinction directly into Q4's Core answer, not just its Staff-level extension. | [`TreeSet` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/TreeSet.html) (already cited in this question's Sources line) | **Fixed** |
-| Q2 — `HashMap`'s expected-average-O(1) lookup stated as a blanket `Map` guarantee | Major | "using parallel `List`s of keys and values... a `Map` already solves in O(1)" and a matching follow-up ("a `Map` makes O(1)") — reads as if every `Map` implementation is O(1), when `TreeMap` is O(log n) (already correctly stated elsewhere in this same guide, e.g. its `HashMap`/`LinkedHashMap`/`TreeMap` and `TreeMap`-internals questions). | Reworded both instances in Q2 to say `HashMap` specifically, "expected average O(1)," matching the `HashMap` Javadoc's own hedge ("assuming the hash function disperses the elements properly among the buckets") rather than stating it as an unconditional `Map`-wide guarantee. | [`HashMap` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/HashMap.html) | **Fixed** |
-| `TreeMap` O(log n) — verified, no change needed | — | Checked whether the guide states `TreeMap`'s lookup/insertion/removal cost anywhere, since this was flagged as a risk alongside the `Map`-blanket-O(1) issue above. | Already correctly stated in at least two places (the `HashMap`/`LinkedHashMap`/`TreeMap` choice question and the `TreeMap`/`TreeSet` internals question), each explicit that `TreeMap` is O(log n), not O(1). No change made there. | [`TreeMap` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/TreeMap.html) | Verified — no change |
-| Q1 — `ArrayList` → `ArrayDeque` described as a one-line swap alongside `List`/`Queue` | Major | "switching to `ArrayDeque` for queue-like access is a one-line change if the rest of the code only ever referenced `List`/`Queue`" — `ArrayDeque` does not implement `List`, so a `List`-typed call site cannot simply be reassigned an `ArrayDeque`; its indexed-access methods (`get(int)`, `set(int, E)`) don't exist on `ArrayDeque` at all. | Reworded to separate the two cases: swapping between `List` implementations (`ArrayList`↔`LinkedList`) is the one-line case; swapping to `ArrayDeque` is only one line if the call site was already typed as `Queue`/`Deque`, and needs real code changes (replacing indexed access) if it was typed as `List`. | [`ArrayDeque` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ArrayDeque.html) — confirmed "All Implemented Interfaces" is `Collection`, `Deque`, `Queue`, `SequencedCollection`, `Cloneable`, `Serializable` — `List` is not among them | **Fixed** |
-
-**Targeted correction pass (2026-08-23), scope: Q1, Q2, and Q4 only, at the requester's explicit direction.** This was a narrow re-check of five specific claims (`Set`/`Map` duplicate-detection and complexity generalizations, the `ArrayDeque`/`List` swap claim) against the Java 21 Javadoc, not a full re-read of all 27 questions — the other 22 questions in this guide were **not** re-verified as part of this pass. This does **not** change the guide's overall status in the "Current status" tier table above (still **Fact-checked** — code blocks in this guide have still never been executed, and the bulk of the guide's claims were last independently checked at the passes documented above and in the graduation entry, not in this pass).
-
-**Code-block audit (2026-08-23), full-guide scope, at the requester's explicit direction.** Every one of the guide's 28 fenced code blocks (27 `java`, 1 `bash`) was classified per `CONTRIBUTING.md`'s five-way policy: **24 self-contained runnable/compilable examples**, **3 partial illustrative snippets** (Q10, Q16, Q22's `java` block — each references an undefined placeholder type/method, `Task`/`task1`/`task2`, `expensiveInit()`, `ExpensiveContext`, that was deliberately *not* invented to force a compile, per instruction), and **1 shell command** (Q22's `bash` block, `jmap`/`jcmd`). No `text`/pseudocode or configuration blocks exist in this guide. All 24 blocks classified as self-contained were actually compiled with `javac` (JDK 21) and executed with `java`; all 24 compiled and ran successfully, and every observed output was checked against the block's own inline comments/claims.
-
-One real bug was found and fixed. **Q20** ("How Do Weakly Consistent Iterators Differ From Fail-Fast Iterators?"): the fail-fast demo used `new ArrayList<>(List.of(1, 2, 3))`, removing the value `2` mid-iteration, with the comment "this throws, even single-threaded." It does not: `ArrayList`'s iterator only checks for comodification inside `next()`, and removing the **second-to-last** element of a 3-element list leaves `cursor == size` after the removal, so `hasNext()` returns `false` and the loop exits before `next()` is ever called again — no exception is thrown. Verified deterministic (reproduced 3/3 runs) and verified the general rule empirically (removing value `n-1` from a fresh `1..n` list never throws, for `n` from 3 to 6; every other position does). Fixed by changing the list to `List.of(1, 2, 3, 4)` — same removed value, no longer the second-to-last element — and confirmed it now throws `ConcurrentModificationException` as documented. This is, incidentally, a well-known Java gotcha in its own right (`ConcurrentModificationException`'s own Javadoc: "the fail-fast behavior of iterators should be used only to detect bugs," not relied on for correctness) — worth knowing even independent of this fix.
-
-Every other claim verified against actual output matched exactly, with no changes needed, including several subtle ones worth naming since they were genuinely at risk of being wrong: Q3's missing-`hashCode()` bug (`contains()` returns `false` as documented), Q14's full mutate-then-restore `HashMap` key sequence (all six documented outputs matched exactly, including the `get()`/`remove()`-fail-but-iteration-finds-it distinction), Q19's `CopyOnWriteArrayList` frozen-snapshot iterator claim and its O(n²) "disaster case" (empirically confirmed near-quadratic scaling at reduced scale — 2,000/4,000/8,000 elements took ~0/2/9ms — and the literal 1,000,000-element case in the guide did not finish in 180 seconds, which is itself strong evidence for the claim, not proof it never would; not run to completion), Q23's `LinkedHashMap`-based LRU cache eviction order, Q24's `TreeSet` natural-ordering-not-`equals()` duplicate collapse, and Q26's four separate `Arrays.asList`/`List.of`/`Collections.unmodifiableList` behavioral claims (all four confirmed, including the exact exception type for each). The two `jmap`/`jcmd` commands in Q22's shell block were checked against the JDK 21 `jmap`(1) and `jcmd`(1) man pages — both correct as written; noted for the record (not a guide defect, since the guide doesn't claim otherwise) that Oracle's own `jmap` documentation currently describes the tool itself as "experimental and unsupported." Q10's `Task`/`task1`/`task2` placeholder was labeled directly in its code comment, since the bare name gave no signal it wasn't a real `java.util` type; `expensiveInit()` (Q16) and `ExpensiveContext` (Q22) were left unlabeled, since their names and surrounding prose already make the placeholder intent obvious.
-
-This guide's code blocks are now **code-tested**, narrowly: every block presented as self-contained/runnable was actually compiled and executed successfully, and the one that wasn't behaving as documented is fixed. This does **not** make the guide "fully verified" — the 3 partial snippets were correctly left unexecuted rather than forced to compile, and this pass did not re-check the guide's prose/citations outside Q1/Q2/Q4 (covered by the pass above). See "Current status" for the guide's overall tier.
-
-**Guide status: Reviewed. 27/27 questions reviewed (15 original Staff-level + 12 new Basic/Intermediate, 2026-08-23), TOC added, version-baseline header present. Graduated Basic → Staff, matching Java Concurrency and Kubernetes/Docker. Uses the five-part (Core answer/Staff-level extension/Example/Follow-up questions/Sources) structure throughout — no longer just the pilot, this is now the second guide fully on that structure (see the answer-length restructuring rollout note in the backlog). Targeted correction pass completed 2026-08-23 (same day, see note above) — 5 corrections made to Q1/Q2/Q4 (4 Major, 1 verified-no-change); scope was limited to those three questions, not a re-verification of the whole guide. Full code-block audit completed 2026-08-23 (same day, see note above) — 28/28 blocks classified, 24/24 self-contained blocks compiled and run successfully, 1 bug found and fixed (Q20).**
-
-**Answer-length restructuring pilot (2026-08-22):** The README promised ~30–90-second spoken answers, but a repo-wide measurement of 358 labeled Answer sections found a 234-word median (≈94 seconds at 150 wpm), 206 answers over 225 words, and none under 75 — this guide's own Q5 was the worst offender at 649 words. Rather than trim depth outright, this guide was restructured question-by-question into **Core answer** (100–180 words, the actual spoken-out-loud answer) / **Staff-level extension** (the deeper trade-off material moved out of the core response, not deleted) / **Example** (renamed from Code) / **Follow-up questions** (interviewer-style Q&A pairs, renamed from Follow-up) / **Sources** (renamed from Source). All 15 Core answers now measure 116–176 words (verified programmatically). This was done as a pilot on one guide only, per the repository owner's explicit choice, to be reviewed before deciding whether to roll the same treatment out to the other 14 guides — see backlog.
-
-### Language/Java_Concurrency_Interview_Prep.md
-
-| Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
-|---|---|---|---|---|---|
-| Q14 (was Q1 before the 2026-08-23 renumbering below) — JMM / happens-before | Critical | Racy code called "actually undefined" / "genuinely undefined behavior." | Without happens-before, visibility/ordering aren't guaranteed, but the JMM (JLS Ch. 17) still constrains execution — not UB in the C/C++ sense. | [JLS §17.4](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.4) | **Fixed** |
-| Q33 (was Q20 before the 2026-08-23 renumbering below) — Structured concurrency | Critical | Cited JEP 505 but used the removed constructor-based `new StructuredTaskScope.ShutdownOnFailure()` API. | JEP 505 replaced constructors with `StructuredTaskScope.open(Joiner)`. Rewrote example to that API; flagged that JEP 525/533 have continued changing it (JEP 533 changes the thrown exception to `ExecutionException`). | [JEP 505](https://openjdk.org/jeps/505), [JEP 525](https://openjdk.org/jeps/525), [JEP 533](https://openjdk.org/jeps/533), [`Joiner` Javadoc, JDK 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.Joiner.html) | **Fixed** |
-| Guide graduated Basic → Staff (2026-08-23) | — | Guide previously started at Lead/Staff depth with no on-ramp, unlike the graduated Java Collections (Senior → Staff) and Kubernetes/Docker (Basic → Staff) guides. | Added 13 new questions — 8 Basic (thread vs. process, creating threads, thread lifecycle, race conditions, `synchronized` basics, deadlock basics, `wait`/`notify` vs. `sleep`, daemon threads) and 5 Intermediate (`ExecutorService`, `Runnable`/`Callable`/`Future`, `CountDownLatch`/`CyclicBarrier`/`Semaphore`, producer-consumer via `BlockingQueue`, `synchronized` vs. `ReentrantLock` basics) — as new `## Basic`/`## Intermediate` sections before the existing 20 questions, now wrapped in `## Staff Level`. The original 20 questions were renumbered 1–20 → 14–33 (heading level `##` → `###` to nest under the new level sections); the one internal self-reference ("from question 6") was updated to the new number ("from question 19"). No existing question content was altered beyond the number/heading-level change. All 13 new questions cite Oracle Javadoc/JLS/Java Tutorials sources, verified live. | — | **Added** |
-
-**Guide status: Reviewed. 33/33 questions reviewed (20 original Staff-level + 13 new Basic/Intermediate, 2026-08-23), TOC added, version-baseline header present. Graduated Basic → Staff, matching the Java Collections and Kubernetes/Docker guides.**
-
-### Language/Java_JVM_GC_Interview_Prep.md
-
-No factual errors found against JVMS §2.5, G1/ZGC/Shenandoah docs, JEP 439, or container-awareness documentation.
-
-| Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
-|---|---|---|---|---|---|
-| Q13 (was Q1) follow-up — wrong internal cross-reference (found and fixed 2026-08-23) | Minor | Pre-existing bug, found incidentally while renumbering: the follow-up said "covered in more depth in question 8," but Q8 (now Q20) is about stop-the-world pauses/safepointing, unrelated to the container-OOM-kill topic actually being referenced. | The intended target was the container-kill question (old Q14, now Q26, "Why Can the Container Kill a Java Process Even When Heap Usage Is Below `-Xmx`?"). | — | **Fixed** |
-| Guide graduated Basic → Staff (2026-08-23) | — | Guide started directly at Lead/Staff depth (memory areas, JIT internals, GC collector selection) with no on-ramp, unlike the graduated Collections/Concurrency/Kubernetes guides. | Added 12 new questions — 7 Basic (JVM/JDK/JRE, stack vs. heap, what GC is and why, `ClassLoader` basics, bytecode interpretation vs. JIT, why the heap has young/old generations, `==` vs. `.equals()`) and 5 Intermediate (collector types overview before the G1/ZGC/Shenandoah comparison, minor vs. major/full GC, what a Java "memory leak" actually means given GC, basic JVM memory flags, metaspace vs. the old PermGen) — as new `## Basic`/`## Intermediate` sections before the existing 18 questions, now wrapped in `## Staff Level`. The original 18 questions were renumbered 1–18 → 13–30; three internal self-references were updated to the new numbers (including the pre-existing wrong reference above). All citations verified live before writing, including two corrected Oracle GC-tuning-guide URLs (the guide's actual page slugs differ from the intuitive ones — e.g. `garbage-collector-implementation1.html`, not `garbage-collector-implementation.html`). | — | **Added** |
-
-**Guide status: Reviewed. 30/30 questions reviewed (18 original Staff-level + 12 new Basic/Intermediate, 2026-08-23), TOC added, version-baseline header present. Graduated Basic → Staff, matching Java Collections, Java Concurrency, and Kubernetes/Docker.**
-
-### Frameworks/Spring_Boot_Internals_Interview_Prep.md
-
-| Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
-|---|---|---|---|---|---|
-| Q13 (was Q1) — early events | Critical | Showed `@Component` + `@EventListener` handling `ApplicationStartingEvent`/`ApplicationEnvironmentPreparedEvent`, which fire before the `ApplicationContext` exists. | Must register via `SpringApplication.addListeners(...)` or a `spring.factories` `ApplicationListener` entry; `@Component`/`@EventListener` only works from `ContextRefreshedEvent` onward. | [Spring Boot Reference — Application Events and Listeners](https://docs.spring.io/spring-boot/reference/features/spring-application.html) | **Fixed** |
-| Q16 (was Q4) — `@Primary` vs `@Qualifier` | Critical | Prose stated Spring checks `@Primary` before `@Qualifier`, contradicting the question's own code example, which showed an injection-point `@Qualifier` overriding `@Primary`. | An explicit `@Qualifier` at the injection point is resolved first (a specific, per-injection-point instruction); `@Primary` is the tie-breaker only when no qualifier is given and multiple type-matching candidates remain. | [`@Primary` Javadoc](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/context/annotation/Primary.html), [Qualifiers reference](https://docs.spring.io/spring-framework/reference/core/beans/annotation-config/autowired-qualifiers.html) | **Fixed** |
-| Q24/26 (was Q12/14) follow-ups — proxy method visibility | Critical | Blanket "advised methods must be public" framing. | Interface-based (JDK) proxies: public-only. Class-based (CGLIB) proxies: as of **Spring Framework 6.0**, protected/package-visible methods can also be made transactional by default. Private/effectively-private methods never advisable. | [Spring Framework Reference — `@Transactional` method visibility](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html), [Proxying Mechanisms](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) | **Fixed** |
-| Q29 (was Q17) follow-up | Major | Claimed `SpringApplicationRunListener` registers via the same `.imports` mechanism as `@AutoConfiguration`. | It uses the older `META-INF/spring.factories` mechanism, distinct from `AutoConfiguration.imports`. | Spring Boot Reference docs | **Fixed** |
-| Q13 follow-up / Q29 (was Q1 follow-up / Q17) — `ApplicationFailedEvent` (2026-08-22 pass) | Critical | Implied `ApplicationFailedEvent` is safe to handle with an ordinary `@Component`/`@EventListener`, grouping it with the post-`ContextRefreshedEvent` "safe" events; Q29's code example demonstrated exactly this pattern as the recommended one. | Spring documents it simply as the event sent when an exception occurs during startup, with no guaranteed minimum stage — a failure can happen before the context has created that bean at all. Reliable handling requires a listener registered directly with `SpringApplication.addListeners(...)` (or `spring.factories`), not a regular managed bean. | [Spring Boot Reference — Application Events and Listeners](https://docs.spring.io/spring-boot/reference/features/spring-application.html#features.spring-application.application-events-and-listeners) | **Fixed** |
-| Q15 (was Q3) — `AutowiredAnnotationBeanPostProcessor` phase (2026-08-22 pass) | Major | Cited `AutowiredAnnotationBeanPostProcessor` as an example of the before-initialization `BeanPostProcessor` callback phase. | Its injection work runs through `postProcessProperties()` during dependency/property population — a distinct, earlier stage than `postProcessBeforeInitialization`. Separated the lifecycle explicitly into instantiation → property population → `postProcessBeforeInitialization` → initialization → `postProcessAfterInitialization`/proxying. | [`AutowiredAnnotationBeanPostProcessor` Javadoc](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/beans/factory/annotation/AutowiredAnnotationBeanPostProcessor.html) | **Fixed** |
-| Fenced code block | Editorial | `spring.factories`-style snippet's code fence had no language tag (markdownlint MD040). | Tagged `text`. | — | **Fixed** |
-| Guide graduated Basic → Staff (2026-08-23) | — | Guide started directly at Lead/Staff depth with no on-ramp, despite the README describing it as assuming only "basic Spring." | Added 12 new questions — 7 Basic (what Spring/DI solve, bean/`ApplicationContext` basics, `@Component` family, injection styles, Spring Boot vs. Framework, `@SpringBootApplication`, properties vs. YAML) and 5 Intermediate (bean scopes, `@Bean` vs. `@Component`, profiles, `@RestController` vs. `@Controller`, `@Value` vs. `@ConfigurationProperties`) — as new `## Basic`/`## Intermediate` sections before the existing 25 questions, now wrapped in `## Staff Level`. The original 25 questions were renumbered 1–25 → 13–37; all 15 internal cross-references (verified individually against their actual targets before renumbering — none were wrong) were updated to the new numbers. The one cross-file reference from `AUDIT.md`'s Transactions entry ("Spring Boot Internals guide's Q12/14 fix") was also updated. All 12 new citations verified live before writing. | — | **Added** |
-
-**Guide status: Reviewed. 37/37 questions reviewed (25 original Staff-level + 12 new Basic/Intermediate, 2026-08-23), TOC added, version-baseline header present. Graduated Basic → Staff, matching Collections, Concurrency, JVM & GC, and Kubernetes/Docker.**
-
-### Frameworks/Spring_Security_OAuth2_Interview_Prep.md
-
-No Critical/Major findings after a full read, including targeted verification of filter-chain ordering (Q16, was Q4), CSRF/CORS (Q19–20, was Q7–8), OAuth2 authorization-code flow with PKCE against RFC 7636 (Q22, was Q10), and JWT/JWKS validation and key rotation against RFC 7519/7517 (Q28–29, was Q16–17) — the `aud`-validation-not-checked-by-default callout in Q28 (was Q16) in particular is a real, correctly-flagged Spring Security gap, not an error. No duplicates, no conversational artifacts, no broken links.
-
-| Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
-|---|---|---|---|---|---|
-| Guide graduated Basic → Staff (2026-08-23) | — | Guide started directly at Lead/Staff depth (filter chain internals, OAuth2 flows, JWT validation) with no on-ramp, despite the README describing it as assuming only Spring Boot Internals. | Added 12 new questions — 7 Basic (what Spring Security/`@EnableWebSecurity` does, `UserDetailsService`, Basic Auth vs. form login, password hashing/`BCryptPasswordEncoder`, cookies vs. sessions, HTTPS/TLS basics, RBAC/`@PreAuthorize` basics) and 5 Intermediate (`hasRole()` vs. `hasAuthority()`, JWT structure before validation, `permitAll()`/`authenticated()`/`denyAll()`, CSRF basics before the enable/disable decision, `AuthenticationEntryPoint`) — as new `## Basic`/`## Intermediate` sections before the existing 30 questions, now wrapped in `## Staff Level`. The original 30 questions were renumbered 1–30 → 13–42; all internal cross-references were updated to the new numbers, including two multi-number references ("question 7/8," "question 25/26") a first automated pass initially handled incorrectly and required a manual fix. Two cross-file numbered references from Cross-Stack Design Scenarios (old Q17 and Q30) and this guide's own AUDIT.md finding-row labels (Q4, Q7–8, Q10, Q16–17) were also updated. One citation URL 404'd during verification (`.../authorization/expression-based.html`, removed from the current docs) and was corrected to the live `.../authorization/method-security.html` page before being included. | — | **Added** |
-
-**Guide status: Reviewed — no correctness findings. 42/42 questions reviewed (30 original Staff-level + 12 new Basic/Intermediate, 2026-08-23), TOC added, version-baseline header present. Graduated Basic → Staff, matching Spring Boot Internals and the other graduated guides.**
-
-### Frameworks/JPA_Hibernate_Interview_Prep.md
-
-| Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
-|---|---|---|---|---|---|
-| Q33 (was Q21) follow-up — pessimistic lock timeout | Minor | Cited `javax.persistence.lock.timeout` while the rest of the guide targets Jakarta Persistence 3.1 (`jakarta.persistence.*`). | Corrected to `jakarta.persistence.lock.timeout`. | [Jakarta Persistence Specification 3.1](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1.html) | **Fixed** |
-| Guide graduated Basic → Staff (2026-08-23) | — | Guide started directly at Lead/Staff depth (entity lifecycle, dirty checking, N+1, locking) with no on-ramp, despite the README describing it as assuming only Spring Boot Internals + basic SQL. | Added 12 new questions — 7 Basic (what an ORM/JPA/Hibernate is, `@Entity` requirements, Spring Data JPA/repositories, `@Id`/`@GeneratedValue`, relationship-annotation cardinality, DTOs) and 5 Intermediate (`save`/`findById`/`deleteById`, JPQL vs. native SQL, `@Transactional` at service vs. repository layer, composite keys, `CascadeType.ALL` vs. individual types) — as new `## Basic`/`## Intermediate` sections before the existing 30 questions, now wrapped in `## Staff Level`. The original 30 questions were renumbered 1–30 → 13–42; this was the densest guide for internal cross-references (~55 occurrences, including four compound "question N/M" references — `22/23`, `4/5`, `15/16`, `8/29` — that needed both numbers offset, handled as a distinct regex pass to avoid the partial-fix bug encountered on the Spring Security guide's compound references). Five cross-file numbered references from Cross-Stack Design Scenarios (old Q7, Q9 ×2, Q25, Q30) were also updated. All 12 new citations verified live before writing. | — | **Added** |
-
-Dependency-resolution question (known issue #9) was independently re-checked in this guide's own scope and found already accurate. Entity lifecycle, dirty checking/flush timing, N+1 causes/fixes, LAZY/EAGER defaults per association type, and `GenerationType.IDENTITY` disabling JDBC batching were all verified correct.
-
-**Guide status: Reviewed. 42/42 questions reviewed (30 original Staff-level + 12 new Basic/Intermediate, 2026-08-23), TOC added, version-baseline header present. Graduated Basic → Staff — the fifth and final guide in this rollout, matching Collections, Concurrency, JVM & GC, Spring Boot Internals, and Spring Security & OAuth2.**
-
-### Testing/Software_Testing_Interview_Prep.md
-
-| Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
-|---|---|---|---|---|---|
-| New guide created (2026-08-23) | — | No dedicated testing guide existed; testing content was scattered (Computer Science Fundamentals Q28's unit/integration/E2E definitions, Java Concurrency Q29's concurrent-code-testing mechanics, Microservices & Architecture Patterns Q23's contract-testing/Pact mechanics), with no guide covering testing-framework mechanics or scenario-based testing strategy. | Created `Testing/Software_Testing_Interview_Prep.md`, graduated Basic → Staff: 8 Basic questions (JUnit annotations, assertion vs. exception, AAA pattern, mock/stub/spy, Mockito basics, `@Mock` vs. `@InjectMocks`, test naming, test coverage), 7 Intermediate questions (`@ParameterizedTest`/`@ValueSource`/`@CsvSource`, `assertThrows`, `@SpringBootTest`/`@WebMvcTest`/`@DataJpaTest`, `MockMvc`, `@Mock` vs. `@MockitoBean`, test independence, Testcontainers), and 9 Staff-level scenario-based questions (external payment gateway, `@Async`/scheduled tasks, Kafka producer/consumer, diagnosing flaky tests, time-dependent code via `Clock`, integration test data via `@Transactional` rollback, mocking vs. Testcontainers, legacy-codebase test strategy, structuring test suites in CI) — 24 questions total. Deliberately cross-references the three existing related questions above rather than re-explaining them. | — | **Added** |
-| Version baseline verified (2026-08-23) | — | Needed to confirm the current-as-of-2026 testing-stack versions before drafting, since this is version-sensitive content. | Verified live: JUnit is now major version 6 (6.0.x current, 6.1.0 in milestone preview) — a low-disruption release requiring Java 17+, with the Jupiter annotations covered in this guide unchanged from JUnit 5. Verified Spring Boot's `@MockBean`/`@SpyBean` are deprecated since Spring Boot 3.4.0 in favor of `@MockitoBean`/`@MockitoSpyBean` (now part of Spring Framework's own `spring-test` module) — this guide presents `@MockitoBean` as current, noting `@MockBean` only as the deprecated predecessor. All citation URLs individually verified live via fetch before being written into the guide (one dead link, `spring-mvc-test-framework.html`, was caught post-write by `lychee` and corrected to `testing/mockmvc.html`). | [JUnit 6 Release Notes](https://docs.junit.org/6.0.2/release-notes/index.html), [Spring Framework Reference — `@MockitoBean`](https://docs.spring.io/spring-framework/reference/testing/annotations/integration-spring/annotation-mockitobean.html) | **Verified** |
-| Guide expanded for SDET/QA roles (2026-08-23) | — | Guide covered only Java/Spring testing-framework mechanics (JUnit, Mockito, Spring Boot test slices) — no testing fundamentals/terminology and no SDET-specific automation tooling (UI/API automation, BDD), despite the folder being named "Testing" generally. | Added 17 new questions — 8 Basic (software testing/verification vs. validation, STLC, test plan vs. strategy vs. case, functional vs. non-functional testing, black/white/gray-box testing, smoke vs. sanity vs. regression testing, manual vs. automation testing, the defect life cycle and severity vs. priority), 6 Intermediate (API testing with REST Assured, Selenium WebDriver locators, the Page Object Model, BDD/Gherkin/Cucumber, data-driven vs. keyword-driven testing, the test automation pyramid), and 3 Staff-level scenario-based (designing a test automation framework from scratch, diagnosing a flaky UI/Selenium test as distinct from a flaky unit test, performance/load testing strategy with JMeter/Gatling) — inserted as new questions 1–8 before the existing Basic content, appended after the existing Intermediate content, and appended after the existing Staff content, respectively. The original 24 questions were renumbered 1–24 → 9–16 (old Basic), 17–23 (old Intermediate), 30–38 (old Staff); the guide's one internal numeric self-reference ("covered in Question 1") was replaced with a descriptive reference instead of being renumbered, matching the no-bare-numbers convention already used for every other cross-reference in this guide. Header, title, and intro paragraph updated to reflect the broadened SDET/QA scope. All 17 new citations (ISTQB CTFL Syllabus v4.0.1, REST Assured, Selenium ×2, Cucumber Gherkin, Martin Fowler's TestPyramid, Apache JMeter) verified live before writing; the ISTQB Foundation Level terminology (verification/validation, severity/priority, smoke/sanity/regression, black/white-box, functional/non-functional, data-driven/keyword-driven) was cross-checked against the official glossary.istqb.org term pages and the ISTQB CTFL syllabus PDF, since the glossary site itself is a client-rendered SPA that couldn't be fetched directly for exact wording. | [ISTQB CTFL Syllabus v4.0.1](https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf) | **Added** |
-
-**Targeted re-audit (2026-08-23, same day):** at the requester's explicit direction, verified against current official JUnit 6, Mockito 5, Spring/Spring Boot, Testcontainers, and Kafka documentation.
-
-| Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
-|---|---|---|---|---|---|
-| Q19 — `@SpringBootTest` grouped in with "test slice" annotations | Major | Opened by calling `@SpringBootTest`, `@WebMvcTest`, and `@DataJpaTest` collectively "Spring Boot's 'test slice' annotations." | Spring Boot's own docs introduce test slices specifically as the answer to `@SpringBootTest`'s full auto-configuration being "a little too much for tests" — `@SpringBootTest` is the thing slices exist in contrast to, not one of them. Reworded so only `@WebMvcTest`/`@DataJpaTest` are called slices. | [Spring Boot Reference — Testing Spring Boot Applications](https://docs.spring.io/spring-boot/reference/testing/spring-boot-applications.html) (already cited there) | **Fixed** |
-| Q17 — `@ValueSource` age example | Major | Code example's `@ValueSource(ints = {-1, 0, 1, 100})` included `-1` under a test named `isValidAge_acceptsNonNegativeAges` (self-contradictory: -1 is negative), and the method body had no assertion at all — an empty test that always passes regardless of behavior. | Removed `-1` (the array now matches what the test name actually claims) and added a real assertion (`assertTrue(ageValidator.isValidAge(age))`); moved the "ValueSource can't pair an input with a different expected output" point into a code comment rather than leaving it as the excuse for having no assertion. | — (internal consistency fix; no external source needed) | **Fixed** |
-| Q18 — `assertThrows` type matching | Major | Said it fails "if... a *different* exception type was thrown than expected," without clarifying that a **subclass** of the expected type is accepted, not just an exact match. | `assertThrows` checks `expectedType.isInstance(actualException)` — a subclass passes; only a non-assignable type or no exception fails it. Added `assertThrowsExactly()` as the exact-match alternative, plus a code example demonstrating the subclass-pass behavior. | [JUnit source — `AssertThrows`](https://github.com/junit-team/junit5/blob/main/junit-jupiter-api/src/main/java/org/junit/jupiter/api/AssertThrows.java) (`expectedType.isInstance(actualException)`) | **Fixed** |
-| Q13 — Mockito mock mechanism | Major | Described Mockito's mock creation as "generating a dynamic proxy (or, for classes, a subclass via byte-code generation)" with no mention of the inline mock maker. | Since Mockito 5.0.0 (2023), the **inline mock maker** — bytecode instrumentation rewriting the target class's own methods — is the default, not subclass/proxy generation; it's also what enables mocking `final` classes/methods and static methods without extra setup. | [Mockito 5.0.0 Release Notes](https://github.com/mockito/mockito/releases/tag/v5.0.0) | **Fixed** |
-| Q14 — `@InjectMocks` injection limitations | Major | Described only constructor-injection matching and its failure mode; didn't mention Mockito tries setter and field injection as fallbacks, or that Mockito's own docs are explicit it silently reports no failure when injection can't be satisfied. | Mockito tries constructor → setter → field injection in order, stopping at the first success; per Mockito's own Javadoc, if none succeed it does not report failure — the field is just left unset. Reworded to state the three-strategy order and the "won't report failure" behavior explicitly. | Mockito `@InjectMocks` Javadoc (already cited there) | **Fixed** |
-| Q9 follow-up — `@BeforeAll`/`@AfterAll` static requirement | Major | Stated they "must be `static` by default" with no mention of the `@TestInstance(PER_CLASS)` exception. | Under the default `PER_METHOD` lifecycle they must be static (no shared instance exists yet); under `@TestInstance(Lifecycle.PER_CLASS)` one instance is reused for the whole class and they can be ordinary instance methods instead. | [JUnit User Guide — Test Instance Lifecycle](https://docs.junit.org/6.0.2/writing-tests/test-instance-lifecycle.html): "with the 'per-class' mode it becomes possible to declare `@BeforeAll` and `@AfterAll` on non-static methods." | **Fixed** |
-| Q10 — failure vs. error terminology | Major | Presented "failure" vs. "error" as if it were JUnit's own internal distinction, with no note that JUnit 5/Jupiter collapses both into one status. | JUnit Platform's `TestExecutionResult` has only three statuses — `SUCCESSFUL`, `ABORTED`, `FAILED` — no separate `ERROR`; the failure/error split shown in CI dashboards comes from Surefire/Gradle's JUnit-XML report format (inherited from JUnit 3/4's `TestResult`), not from Jupiter's own execution model. | [`TestExecutionResult.Status` Javadoc](https://docs.junit.org/6.0.2/api/org.junit.platform.engine/org/junit/platform/engine/TestExecutionResult.Status.html) | **Fixed** |
-| Q35 — `@Transactional` test rollback limitations | Critical | Named only "cross-transaction behavior" in the abstract as the one gap, with no mention of the three concrete, commonly-tested cases where the automatic rollback silently doesn't apply: `REQUIRES_NEW`, async execution, and `RANDOM_PORT` tests. | Spring's own docs warn to use caution with any nested-transaction propagation other than `REQUIRED`/`SUPPORTS` (i.e., `REQUIRES_NEW` doesn't reliably roll back); test-managed transaction state is bound to the current thread via `ThreadLocal`, so `@Async` work and a `RANDOM_PORT` test's real HTTP request (handled by the embedded server on a different thread) both fall outside it. Rewrote the paragraph to name all three explicitly. | [Spring Framework Reference — Transaction Management in Tests](https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/tx.html) (already cited there): "you should use caution if Spring-managed or application-managed transactions are configured with any propagation type other than `REQUIRED` or `SUPPORTS`"; "Spring's testing support binds transaction state to the current thread (via a `java.lang.ThreadLocal` variable)." | **Fixed** |
-| Q23 — Docker requirement | Minor | Said Testcontainers "require[s] Docker to be available," without noting Docker-API-compatible alternatives. | Testcontainers requires a Docker-API-compatible container runtime — Docker is the primary, most-tested option, but Podman, Colima, and Rancher Desktop are real supported alternatives (tested less rigorously). | [Testcontainers — Supported Container Runtimes](https://java.testcontainers.org/supported_docker_environment/): "you need a Docker-API compatible container runtime." | **Fixed** |
-| Q32 — Embedded Kafka broker terminology | Minor | Described `EmbeddedKafka` generically with no version-scoped detail on which broker implementation it actually runs. | As of Kafka 4.0's KRaft-only transition (ZooKeeper removed), Spring Kafka's `@EmbeddedKafka` specifically runs an `EmbeddedKafkaKraftBroker`. Added this detail and updated the guide's version baseline to declare Apache Kafka 4.x for the affected questions. | [Spring for Apache Kafka — Testing](https://docs.spring.io/spring-kafka/reference/testing.html): "Since Kafka 4.0 has fully transitioned to KRaft mode, only the `EmbeddedKafkaKraftBroker` implementation is now available." (already cited there) | **Fixed** |
-
-| Guide expanded for missing Lead/Staff topics (2026-08-23) | — | Repo-wide review (at the repository owner's explicit direction) found four Lead/Staff testing topics with no coverage anywhere in InterviewSmith — property-based testing, mutation testing, security testing as a testing discipline (SAST/DAST/SCA/pentest), and testing distributed/eventually-consistent workflows (sagas) — plus one topic (spike testing) missing from the existing performance-testing question, and confirmed one topic (consumer-driven contract testing) was already covered in depth and already cross-linked (Microservices & Architecture Patterns Q23), so no new question was added for it. | Added 4 new Staff-level questions (42–45), each using an explicit six-part shape per the requester's instruction — Answer / Staff-level trade-offs / Example / Failure modes / Follow-up questions / Sources — a variant of this repo's own five-part pilot structure with an added Failure-modes section, applied only to these 4 questions; the guide's other 41 questions remain on the original four-part shape. Also added spike testing to the existing Q41 (load/stress/soak) rather than creating a fifth, near-duplicate question. New citations (jqwik, PIT, OWASP Web Security Testing Guide, OWASP Top Ten, Principles of Chaos Engineering) verified live before writing. TOC, guide baseline (added jqwik and PIT/PITest), consolidated Sources table, and `README.md`'s guide-by-guide description updated to match. | [jqwik](https://jqwik.net/docs/current/user-guide.html), [PIT](https://pitest.org/), [OWASP WSTG](https://owasp.org/www-project-web-security-testing-guide/), [Principles of Chaos Engineering](https://principlesofchaos.org/) | **Added** |
-
-**Answer-length restructuring rollout, guide 3 of 15, six-part variant (2026-08-23):** All 45 questions (previously a mix of the four-part Answer/Code/Follow-up/Source shape on Q1–41 and the six-part Answer/Staff-level trade-offs/Example/Failure modes/Follow-up questions/Sources shape already piloted on Q42–45 — see the finding above) were restructured onto that same six-part shape throughout: **Core answer** (100–180 words, renamed from Answer) / **Staff-level extension** (renamed from Staff-level trade-offs; the deeper judgment/trade-off material trimmed out of Q1–41's over-long Answer paragraphs was moved here, not deleted) / **Example** (renamed from Code) / **Failure modes** (new for Q1–41; concrete anti-pattern content already present in most of the old Follow-up paragraphs was relocated here) / **Follow-up questions** (renamed from Follow-up; recast as explicit interviewer-style Q&A pairs) / **Sources** (renamed from Source). This makes Testing the first guide on the six-part variant rather than the five-part shape used by Java_Collections and REST_API_Design, since the Failure-modes section piloted on this guide's own Q42–45 was judged worth keeping for all 45 rather than dropped to match the other two guides.
-
-Measured before/after, programmatically: the 45 old Answer sections ranged 130–265 words (average 187.9, median 188); 27 of 45 (60%) exceeded the 180-word spoken-answer ceiling this repo targets, none were under 100. All 45 new Core answers now measure 101–176 words (average 145.2), verified via a word-count script run after every edit. No technical content was deleted — material trimmed from the old Answer paragraphs and the old Follow-up sections was redistributed into Staff-level extension, Failure modes, and Follow-up questions rather than cut; all 45 Example code blocks are byte-for-byte unchanged. No other guide's file was touched. `scripts/check_internal_links.py` and `scripts/check_duplicate_headings.py` both pass clean after the restructuring.
-
-**Guide status: Reviewed. 45/45 questions reviewed, TOC added, version-baseline header present. Graduated Basic → Staff (Staff section organized as scenario-based questions), matching the pattern of the other graduated guides. Broadened (2026-08-23) from Java/Spring-only testing mechanics to also cover SDET/QA testing fundamentals, types of testing, and automation tooling (Selenium, API testing, BDD, the test pyramid) — see finding above. Targeted re-audit against current JUnit/Mockito/Spring/Testcontainers/Kafka docs completed 2026-08-23 (same day) — 9 corrections made (1 Critical, 7 Major, 1 Minor). Expanded again the same day with 4 Lead/Staff-topic questions (42–45) — see finding above. Restructured again the same day (see the restructuring note directly above) so all 45 questions now uniformly use the six-part Core answer/Staff-level extension/Example/Failure modes/Follow-up questions/Sources shape — no longer a two-shape mix.**
-
-### System Design/REST_API_Design_Interview_Prep.md
-
-| Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
-|---|---|---|---|---|---|
-| Q10 — ETag | Editorial | Malformed markdown span: `` `ETag** `` (mismatched backtick/bold). | Fixed to `` `ETag` ``. | — | **Fixed** |
-| Q4 — idempotent methods | Editorial | Code block omitted `TRACE`, though prose correctly includes it. | Added `TRACE` to the code block. | [RFC 9110 §9.2.2](https://datatracker.ietf.org/doc/html/rfc9110#section-9.2.2) | **Fixed** |
-| Q5 vs Cross-Stack Q11 | Minor | ~90% duplicated idempotency-key mechanism and code with Cross-Stack Design Scenarios Q11. | Trimmed Cross-Stack Q11 to cross-reference this question and focus on the client-contract + incident-investigation angle instead of re-explaining the mechanism. | — | **Fixed** |
-
-HTTP semantics (RFC 9110/9111/9457/7396/6902/4918) and CAP theorem framing checked out.
-
-**Guide status: Reviewed. 28/28 questions reviewed, TOC added, version-baseline header present. Restructured (2026-08-22) into the five-part shape — the second guide, after Java Collections, to receive this treatment.**
-
-**Answer-length restructuring rollout, guide 2 of 15 (2026-08-22):** Following the Java Collections pilot (see that guide's own "Guide status" note), this guide's 28 questions were restructured into **Core answer** (100–180 words) / **Staff-level extension** / **Example** (renamed from Code) / **Follow-up questions** (renamed from Follow-up) / **Sources** (renamed from Source). Pre-restructuring, answers ranged 160–324 words (average 235, five over 250); all 28 Core answers now measure 132–180 words (verified programmatically). No content was deleted — material trimmed from the Answer paragraphs, and the prose from the original Follow-up sections, was redistributed into Staff-level extension and Follow-up questions rather than cut.
-
-### System Design/Cross_Stack_Design_Scenarios_Interview_Prep.md
-
-| Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
-|---|---|---|---|---|---|
-| Q11 vs REST API Q5 | Minor | Duplicate — see REST API Design entry above. | Consolidated. | — | **Fixed** |
-| Q7 — circuit-breaker fallback | Major | `@CircuitBreaker(fallbackMethod = "servedegraded")` didn't match the actual method name `serveDegraded` — Resilience4j resolves fallback methods by exact, case-sensitive name via reflection, so this would fail to wire up at runtime rather than degrade gracefully as claimed. | Fixed the string to `"serveDegraded"`. | [Resilience4j docs](https://resilience4j.readme.io/docs/circuitbreaker) | **Fixed** |
-
-Cross-checked against the now-reviewed Kafka, Redis, and Transactions guides for consistency on partition ordering, eviction/rate-limiting, and isolation-level claims — no contradictions found.
-
-**Guide status: Reviewed. 20/20 questions reviewed, TOC added, version-baseline header present.**
-
-### Microservices & Architecture Patterns/Microservices_Architecture_Patterns_Interview_Prep.md
-
-CAP theorem (Q20) is correctly scoped to "during a network partition," not oversimplified as a blanket pick-2-of-3, and cites both Brewer's own retrospective and PACELC as a refinement. Service mesh (Q12) and ambassador/adapter (Q13) sections were checked for the "what's genuinely solved vs. often oversold" framing the task asked for and found substantively accurate, with real failure-mode content (retry-policy compounding across mesh + application layers) rather than trivia. No Critical/Major findings.
-
-**Guide status: Reviewed — no blocking findings. 25/25 questions reviewed, TOC added, version-baseline header present.**
-
-### Kubernetes, Docker & Cloud/Kubernetes_Docker_Interview_Prep.md
-
-| Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
-|---|---|---|---|---|---|
-| Q17 — ConfigMap vs Secret | Major | Implied `kubectl get`/`describe` both hide Secret values by default. | Only `kubectl describe secret` redacts (byte counts only); `kubectl get secret -o yaml/json` prints the full base64-encoded data — real protection is RBAC, not `describe`'s redaction. | [Kubernetes — Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) | **Fixed** |
-| Q20 — dockershim | Editorial | "was removed" with no version. | Deprecated v1.20, removed v1.24. | [Kubernetes — Dockershim Removal FAQ](https://kubernetes.io/blog/2022/02/17/dockershim-faq/) | **Fixed** |
-| Q32 — PodSecurityPolicy | Editorial | "now-removed" with no version. | Deprecated v1.21, removed v1.25. | [Kubernetes — Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/) | **Fixed** |
-
-**Guide status: Reviewed. 35/35 questions reviewed, TOC added, version-baseline header present.**
-
-### AI Engineering/AI_Engineering_Interview_Prep.md
-
-| Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
-|---|---|---|---|---|---|
-| Q24 — resilience code | Major | Code block mixed Java/Spring annotations (`@CircuitBreaker`, `@Retryable`, `@Backoff`) onto a Python function — doesn't compile in either language. | Rewrote using real Python libraries (`tenacity`, `pybreaker`) with a working call pattern. | [tenacity docs](https://tenacity.readthedocs.io/), [pybreaker](https://github.com/danielfm/pybreaker) | **Fixed** |
-
-This is the fastest-moving guide in the repo (model capabilities/pricing/context windows). The version-baseline header explicitly flags specific numbers as approximate and to be re-verified before an interview, rather than stating them as permanent fact — see the header's own "last verified" caveat.
-
-**Guide status: Reviewed. 27/27 questions reviewed, TOC added, version-baseline header present (with the fast-moving-content caveat above).**
-
-### Tech Leadership/Engineering_Leadership_Interview_Prep.md
-
-| Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
-|---|---|---|---|---|---|
-| Q2, Q20 follow-ups | Editorial | First-person "I've seen..." phrasing implying personal production experience (task rules prohibit inventing this). | Reworded to observational framing; added an explicit "personal example to add" placeholder at the Q20 spot per repo policy. | — | **Fixed** |
-
-No fabricated metrics or incidents found beyond the two reworded phrasings above.
-
-**Guide status: Reviewed. 25/25 questions reviewed, TOC added, version-baseline header present.**
-
-### System Design/Kafka_Interview_Prep.md
-
-| Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
-|---|---|---|---|---|---|
-| Q9 — idempotent producer scope (known issue #3) | Major | Summarized idempotence scope as "single producer session, single partition," readable as if a producer using idempotence could only safely write to one partition total. | Sequencing/dedup is tracked independently **per partition** within a session (a producer can write to many partitions); idempotence alone gives no atomicity across partitions/topics — that's what transactions add. | [Confluent — Exactly-once Semantics Is Possible](https://www.confluent.io/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/) (quote verified: "For a single partition, Idempotent producer sends remove the possibility of duplicate messages") | **Fixed** |
-| Version-baseline header (2026-08-22 pass) | Major | Header said "Baseline: Apache Kafka 3.x" while "Last verified" was dated 2026; Kafka 4.0 (KRaft-only, ZooKeeper removed) GA'd March 2025, so the stated baseline was stale relative to the verification date. | Updated the baseline to Kafka 4.x and added an explicit note that this guide's rebalancing content describes the classic consumer-group protocol (still the client default in 4.x), distinct from the new KIP-848 protocol that's broker-default-but-client-opt-in as of 4.0. | [Apache Kafka 4.0.0 Release Announcement](https://kafka.apache.org/blog/2025/03/18/apache-kafka-4.0.0-release-announcement/) | **Fixed** |
-| Q2 — "strict FIFO" ordering (2026-08-22 pass) | Major | Stated partition-scoped ordering as unconditional "strict FIFO," without noting it depends on producer configuration. | Ordering within a partition holds when idempotence is enabled (default since Kafka 3.0.1/3.2.0) or `max.in.flight.requests.per.connection=1`; without idempotence and with more than one in-flight request, a retry can reorder records even within one partition (Q12). | [Apache Kafka Documentation — Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) | **Fixed** |
-| Q3 — same key → same partition (2026-08-22 pass) | Major | "Every record with the same key always lands in the same partition" was qualified only for partition-count changes. | Also depends on a fixed partitioner implementation and a key serializer that's deterministic for logically-equal keys; either changing breaks the mapping. | [Apache Kafka Documentation — Producer Configs](https://kafka.apache.org/documentation/#producerconfigs) | **Fixed** |
-| Q6 — static membership "reduces rebalances to zero" (2026-08-22 pass) | Major | Claimed static membership could reduce rolling-deploy rebalances "to zero" without qualification. | It eliminates the rebalance for a same-instance restart returning within `session.timeout.ms`; genuine scale-up/down or a late-returning consumer still triggers one. | [KIP-345](https://cwiki.apache.org/confluence/display/KAFKA/KIP-345%3A+Introduce+static+membership+protocol+to+reduce+consumer+rebalances) | **Fixed** |
-| Q7 — at-least-once "never silently dropped" (2026-08-22 pass) | Major | Implied at-least-once guarantees the business outcome is never lost, when the guarantee is scoped to Kafka's own redelivery, not to the consumer's processing logic. | Auto-commit misconfiguration or a consumer that swallows a processing failure can still lose the effective outcome even though Kafka redelivered the message correctly. | [Apache Kafka Documentation — Message Delivery Semantics](https://kafka.apache.org/documentation/#semantics) | **Fixed** |
-| Q10 — RF=3/`min.insync.replicas=2`/`acks=all` "no write unavailability" (2026-08-22 pass) | Major | Stated this configuration tolerates any single-broker loss "without data loss or write unavailability," unconditionally. | Holds only if the lost broker was already fully in sync; a leader loss still has a brief election window, and an ISR already degraded before the loss can drop write availability entirely. | [Apache Kafka Documentation — Broker Configs](https://kafka.apache.org/documentation/#brokerconfigs) | **Fixed** |
-| Q11 — "classic CAP-style tension" (2026-08-22 pass) | Minor | Called the `acks=all`/`min.insync.replicas` trade-off a "classic CAP" trade-off; CAP formally describes behavior during a network partition, while this trade-off applies to any replica unavailability, partition or not. | Reworded to "structurally similar to, but not a literal instance of, CAP." | — | **Fixed** |
-
-Full read of all 40 conceptual questions + 15 scenario questions. Ordering guarantees (Q2), rebalancing (Q4–6), delivery semantics (Q7), `acks`/ISR/replication (Q10–11), retention/compaction (Q29–30), and all 15 scenario questions checked against Kafka documentation and cited KIPs (429, 345, 98) — no other Critical/Major findings from the original pass. A second pass (this round) found the seven overly-absolute-language issues above, all now fixed; two scenario answers (S5, S38-adjacent payments-pipeline design) carried the same RF/ISR overstatement by restating Q10's claim and were softened to cross-reference the corrected version instead of re-asserting it independently.
-
-**Guide status: Reviewed. 55/55 questions reviewed (40 conceptual + 15 scenario), version-baseline header present. TOC not yet added — see Phase 3/4 backlog.**
-
-### System Design/Redis_Caching_Interview_Prep.md
-
-| Question | Severity | Problem | Correct interpretation | Authoritative source | Status |
-|---|---|---|---|---|---|
-| Q22 — rate-limiter EXPIRE bug (known issue #4) | Critical | Lua rate limiter called `EXPIRE` unconditionally on every allowed request and described this as "harmless." Resetting the TTL on every request means the window's expiry keeps getting pushed forward as long as traffic continues, so it never actually rolls over on schedule — a materially different (much stricter) behavior than the stated fixed-window semantics. | Set `EXPIRE` only when `INCR` returns `1` (the request that creates the window). | [Redis Documentation — INCR command, "Pattern: rate limiter"](https://redis.io/docs/latest/commands/incr/) (this file's fix is exactly the documented "rate limiter 2" pattern) | **Fixed** |
-
-Full read of all 30 questions. Cache-aside/write-through/write-behind (Q2), the update-then-delete-cache race (Q4–5), stampede prevention (Q6), eviction policies (Q11), hot keys (Q12–13), replication/Sentinel/Cluster consistency (Q15–17), distributed locks (Q18–19), and Redis transaction/pipeline semantics (Q23–24) checked against Redis documentation — no other Critical/Major findings.
-
-**Guide status: Reviewed. 30/30 questions reviewed, version-baseline header present. TOC not yet added — see Phase 3/4 backlog.**
-
-### System Design/Transactions_Interview_Prep.md
-
-Isolation levels and their PostgreSQL-specific behavior (Q2–3), MVCC (Q4), Spring propagation defaults and the shared-rollback implication of `REQUIRED` (Q5–6), proxy-based self-invocation and private-method limitations (Q8–9, consistent with the Spring Boot Internals guide's Q24/26 fix, formerly Q12/14 before its 2026-08-23 Basic/Intermediate renumbering), default rollback-on-unchecked-only behavior (Q10), deadlocks (Q13), optimistic/pessimistic concurrency (Q14–15), the outbox pattern (Q19), and 2PC-vs-saga trade-offs (Q22–23, correctly hedged — "2PC isn't *never* used," not an absolute) were all checked against PostgreSQL documentation, the Spring Framework reference, and the cited papers/pattern sources. No Critical/Major findings in this pass.
-
-**Guide status: Reviewed. Spot-checked in depth (isolation levels, propagation, self-invocation/private-method proxy behavior, rollback rules, 2PC/saga) with no findings; not every one of the 30 questions was individually re-verified line-by-line in this pass the way the other 14 guides were — treat as a strong but slightly lighter pass than the rest of the repo. Version-baseline header present. TOC not yet added — see Phase 3/4 backlog.**
-
-## Repo-wide checks
-
-**Historical — these counts were accurate when each check was first run and
-wired into CI, but were never updated as guides were added afterward; see
-"Corrected repo-wide counts" under Current status above for today's real
-numbers.** The checks themselves are still the ones running in CI today
-(`scripts/check_internal_links.py`, `scripts/check_duplicate_headings.py`,
-`markdownlint-cli2`, `lychee`, and, as of this audit,
-`scripts/check_code_fences.py`) — only the file/link counts below are stale.
-
-| Check | Result | Status |
-|---|---|---|
-| Internal markdown links (relative paths + `#anchor` fragments) resolve | `scripts/check_internal_links.py`, verified against `github-slugger` (the library GitHub's renderer actually uses) for anchor correctness — 21 files, 0 broken | **Pass** — wired into CI |
-| Duplicate headings within a file | `scripts/check_duplicate_headings.py` (skips fenced code blocks after an early false positive on an identical thread-dump line in a deadlock example) — 21 files, 0 found | **Pass** — wired into CI |
-| Markdown lint | `markdownlint-cli2` with `.markdownlint.yaml` tuned to InterviewSmith's house style — 21 files, 0 issues (2 missing code-fence language tags found and fixed along the way) | **Pass** — wired into CI |
-| External link liveness | `lychee` with `.lychee.toml` (retries, realistic user agent, justified allowlist for confirmed-live-but-bot-blocking domains and the illustrative `*.example.com` code-example hostnames) — 1476 links checked, 1476 OK, 0 errors, 19 correctly excluded | **Pass** — wired into CI, plus a monthly scheduled run since link rot happens independent of edits |
-| README links to reserved directories (`Design Patterns`, `Frontend & Full-Stack`, `Forward-Deployed & Customer-Facing Engineering`) | Directories did not exist; created a placeholder `README.md` in each, clearly marked "reserved — not yet written" | **Fixed** |
-| "let me know and I'll restructure it" / similar chat-meta-commentary | Found once (Java_Collections, end of file) — repo-wide grep confirms no other instances anywhere in the repo | **Fixed** |
-| Version-baseline / target-level / last-verified / prerequisites header on every guide | Added to all 15 guides | **Fixed** |
-| Table of Contents on every guide | Added to 12 of 15 guides (all except Kafka, Redis, Transactions) | Open — see backlog |
-
-## Guide review status
-
-**Historical — this table's blanket "Reviewed" label predates the tiered
-status system and doesn't distinguish a citations-only pass from a
-code-validated one. See "Guide-by-guide current status" under Current
-status above for the tier each guide actually has evidence for today; this
-table is kept as the original record of what each pass called itself at
-the time.**
-
-| Guide | Status |
-|---|---|
-| Computer Science Fundamentals/Computer_Science_Fundamentals_Interview_Prep.md | Reviewed |
-| Computer Science Fundamentals/Computer_Science_Glossary.md | Reviewed |
-| Language/Java_Collections_Interview_Prep.md | Reviewed |
-| Language/Java_Concurrency_Interview_Prep.md | Reviewed |
-| Language/Java_JVM_GC_Interview_Prep.md | Reviewed |
-| Frameworks/Spring_Boot_Internals_Interview_Prep.md | Reviewed |
-| Frameworks/Spring_Security_OAuth2_Interview_Prep.md | Reviewed — no correctness findings |
-| Frameworks/JPA_Hibernate_Interview_Prep.md | Reviewed |
-| Testing/Software_Testing_Interview_Prep.md | Reviewed |
-| System Design/REST_API_Design_Interview_Prep.md | Reviewed |
-| System Design/Cross_Stack_Design_Scenarios_Interview_Prep.md | Reviewed |
-| Microservices & Architecture Patterns/Microservices_Architecture_Patterns_Interview_Prep.md | Reviewed — no blocking findings |
-| Kubernetes, Docker & Cloud/Kubernetes_Docker_Interview_Prep.md | Reviewed |
-| AI Engineering/AI_Engineering_Interview_Prep.md | Reviewed |
-| Tech Leadership/Engineering_Leadership_Interview_Prep.md | Reviewed |
-| System Design/Kafka_Interview_Prep.md | Reviewed |
-| System Design/Redis_Caching_Interview_Prep.md | Reviewed |
-| System Design/Transactions_Interview_Prep.md | Reviewed (spot-checked in depth; see note above) |
-
-"Reviewed" means: audited against the Phase 1 checklist and InterviewSmith's known-issues list, with all Critical/Major findings from that pass fixed. It does **not** mean every question has been rewritten into the full Phase 2 six-part standardized structure (Question / Short answer / Deep dive / Example / Failure modes / Follow-ups / Sources) — the existing Answer/Code/Follow-up/Source structure was judged accurate and well-organized enough that a wholesale rewrite risked introducing errors for uncertain benefit, and was deliberately not attempted in this pass (see backlog).
-
-## Phase 3/4 backlog (not yet done)
-
-- Table of contents on the Kafka, Redis, and Transactions guides (the other 14 have one).
-- **Code-block audit rollout.** Computer Science Fundamentals and Testing had every code block classified and every compilable/runnable one actually verified on 2026-08-23 (see "Code block audit" under Current status above). `scripts/check_code_fences.py`, added the same day, found 4 blocks elsewhere in the repo tagged `text` but reading as executable-looking code — `AI Engineering/AI_Engineering_Interview_Prep.md:668`, `System Design/Cross_Stack_Design_Scenarios_Interview_Prep.md:522`, and `System Design/Transactions_Interview_Prep.md:116` and `:770`. Flagged for classification, not fixed in this pass — out of scope for the two guides this audit covered. The other 15 guides' code blocks haven't been classified or executed at all yet.
-- **Answer-length restructuring rollout.** Java_Collections (2026-08-22, pilot) and System Design/REST_API_Design (2026-08-22) have been migrated to a five-part Core answer / Staff-level extension / Example / Follow-up questions / Sources structure (100–180-word Core answers); Testing/Software_Testing_Interview_Prep (2026-08-23) has been migrated to a six-part variant that additionally keeps a Failure modes section (100–180-word Core answers, piloted on that guide's own Q42–45 before being rolled out to all 45 questions). Computer Science Fundamentals (2026-08-23) has been migrated to its own, deliberately lighter Basic-level four-part variant — Answer / Example / Go deeper / Source, 80–150-word Answers, no Staff-level complexity — appropriate to its Basic-only scope rather than either Staff-oriented shape above. All four fix the repo-wide answer-length problem (original median 234 words against the target for each guide's level) for their guide — see each guide's own "Guide status" note above. 13 guides remain — roughly 450 more questions — still on the original Answer/Code/Follow-up/Source shape and still running long. Continuing the rollout guide-by-guide is fine to proceed with incrementally; open question for the repository owner: standardize the rest of the Staff/graduated guides on the five-part shape (matching Java_Collections/REST_API_Design) or the six-part shape with Failure modes (matching Testing)? The README's "How each question is structured" section still describes the old four-part shape, since it's accurate for 13 of 17 guides — update it once rollout covers all (or the repository owner decides to stop partway), to avoid the same overstatement-of-uniformity problem this pass was fixing elsewhere.
-- Full Phase 2 rewrite of every question into the six-part standardized structure (Question / Short answer / Deep dive / Example / Failure modes / Follow-ups / Sources) — a different, more elaborate structure than the five-part answer-length restructuring above. InterviewSmith contains **544** numbered questions across 17 guides as of 2026-08-23 — counted directly from every guide's numbered headings (not summed from per-guide deltas) and cross-checked per guide for gaps or duplicates; see "Corrected repo-wide counts" under Current status above. (A prior note here claimed 559, arrived at by manually summing each same-day edit's stated delta rather than recounting from the file — exactly the kind of drift a fresh count catches; see the same section for the correction.) All seven graduated guides now span Basic → Staff internally, matching the Kubernetes/Docker guide's original graduated design; Computer Science Fundamentals is Basic-only by design and doesn't graduate to Staff. This was not attempted; Phase 1 (accuracy) and the explicitly listed known issues were prioritized per the task's own instruction not to proceed to content restructuring before the audit is complete. This is a genuinely large, separate scope decision the repository owner should make deliberately rather than have it happen as a side effect of an accuracy pass.
-- Extracting Java/SQL examples into standalone, CI-testable sample projects (Phase 3, "where practical"). Not attempted — would need per-example scaffolding (Maven/Gradle module, test harness) and is a substantial project of its own.
-- Licensing — deliberately not chosen; needs the repository owner's decision (see `CONTRIBUTING.md`).
-- Java_Collections Q22 (was Q10) vs. Java_JVM_GC Q24 (was Q12) heap-dump question redundancy — flagged, not consolidated (both are independently accurate; low priority).
+placeholder stubs with no content. `Further Reading/System_Design_and_AI_Reading_List.md`
+is an external link list, exempt from this policy by its own header.
+`System Design/System_Design_Interview_Question_Bank.md` is practice
+prompts, not worked answers. None of these five files are tracked in the
+table above.
+
+## Repository-wide counts (measured 2026-08-23)
+
+- 31 markdown files (17 Q&A guides, 1 glossary, 3 placeholder stubs, 1
+  Further Reading list, 1 question bank, 3 dated files under `audits/`,
+  plus README/AUDIT/CONTRIBUTING/ROADMAP/LICENSE)
+- 544 numbered questions across 17 guides, plus a 200-term glossary
+- 0 broken internal links, 0 duplicate headings, 0 missing code-fence
+  language tags (`scripts/check_internal_links.py`,
+  `scripts/check_duplicate_headings.py`, `scripts/check_code_fences.py`)
+- 2,245 external link occurrences checked, 2,221 OK, 0 errors, 24 excluded
+  (`lychee`, most recent full run 2026-08-23)
+- 17 of 17 Q&A guides have a table of contents
+
+## Open findings
+
+- `Language/Java_Collections_Interview_Prep.md` Q22 and
+  `Language/Java_JVM_GC_Interview_Prep.md` Q24 cover overlapping ground
+  (heap-dump/memory-leak diagnosis) — not consolidated, low priority.
+- 4 code fences outside the audited guides (AI Engineering, Cross-Stack
+  Design Scenarios, Transactions) are tagged `text` but read as
+  executable-looking code — flagged by `scripts/check_code_fences.py`,
+  not yet classified.
+- 14 of 17 guides have never had their code blocks classified or executed
+  (see `ROADMAP.md`).
+- 13 of 17 guides have not been measured or restructured for answer
+  length since the original repository-wide measurement.
+
+## Known limitations
+
+- Citation liveness reflects the date of the most recent `lychee` run, not
+  continuous monitoring — a monthly scheduled run catches drift between
+  edits.
+- "Fact-audited: Yes" reflects independent verification that occurred at
+  some point, not necessarily on the date in the "Last reviewed" column —
+  see the linked audit file under `audits/` for exactly what was checked
+  and when.
+- AI Engineering's content is explicitly the fastest-moving in the
+  repository; a "Yes" there is weaker evidence of current accuracy than
+  the same mark on a spec-driven guide.
+- No guide's code has been mechanically tested beyond Computer Science
+  Fundamentals, Testing, and Java Collections.
+
+## History
+
+Detailed findings, one file per audit pass:
+
+- `audits/2026-08-22-initial-accuracy-audit.md` — the original
+  repository-wide accuracy pass, per-guide finding tables, and the
+  repo-wide checks as they stood at the time.
+- `audits/2026-08-23-repo-metrics-and-code-validation.md` — repository
+  count corrections, and the Computer Science Fundamentals / Testing
+  code-block audit.
+- `audits/2026-08-23-java-collections-code-audit.md` — a targeted
+  Javadoc correction pass and a full code-block audit for Java
+  Collections specifically.
+
+See `CONTRIBUTING.md` for the accuracy and citation policy new material
+is expected to meet, and `ROADMAP.md` for planned work.

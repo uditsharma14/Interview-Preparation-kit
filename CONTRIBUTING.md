@@ -168,13 +168,18 @@ Verified against Confluent's 'Exactly-once Semantics Is Possible'...
 Don't bundle an unrelated content fix with a formatting/structure change —
 they should be reviewable (and revertable) independently.
 
-## Updating `AUDIT.md`
+## Updating `AUDIT.md` and `audits/`
 
-If you fix a finding that's tracked in `AUDIT.md`, mark it `**Fixed**` in
-that file in the same change. If you find a new issue you're not fixing
-immediately, add a row for it with `Status: Open` rather than leaving it
+`AUDIT.md` is a summary table, not a findings log — detailed findings live
+in dated files under `audits/`. If you run an audit pass (a fact-check, a
+code-block validation, or similar), add a new dated file under `audits/`
+describing what was checked and what was found, then update the relevant
+row(s) in `AUDIT.md`'s guide status table and "Last reviewed" date to
+match. If you fix a specific issue outside a full audit pass, note it in
+the guide's most recent `audits/` file rather than leaving it
 undocumented — an unfixed known issue is far less costly than an unknown
-one.
+one. Forward-looking work that isn't a specific fix belongs in
+`ROADMAP.md`.
 
 ## Licensing
 

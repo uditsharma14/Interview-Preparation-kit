@@ -34,7 +34,7 @@ InterviewSmith optimizes for **accuracy over question count**. Every guide has u
 - **This is a reference, not a substitute** for coding practice, mock interviews, or your own behavioral stories. It exists to help you *speak accurately* about a topic you already understand well enough to be asked about — it won't teach you to code under time pressure, simulate the back-and-forth of a real interview loop, or hand you a STAR story about a decision you didn't actually make. Pair it with real practice (LeetCode/system-design mocks, a friend or peer running you through questions cold) rather than treating reading alone as preparation.
 - Start with a guide's own header — target level, technology baseline, and prerequisites are stated up front, so you know whether it's the right entry point before reading a word further.
 - Pick a [study path](#study-paths) that matches the time you actually have, rather than defaulting to reading every guide front to back.
-- Every claim ends in a **Source** line — treat a guide's prose as a fast, spoken-out-loud paraphrase, and the linked source as the actual authority, especially for anything version-sensitive.
+- Every interview question includes a **Source** section linking to references supporting its important technical claims — treat a guide's prose as a fast, spoken-out-loud paraphrase, and the linked source as the actual authority, especially for anything version-sensitive.
 - Found something wrong or stale? [`AUDIT.md`](AUDIT.md) tracks known issues and [`CONTRIBUTING.md`](CONTRIBUTING.md) has the fix policy.
 
 ## Who this is for
