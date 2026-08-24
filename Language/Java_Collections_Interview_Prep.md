@@ -388,6 +388,8 @@ In modern code, `ArrayDeque` has largely replaced both the old `java.util.Stack`
 **Example:**
 
 ```java
+// Task/task1/task2 stand in for a real domain type and its instances — not
+// a java.util class; substitute whatever type the queue actually holds.
 Queue<Task> taskQueue = new ArrayDeque<>();
 taskQueue.offer(task1); // added to the tail
 taskQueue.offer(task2);
@@ -823,7 +825,7 @@ Weakly consistent iterators — `ConcurrentHashMap`, `CopyOnWriteArrayList`, `Co
 
 ```java
 // Fail-fast in action — this throws, even single-threaded:
-List<Integer> list = new ArrayList<>(List.of(1, 2, 3));
+List<Integer> list = new ArrayList<>(List.of(1, 2, 3, 4));
 for (Integer i : list) {
     if (i == 2) list.remove(i); // throws ConcurrentModificationException
 }
