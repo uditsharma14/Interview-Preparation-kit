@@ -55,7 +55,7 @@ Every concrete class implements one of these interfaces, which is why code shoul
 
 **Staff-level extension:**
 
-This interface-over-implementation discipline pays off the first time a performance problem forces a swap — discovering `ArrayList`'s O(n) middle-insertion cost is a bottleneck and switching to `ArrayDeque` for queue-like access is a one-line change if the rest of the code only ever referenced `List`/`Queue`, and a much bigger refactor if it referenced `ArrayList` directly everywhere. The same reasoning applies to testing: substituting a different in-memory implementation is trivial against an interface, awkward against a concrete class.
+This interface-over-implementation discipline pays off the first time a performance problem forces a swap — discovering `ArrayList`'s O(n) middle-insertion cost is a bottleneck and switching from one `List` implementation to another (`ArrayList` to `LinkedList`, say) is a one-line change if the rest of the code only ever referenced `List`, and a much bigger refactor if it referenced `ArrayList` directly everywhere. Switching to `ArrayDeque` for queue-like access is a different case worth being precise about: `ArrayDeque` doesn't implement `List` at all — it implements `Deque`/`Queue` — so that swap is only a one-line change if the call sites were already typed as `Queue`/`Deque`; a `List`-typed call site using indexed access (`get(i)`, `set(i, v)`) has no equivalent on `ArrayDeque` and needs real code changes, not just a new `List` implementation. The same reasoning applies to testing: substituting a different in-memory implementation is trivial against an interface, awkward against a concrete class.
 
 **Example:**
 
@@ -76,7 +76,7 @@ for (Map.Entry<String, Integer> entry : scores.entrySet()) {
 - *"Why isn't `Map` a `Collection`?"* — It stores key-value pairs, not single elements — a fundamentally different shape, though its `keySet()`/`values()`/`entrySet()` views are each a `Collection`.
 - *"What's the practical cost of programming to the concrete type instead of the interface?"* — Every later implementation swap becomes a multi-call-site refactor instead of a one-line change.
 
-**Sources:** [Collections Framework Overview, Oracle Java Tutorials](https://docs.oracle.com/javase/tutorial/collections/intro/index.html), [`Collection` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html)
+**Sources:** [Collections Framework Overview, Oracle Java Tutorials](https://docs.oracle.com/javase/tutorial/collections/intro/index.html), [`Collection` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html), [`ArrayDeque` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ArrayDeque.html) (confirms `ArrayDeque`'s implemented interfaces don't include `List`)
 
 ---
 
@@ -84,9 +84,9 @@ for (Map.Entry<String, Integer> entry : scores.entrySet()) {
 
 **Core answer:**
 
-"`List` is an ordered collection that allows duplicates and gives indexed access — you can ask for 'the element at position 3,' and the same value can appear multiple times. `Set` is the mathematical-set abstraction: no duplicates (adding an element already present is a no-op, determined via `equals()`/`hashCode()`), and most implementations don't guarantee any particular order (`HashSet`), though `LinkedHashSet` preserves insertion order and `TreeSet` keeps everything sorted. `Map` associates unique keys with values — a lookup structure, not a sequence: you retrieve by key, not by position.
+"`List` is an ordered collection that allows duplicates and gives indexed access — you can ask for 'the element at position 3,' and the same value can appear multiple times. `Set` is the mathematical-set abstraction: no duplicates — adding an element already present is a no-op — though how 'already present' gets decided depends on the implementation: `HashSet`/`LinkedHashSet` decide it via `equals()`/`hashCode()`, while `TreeSet` instead decides it via natural ordering or a supplied `Comparator`, treating two elements as the same whenever `compareTo()` (or `compare()`) returns zero, independent of `equals()`. Most implementations don't guarantee any particular iteration order (`HashSet`), though `LinkedHashSet` preserves insertion order and `TreeSet` keeps everything sorted. `Map` associates unique keys with values — a lookup structure, not a sequence: you retrieve by key, not by position.
 
-The practical decision is about the *access pattern* the code actually needs: reaching for a `List` when the real requirement is 'no duplicates, fast membership check' means writing manual duplicate-checking code a `Set` already gives for free; using parallel `List`s of keys and values when the requirement is 'look this up by identifier' means writing manual linear search a `Map` already solves in O(1)."
+The practical decision is about the *access pattern* the code actually needs: reaching for a `List` when the real requirement is 'no duplicates, fast membership check' means writing manual duplicate-checking code a `Set` already gives for free; using parallel `List`s of keys and values when the requirement is 'look this up by identifier' means writing manual linear search a `HashMap` already solves in expected average O(1) — that's an average-case, hash-based guarantee specific to `HashMap`/`HashSet`, not something every `Map`/`Set` implementation gives; `TreeMap`, for instance, is O(log n) per operation, covered later in this guide."
 
 **Staff-level extension:**
 
@@ -104,9 +104,9 @@ tagCounts.merge("java", 1, Integer::sum);
 **Follow-up questions:**
 
 - *"Does `Set` guarantee any iteration order?"* — No — `HashSet` doesn't; `LinkedHashSet` preserves insertion order; `TreeSet` keeps sorted order.
-- *"What's the tell that a `List` should actually be a `Map`?"* — Any code doing a linear scan/search over a `List` keyed by some field — that's an O(n) lookup a `Map` makes O(1).
+- *"What's the tell that a `List` should actually be a `Map`?"* — Any code doing a linear scan/search over a `List` keyed by some field — that's an O(n) lookup a `HashMap` makes expected average O(1).
 
-**Sources:** [`List`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html), [`Set`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Set.html), [`Map`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html) Javadoc, JDK 21
+**Sources:** [`List`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html), [`Set`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Set.html), [`Map`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html), [`HashMap`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/HashMap.html) Javadoc, JDK 21, [`TreeSet` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/TreeSet.html) ("a `TreeSet` instance performs all element comparisons using its `compareTo` (or `compare`) method")
 
 ---
 
@@ -155,7 +155,7 @@ System.out.println(points.contains(new Point(1, 2))); // false, without hashCode
 
 **Core answer:**
 
-"All three implement `Set` — no duplicates — but differ in ordering and performance. `HashSet` is backed by a `HashMap` internally, gives O(1) average add/remove/contains, and makes zero ordering guarantee — iteration order can look arbitrary and can change across JDK versions or resizes. `LinkedHashSet` extends `HashSet` but additionally threads every entry through a doubly-linked list (the same mechanism `LinkedHashMap` uses), so iteration order is predictable — insertion order — at a small memory and performance cost over plain `HashSet`. `TreeSet` is backed by a red-black tree (the same structure `TreeMap` uses), keeps elements sorted at all times, and pays O(log n) for add/remove/contains instead of O(1), in exchange for that ordering and range operations (`headSet`, `tailSet`, `ceiling`, `floor`) the other two can't offer at all."
+"All three implement `Set` — no duplicates — but differ in how a duplicate is decided, ordering, and performance. `HashSet` is backed by a `HashMap` internally, decides duplicates via `hashCode()`/`equals()`, gives expected average O(1) add/remove/contains, and makes zero ordering guarantee — iteration order can look arbitrary and can change across JDK versions or resizes. `LinkedHashSet` extends `HashSet`, so it decides duplicates the same `hashCode()`/`equals()` way, but additionally threads every entry through a doubly-linked list (the same mechanism `LinkedHashMap` uses), so iteration order is predictable — insertion order — at a small memory and performance cost over plain `HashSet`. `TreeSet` is different in kind, not just performance: it's backed by a red-black tree (the same structure `TreeMap` uses), decides duplicates via natural ordering or a supplied `Comparator` — two elements are the same whenever `compareTo()`/`compare()` returns zero, regardless of what `equals()` would say — keeps elements sorted at all times, and pays O(log n) for add/remove/contains instead of `HashSet`'s average O(1), in exchange for that ordering and range operations (`headSet`, `tailSet`, `ceiling`, `floor`) the other two can't offer at all."
 
 **Staff-level extension:**
 

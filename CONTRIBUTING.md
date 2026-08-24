@@ -178,7 +178,18 @@ one.
 
 ## Licensing
 
-InterviewSmith does not yet have a license file. Until the owner chooses
-one, treat all content as "all rights reserved" by default — don't
-redistribute it elsewhere or assume permissive reuse. See the README's
-License section for the options recommended to the owner.
+InterviewSmith is dual-licensed — see [`LICENSE.md`](LICENSE.md) for the
+full split. In short: the guides, glossary, and other written/educational
+content are under CC BY-NC-SA 4.0 ([`LICENSE-CONTENT`](LICENSE-CONTENT));
+the tooling in `scripts/` is under MIT ([`LICENSE-CODE`](LICENSE-CODE)).
+**By submitting a contribution, you agree it's licensed under whichever of
+those two applies to the file(s) you changed** — a new or edited guide
+question under CC BY-NC-SA 4.0, a new or edited script under MIT — the same
+terms every other file in that category already carries. You keep copyright
+in your own contribution; you're not assigning it to the repository owner,
+only licensing it under the applicable terms above, consistent with how the
+rest of the repository is licensed.
+
+If you're contributing a file that doesn't clearly fall into either
+category, say so in your PR description rather than assuming — see
+[`LICENSE.md`](LICENSE.md)'s note on exactly this.

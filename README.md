@@ -7,14 +7,14 @@
 <p align="center">
   <a href="https://github.com/uditsharma14/InterviewSmith/actions/workflows/docs-check.yml"><img src="https://github.com/uditsharma14/InterviewSmith/actions/workflows/docs-check.yml/badge.svg" alt="Docs check"></a>
   <img alt="Guides" src="https://img.shields.io/badge/guides-17-orange">
-  <img alt="Q&A entries" src="https://img.shields.io/badge/Q%26A%20entries-559-orange">
+  <img alt="Q&A entries" src="https://img.shields.io/badge/Q%26A%20entries-540%2B-orange">
   <img alt="Glossary terms" src="https://img.shields.io/badge/glossary%20terms-200-orange">
-  <img alt="License" src="https://img.shields.io/badge/license-all--rights--reserved-lightgrey">
+  <a href="LICENSE.md"><img alt="License" src="https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0%20(content)%20%2F%20MIT%20(scripts)-blue"></a>
 </p>
 
 Every push and PR runs markdown linting, internal-link/anchor validation, and external-citation link-checking automatically ([`.github/workflows/docs-check.yml`](.github/workflows/docs-check.yml)); a monthly scheduled run catches link rot that happens independent of any edit.
 
-You don't walk into a Staff-level loop and get asked to define a `HashMap`. You get asked why it breaks under concurrent writes, what happens when the load factor tips, and what you'd actually do about it at 2 a.m. InterviewSmith is built to survive that follow-up: **17 guides, 559 Q&A entries, and a 200-term glossary** — counted directly from the repository, not estimated — each question answered the way you'd actually say it out loud, backed by a runnable code example, and closed out with exactly where a Staff-level interviewer pushes next. Several guides are explicitly graduated Basic → Staff, so the same guide works whether you're building the fundamentals for the first time or forging the deep end the night before a loop.
+You don't walk into a Staff-level loop and get asked to define a `HashMap`. You get asked why it breaks under concurrent writes, what happens when the load factor tips, and what you'd actually do about it at 2 a.m. InterviewSmith is built to survive that follow-up: **17 guides, 540+ interview questions, and a 200-term glossary** — each question answered the way you'd actually say it out loud, supported by code, configuration, SQL, pseudocode, or design examples as fits the question, and closed out with exactly where a Staff-level interviewer pushes next. Several guides are explicitly graduated Basic → Staff, so the same guide works whether you're building the fundamentals for the first time or forging the deep end the night before a loop.
 
 InterviewSmith optimizes for **accuracy over question count**. Every guide has undergone at least one audit pass against primary sources — Oracle/OpenJDK specs, Spring/Hibernate/Kafka/Redis/Kubernetes documentation, IETF RFCs, OWASP. See [`AUDIT.md`](AUDIT.md) for the review status of each guide and every finding, fixed or still open, and [`CONTRIBUTING.md`](CONTRIBUTING.md) for the citation/accuracy policy new material has to meet. An audit pass reduces errors; it doesn't guarantee none remain — version-sensitive claims should still be checked against the linked documentation before you repeat them somewhere it counts, and if you find one that's wrong or stale, `AUDIT.md` and the contribution policy exist to fix it.
 
@@ -182,14 +182,14 @@ Each of these three folders exists today only as a placeholder README stating it
 
 ## How each question is structured
 
-Every question in every guide follows the same shape, deliberately, so once you're used to the pattern in one guide, every other guide reads the same way:
+Most guides follow the same four-part shape below, deliberately, so once you're used to the pattern in one guide, most other guides read the same way — the exceptions are the guides already migrated to the newer structures described after the list:
 
 1. **Answer** — a conversational, interview-ready explanation, phrased the way it would actually be said out loud, roughly 30–90 seconds if spoken. This is the part you should be able to recite cold.
 2. **Code** — a snippet, config, SQL, sketch, or decision framework/template to back the explanation up (compilable code where practical; clearly labeled pseudocode/conceptual where not).
 3. **Follow-up** — the deeper probe that separates a mid-level answer from a Staff-level one: failure modes, trade-offs, what breaks at scale.
 4. **Source** — the authoritative reference(s) for the important claims made above.
 
-A rollout to a more granular five-part structure (Core answer / Staff-level extension / Example / Follow-up questions / Sources — same underlying content, with the deeper trade-off material explicitly pulled out of the core spoken answer) is in progress guide by guide — see [`AUDIT.md`](AUDIT.md) for which guides have migrated so far. The Software Testing guide's four newest Staff-level questions (property-based testing, mutation testing, security testing, and testing distributed/eventually-consistent workflows) use a related six-part variant that adds an explicit **Failure modes** section — see that guide's `AUDIT.md` entry for why.
+A rollout to a more granular five-part structure (Core answer / Staff-level extension / Example / Follow-up questions / Sources — same underlying content, with the deeper trade-off material explicitly pulled out of the core spoken answer) is in progress guide by guide — see [`AUDIT.md`](AUDIT.md) for which guides have migrated so far. Every question in the Software Testing guide uses a related six-part variant that adds an explicit **Failure modes** section, and Computer Science Fundamentals uses its own lighter Basic-level four-part variant (Answer / Example / "Go deeper" / Source, 80–150-word answers) — see each guide's `AUDIT.md` entry for why.
 
 ## Accuracy and contribution policy
 
@@ -197,13 +197,11 @@ InterviewSmith is deliberately not optimizing for question count. See [`CONTRIBU
 
 ## License
 
-Not yet chosen — see the note in `CONTRIBUTING.md`. Treat all content here as all-rights-reserved until the repository owner adds a license file.
+InterviewSmith is **dual-licensed** — this repository is not entirely
+MIT-licensed. See [`LICENSE.md`](LICENSE.md) for the full explanation of
+what's covered by which license and why.
 
-Recommended options for the owner to choose from (not chosen on the owner's behalf):
-
-| Option | Terms | Fits if |
-|---|---|---|
-| **CC BY-NC-SA 4.0** | Share/adapt with attribution, non-commercial only, share-alike | A personal study resource the owner wants circulated but not resold or repackaged commercially |
-| **CC BY-SA 4.0** | Same, minus the non-commercial restriction | The owner is fine with commercial reuse (e.g. a bootcamp using it in paid material) as long as it stays attributed and share-alike |
-| **MIT / Apache-2.0** | Permissive, no share-alike requirement, minimal restriction | The owner wants maximum reuse with no obligation on downstream users beyond attribution (Apache-2.0 also adds an explicit patent grant, irrelevant for prose/docs but standard for code-heavy repos) |
-| **All-rights-reserved** (no license file) | The current default | The owner doesn't want redistribution at all right now |
+| Content | License |
+|---|---|
+| The guides, glossary, diagrams, and other educational/written content | [CC BY-NC-SA 4.0](LICENSE-CONTENT) — attribution required, non-commercial only, share-alike |
+| Repository tooling in [`scripts/`](scripts/) | [MIT](LICENSE-CODE) — permissive, minimal restriction |

@@ -4,6 +4,43 @@
 
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining what actually breaks across service and database boundaries, not reciting ACID as a definition.
 
+<!-- toc -->
+## Table of Contents
+
+- [1. Explain ACID in Practical Terms](#1-explain-acid-in-practical-terms)
+- [2. What Anomalies Are Possible at Each Isolation Level?](#2-what-anomalies-are-possible-at-each-isolation-level)
+- [3. Compare Dirty Reads, Non-Repeatable Reads, Phantom Reads, and Lost Updates](#3-compare-dirty-reads-non-repeatable-reads-phantom-reads-and-lost-updates)
+- [4. How Does MVCC Work?](#4-how-does-mvcc-work)
+- [5. What Is the Default Spring Transaction Propagation Behavior?](#5-what-is-the-default-spring-transaction-propagation-behavior)
+- [6. Explain `REQUIRED`, `REQUIRES_NEW`, `NESTED`, and `NOT_SUPPORTED`](#6-explain-required-requiresnew-nested-and-notsupported)
+- [7. Why Might `REQUIRES_NEW` Exhaust a Connection Pool?](#7-why-might-requiresnew-exhaust-a-connection-pool)
+- [8. Why Does `@Transactional` Self-Invocation Fail?](#8-why-does-transactional-self-invocation-fail)
+- [9. What Happens When `@Transactional` Is Used on Private Methods?](#9-what-happens-when-transactional-is-used-on-private-methods)
+- [10. Which Exceptions Cause Rollback by Default?](#10-which-exceptions-cause-rollback-by-default)
+- [11. Why Is Holding a Database Transaction Open During a Remote Call Dangerous?](#11-why-is-holding-a-database-transaction-open-during-a-remote-call-dangerous)
+- [12. How Should Transaction Boundaries Align With Business Operations?](#12-how-should-transaction-boundaries-align-with-business-operations)
+- [13. How Do Deadlocks Occur, and How Should an Application Respond?](#13-how-do-deadlocks-occur-and-how-should-an-application-respond)
+- [14. How Would You Prevent Lost Updates?](#14-how-would-you-prevent-lost-updates)
+- [15. Compare Optimistic and Pessimistic Concurrency Control](#15-compare-optimistic-and-pessimistic-concurrency-control)
+- [16. What Is Write Skew?](#16-what-is-write-skew)
+- [17. How Do Database Constraints Complement Application Validation?](#17-how-do-database-constraints-complement-application-validation)
+- [18. How Do You Coordinate a Database Update and Kafka Publication?](#18-how-do-you-coordinate-a-database-update-and-kafka-publication)
+- [19. Explain the Transactional Outbox Pattern](#19-explain-the-transactional-outbox-pattern)
+- [20. How Do Outbox Relays Handle Duplicate Publication?](#20-how-do-outbox-relays-handle-duplicate-publication)
+- [21. Why Does Kafka Exactly-Once Processing Not Automatically Include a Relational Database?](#21-why-does-kafka-exactly-once-processing-not-automatically-include-a-relational-database)
+- [22. What Is a Distributed Transaction, and Why Is Two-Phase Commit Often Avoided?](#22-what-is-a-distributed-transaction-and-why-is-two-phase-commit-often-avoided)
+- [23. Explain the Saga Pattern and Compensating Transactions](#23-explain-the-saga-pattern-and-compensating-transactions)
+- [24. Compare Choreography and Orchestration Sagas](#24-compare-choreography-and-orchestration-sagas)
+- [25. How Would You Design Idempotency for a Transactional Consumer?](#25-how-would-you-design-idempotency-for-a-transactional-consumer)
+- [26. How Do You Safely Retry a Failed Transaction?](#26-how-do-you-safely-retry-a-failed-transaction)
+- [27. When Might a Retry Repeat an External Side Effect?](#27-when-might-a-retry-repeat-an-external-side-effect)
+- [28. How Would You Investigate Transactions That Remain Open for Several Minutes?](#28-how-would-you-investigate-transactions-that-remain-open-for-several-minutes)
+- [29. How Would You Perform a Destructive Schema Migration Without Downtime?](#29-how-would-you-perform-a-destructive-schema-migration-without-downtime)
+- [30. When Is Compensation Impossible, and How Should the Workflow Be Designed?](#30-when-is-compensation-impossible-and-how-should-the-workflow-be-designed)
+- [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
+
+<!-- /toc -->
+
 ---
 
 ## 1. Explain ACID in Practical Terms

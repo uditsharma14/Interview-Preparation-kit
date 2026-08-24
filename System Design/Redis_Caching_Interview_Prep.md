@@ -4,6 +4,43 @@
 
 How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar is explaining what breaks under real production traffic (stampedes, hot keys, failover), not reciting Redis command syntax.
 
+<!-- toc -->
+## Table of Contents
+
+- [1. When Should Redis Be Used as a Cache Versus a System of Record?](#1-when-should-redis-be-used-as-a-cache-versus-a-system-of-record)
+- [2. Explain Cache-Aside, Read-Through, Write-Through, and Write-Behind Strategies](#2-explain-cache-aside-read-through-write-through-and-write-behind-strategies)
+- [3. How Do You Maintain Consistency Between a Database and a Cache?](#3-how-do-you-maintain-consistency-between-a-database-and-a-cache)
+- [4. What Can Go Wrong With "Update Database, Then Delete Cache"?](#4-what-can-go-wrong-with-update-database-then-delete-cache)
+- [5. How Would You Handle Failure Between the Database Update and Cache Invalidation?](#5-how-would-you-handle-failure-between-the-database-update-and-cache-invalidation)
+- [6. What Is a Cache Stampede, and How Do You Prevent It?](#6-what-is-a-cache-stampede-and-how-do-you-prevent-it)
+- [7. What Are Cache Penetration and Cache Pollution?](#7-what-are-cache-penetration-and-cache-pollution)
+- [8. Why Should Cache TTLs Include Jitter?](#8-why-should-cache-ttls-include-jitter)
+- [9. How Would You Cache Negative Results Safely?](#9-how-would-you-cache-negative-results-safely)
+- [10. How Do You Select a TTL?](#10-how-do-you-select-a-ttl)
+- [11. Compare Redis Eviction Policies](#11-compare-redis-eviction-policies)
+- [12. How Do Hot Keys Affect Redis?](#12-how-do-hot-keys-affect-redis)
+- [13. How Would You Detect and Mitigate Hot Keys?](#13-how-would-you-detect-and-mitigate-hot-keys)
+- [14. How Do Large Keys Affect Latency and Cluster Behavior?](#14-how-do-large-keys-affect-latency-and-cluster-behavior)
+- [15. What Is the Difference Between Redis Replication, Sentinel, and Cluster?](#15-what-is-the-difference-between-redis-replication-sentinel-and-cluster)
+- [16. What Consistency Guarantees Does Redis Replication Provide?](#16-what-consistency-guarantees-does-redis-replication-provide)
+- [17. What Happens During Redis Failover?](#17-what-happens-during-redis-failover)
+- [18. Why Can a Distributed Lock Be Unsafe?](#18-why-can-a-distributed-lock-be-unsafe)
+- [19. Explain Token-Based Lock Ownership](#19-explain-token-based-lock-ownership)
+- [20. When Should You Avoid Distributed Locks Entirely?](#20-when-should-you-avoid-distributed-locks-entirely)
+- [21. Compare Fixed-Window, Sliding-Window, and Token-Bucket Rate Limiting](#21-compare-fixed-window-sliding-window-and-token-bucket-rate-limiting)
+- [22. How Would You Build an Atomic Rate Limiter Using Lua?](#22-how-would-you-build-an-atomic-rate-limiter-using-lua)
+- [23. How Do Redis Transactions Differ From Relational Transactions?](#23-how-do-redis-transactions-differ-from-relational-transactions)
+- [24. What Do Pipelines Improve, and What Do They Not Guarantee?](#24-what-do-pipelines-improve-and-what-do-they-not-guarantee)
+- [25. How Would You Version Cache Keys During a Deployment?](#25-how-would-you-version-cache-keys-during-a-deployment)
+- [26. How Would Blue and Green Versions Share a Cache Safely?](#26-how-would-blue-and-green-versions-share-a-cache-safely)
+- [27. How Do You Prevent Stale Cached Authorization Decisions?](#27-how-do-you-prevent-stale-cached-authorization-decisions)
+- [28. How Should an Application Behave When Redis Is Unavailable?](#28-how-should-an-application-behave-when-redis-is-unavailable)
+- [29. What Redis Metrics Would You Monitor?](#29-what-redis-metrics-would-you-monitor)
+- [30. Describe a Cache Incident That Increased Rather Than Reduced Database Load](#30-describe-a-cache-incident-that-increased-rather-than-reduced-database-load)
+- [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
+
+<!-- /toc -->
+
 ---
 
 ## 1. When Should Redis Be Used as a Cache Versus a System of Record?
