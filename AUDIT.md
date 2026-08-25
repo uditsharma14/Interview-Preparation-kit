@@ -32,8 +32,8 @@ what hasn't been done yet.
 | Computer Science Fundamentals | Yes | Yes | Yes | 2026-08-23 |
 | Computer Science Glossary | Partial (17/200 terms) | N/A | Yes | 2026-08-23 |
 | Java Collections | Yes | Yes | Yes | 2026-08-23 |
-| Java Concurrency | Yes | No | Yes | 2026-08-23 |
-| Java JVM & GC | Yes | No | Yes | 2026-08-23 |
+| Java Concurrency | Yes | Yes | Yes | 2026-08-25 |
+| Java JVM & GC | Yes | Yes | Yes | 2026-08-25 |
 | Spring Boot Internals | Yes | No | Yes | 2026-08-23 |
 | Spring Security & OAuth2 | Yes | No | Yes | 2026-08-23 |
 | JPA & Hibernate | Yes | No | Yes | 2026-08-23 |

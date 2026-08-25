@@ -1188,7 +1188,11 @@ class BoundedCache<K, V> {
         return map.computeIfAbsent(key, k -> { // atomic load-if-absent
             V value = loader.apply(k);
             insertionOrder.add(k);
-            if (map.size() > capacity) {
+            if (map.size() >= capacity) { // >= not > : computeIfAbsent hasn't committed
+                                            // this key into the map yet while this
+                                            // function is running, so map.size() here
+                                            // doesn't include it — ">" would let the
+                                            // cache settle at capacity + 1, not capacity
                 K oldest = insertionOrder.poll(); // approximate FIFO eviction,
                 if (oldest != null) map.remove(oldest); // NOT true LRU — good enough
                                                            // to illustrate the shape,
@@ -1346,7 +1350,8 @@ This mostly matters for lock-free data structures built on `compareAndSet` over 
 
 ```java
 // Illustrating the LOGICAL ABA scenario in Java (object identity, not memory-address reuse):
-AtomicStampedReference<Integer> ref = new AtomicStampedReference<>(100, 0);
+Integer initialValue = 100, midValue = 200; // reused explicitly — see the gotcha noted below
+AtomicStampedReference<Integer> ref = new AtomicStampedReference<>(initialValue, 0);
 
 // Thread 1 reads the value and a stamp
 int[] stampHolder = new int[1];
@@ -1354,12 +1359,12 @@ Integer value = ref.get(stampHolder); // value=100, stamp=0
 int stamp = stampHolder[0];
 
 // Meanwhile, Thread 2 changes 100 -> 200 -> back to 100
-ref.compareAndSet(100, 200, 0, 1); // stamp now 1
-ref.compareAndSet(200, 100, 1, 2); // value is 100 again, but stamp is now 2
+ref.compareAndSet(initialValue, midValue, 0, 1);   // stamp now 1
+ref.compareAndSet(midValue, initialValue, 1, 2);   // value is 100 again, but stamp is now 2
 
 // Thread 1's plain compareAndSet (ignoring the stamp) would WRONGLY succeed here,
 // because the VALUE alone looks unchanged, even though real state transitions happened:
-boolean wronglySucceeds = ref.compareAndSet(100, 999, 0, 3); // fails correctly here
+boolean wronglySucceeds = ref.compareAndSet(initialValue, 999, 0, 3); // fails correctly here
 // because compareAndSet checks BOTH value AND stamp — stamp mismatch (0 vs actual 2)
 // is exactly what AtomicStampedReference is for: it detects the "went through A-B-A"
 // history even when the final value looks unchanged.
@@ -1367,7 +1372,7 @@ boolean wronglySucceeds = ref.compareAndSet(100, 999, 0, 3); // fails correctly 
 
 **Follow-up:**
 
-I'd cite `AtomicStampedReference` (adds a version stamp alongside the value, so CAS checks both) and `AtomicMarkableReference` (adds a boolean mark, e.g. for logical deletion) as the JDK's direct answers to this — both exist specifically because plain `AtomicReference.compareAndSet()` can't distinguish "genuinely unchanged" from "changed and changed back." I'd also be honest that this is a real concern mainly when building custom lock-free data structures (stacks, queues, linked structures) — it rarely bites application-level code directly, since most application code uses `ConcurrentHashMap`/`java.util.concurrent` collections that have already handled this correctly internally, but it's a good signal in an interview that you understand *why* those collections are non-trivial to implement correctly.
+I'd cite `AtomicStampedReference` (adds a version stamp alongside the value, so CAS checks both) and `AtomicMarkableReference` (adds a boolean mark, e.g. for logical deletion) as the JDK's direct answers to this — both exist specifically because plain `AtomicReference.compareAndSet()` can't distinguish "genuinely unchanged" from "changed and changed back." I'd also be honest that this is a real concern mainly when building custom lock-free data structures (stacks, queues, linked structures) — it rarely bites application-level code directly, since most application code uses `ConcurrentHashMap`/`java.util.concurrent` collections that have already handled this correctly internally, but it's a good signal in an interview that you understand *why* those collections are non-trivial to implement correctly. I'd also flag a genuinely easy-to-miss gotcha with `AtomicReference`/`AtomicStampedReference` over a boxed type like `Integer`: `compareAndSet()`'s expected-value check is reference equality (`==`), not `.equals()` — reusing the same `Integer` variable at every call site (as above) is deliberate, since re-autoboxing the literal `200` a second time would create a genuinely different `Integer` object for any value outside the JVM's cached range of `-128` to `127`, and the CAS would then silently fail even though the boxed values are numerically equal.
 
 **Source:** [`AtomicStampedReference` Javadoc](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicStampedReference.html)
 
