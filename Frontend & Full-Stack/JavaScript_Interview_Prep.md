@@ -535,7 +535,7 @@ console.log("2: sync");
 
 **Staff-level extension:**
 
-The genuinely subtle version of this worth naming for a Staff-level answer: a closure that only uses one small variable from its enclosing scope can still, in some engine implementations, keep the *entire* enclosing scope's variables alive, not just the one it references, since the scope is captured as a whole. Detached DOM nodes are the other classic instance of the same underlying pattern — a JavaScript reference (often via a closure) held onto a DOM element that's since been removed from the document keeps that entire node, and everything it once referenced, from being collected, which is exactly why "detached DOM tree" is one of the most common leak categories a heap snapshot in browser DevTools surfaces in practice.
+The genuinely subtle version of this worth naming for a Staff-level answer: a closure that only uses one small variable from its enclosing scope can still, in some engine implementations, keep the *entire* enclosing scope's variables alive, not just the one it references, since the scope is captured as a whole. Detached DOM nodes are the other classic instance of the same underlying pattern — a JavaScript reference (often via a closure) held onto a DOM element that's since been removed from the document keeps that entire node, and everything it once referenced, from being collected, which is exactly why "detached DOM tree" is one of the most common leak categories a heap snapshot in browser DevTools surfaces in practice. `WeakMap` and `WeakSet` exist specifically to sidestep this class of leak for a cache keyed by object identity: an entry keyed by a `WeakMap` doesn't count as a reference for garbage-collection purposes, so a cache built on `WeakMap` never keeps its keys (or their values) alive on its own — the moment nothing else references a given key object, that entry is eligible for collection automatically, with no manual cache-eviction logic needed at all.
 
 **Example:**
 
@@ -563,8 +563,9 @@ function setupCleanListener() {
 
 - *"How would you actually find a leak like this in production?"* — Chrome DevTools' Memory panel: take two heap snapshots across a suspected leaking action repeated several times, and compare — objects whose count grows every repetition without ever dropping are the leak candidates.
 - *"Why does a `setInterval` that's never cleared count as a leak even if its callback does nothing harmful?"* — The interval itself, plus its callback's entire closure scope, stays alive and keeps running for the life of the page, unless `clearInterval()` is called — a common source of the "many mount/unmount cycles, ever-growing memory" pattern in SPAs.
+- *"When would you reach for `WeakMap` instead of a plain `Map` for a cache?"* — Whenever the cache is keyed by object references you don't otherwise control the lifetime of (a DOM node, a component instance) — a plain `Map` would keep every key alive forever unless you remembered to `delete` it manually; `WeakMap` lets those entries disappear on their own once nothing else references the key.
 
-**Sources:** [MDN — Memory management](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_management), [Chrome DevTools — Fix memory problems](https://developer.chrome.com/docs/devtools/memory-problems/)
+**Sources:** [MDN — Memory management](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_management), [Chrome DevTools — Fix memory problems](https://developer.chrome.com/docs/devtools/memory-problems/), [MDN — `WeakMap`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)
 
 ---
 
@@ -609,7 +610,7 @@ const throttledScroll = throttle(() => console.log("scroll position updated"), 2
 - *"What happens if `delay` in the debounce example above is set to 0?"* — It still defers to a macrotask via `setTimeout`, so it's not synchronous, but with no meaningful "quiet period" — effectively collapsing multiple synchronous calls in the same tick into one, rather than genuinely waiting for user activity to pause.
 - *"Would you ever combine debounce and throttle for the same handler?"* — Yes — a search box that throttles for periodic 'still typing' feedback while also debouncing the actual expensive search request until typing stops is a real, common pattern, though it's genuinely more complexity than most cases need.
 
-**Sources:** [MDN — `setTimeout()`](https://developer.mozilla.org/en-US/docs/Web/API/Window/setTimeout), [MDN — Debouncing and throttling explained through examples (css-tricks, referenced widely as the canonical explanation)](https://developer.mozilla.org/en-US/docs/Web/API/Window/setTimeout#throttling_and_debouncing)
+**Sources:** [MDN — `setTimeout()`](https://developer.mozilla.org/en-US/docs/Web/API/Window/setTimeout), [CSS-Tricks — Debouncing and Throttling Explained Through Examples](https://css-tricks.com/debouncing-throttling-explained-examples/) (secondary source — debounce/throttle aren't part of any spec, so no primary source exists for the pattern itself)
 
 ---
 
@@ -836,6 +837,9 @@ myPromiseAll([
 | MDN — Microtasks | https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide |
 | MDN — Memory management | https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_management |
 | Chrome DevTools — Fix memory problems | https://developer.chrome.com/docs/devtools/memory-problems/ |
+| MDN — `WeakMap` | https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap |
+| MDN — `setTimeout()` | https://developer.mozilla.org/en-US/docs/Web/API/Window/setTimeout |
+| CSS-Tricks — Debouncing and Throttling Explained Through Examples | https://css-tricks.com/debouncing-throttling-explained-examples/ |
 | Node.js Documentation — ECMAScript modules | https://nodejs.org/api/esm.html |
 | Node.js Documentation — CommonJS modules | https://nodejs.org/api/modules.html |
 | V8 Blog — Trash talk: the Orinoco garbage collector | https://v8.dev/blog/trash-talk |

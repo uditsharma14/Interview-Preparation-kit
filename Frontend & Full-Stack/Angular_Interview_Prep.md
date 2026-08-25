@@ -21,15 +21,16 @@ How to use this: each question has a **Core answer** (100–180 words), a **Staf
   - [10. What Are Signals, and How Do `signal()`, `computed()`, and `effect()` Work Together?](#10-what-are-signals-and-how-do-signal-computed-and-effect-work-together)
   - [11. What's the Difference Between Template-Driven and Reactive Forms?](#11-whats-the-difference-between-template-driven-and-reactive-forms)
   - [12. What Does `HttpClient` Provide, and How Do Interceptors Work?](#12-what-does-httpclient-provide-and-how-do-interceptors-work)
+  - [13. What Does the Angular Router Provide, and How Do Route Guards Work?](#13-what-does-the-angular-router-provide-and-how-do-route-guards-work)
 - [Staff Level](#staff-level)
-  - [13. How Does Angular's Change Detection Actually Work, and What Does Zoneless Angular Change?](#13-how-does-angulars-change-detection-actually-work-and-what-does-zoneless-angular-change)
-  - [14. Signals vs. RxJS — When Would You Use Each, and How Do They Interoperate?](#14-signals-vs-rxjs--when-would-you-use-each-and-how-do-they-interoperate)
-  - [15. How Would You Optimize the Performance of a Large Angular Application?](#15-how-would-you-optimize-the-performance-of-a-large-angular-application)
-  - [16. How Does Angular's Dependency Injection Hierarchy Work?](#16-how-does-angulars-dependency-injection-hierarchy-work)
-  - [17. How Would You Approach State Management in a Large Angular Application?](#17-how-would-you-approach-state-management-in-a-large-angular-application)
-  - [18. What Is Server-Side Rendering in Angular, and How Does Hydration Work?](#18-what-is-server-side-rendering-in-angular-and-how-does-hydration-work)
-  - [19. How Do You Test an Angular Component?](#19-how-do-you-test-an-angular-component)
-  - [20. What Are Signal-Based Inputs and Outputs, and How Do They Compare to `@Input()`/`@Output()`?](#20-what-are-signal-based-inputs-and-outputs-and-how-do-they-compare-to-inputoutput)
+  - [14. How Does Angular's Change Detection Actually Work, and What Does Zoneless Angular Change?](#14-how-does-angulars-change-detection-actually-work-and-what-does-zoneless-angular-change)
+  - [15. Signals vs. RxJS — When Would You Use Each, and How Do They Interoperate?](#15-signals-vs-rxjs--when-would-you-use-each-and-how-do-they-interoperate)
+  - [16. How Would You Optimize the Performance of a Large Angular Application?](#16-how-would-you-optimize-the-performance-of-a-large-angular-application)
+  - [17. How Does Angular's Dependency Injection Hierarchy Work?](#17-how-does-angulars-dependency-injection-hierarchy-work)
+  - [18. How Would You Approach State Management in a Large Angular Application?](#18-how-would-you-approach-state-management-in-a-large-angular-application)
+  - [19. What Is Server-Side Rendering in Angular, and How Does Hydration Work?](#19-what-is-server-side-rendering-in-angular-and-how-does-hydration-work)
+  - [20. How Do You Test an Angular Component?](#20-how-do-you-test-an-angular-component)
+  - [21. What Are Signal-Based Inputs and Outputs, and How Do They Compare to `@Input()`/`@Output()`?](#21-what-are-signal-based-inputs-and-outputs-and-how-do-they-compare-to-inputoutput)
 - [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
 
 <!-- /toc -->
@@ -46,7 +47,7 @@ How to use this: each question has a **Core answer** (100–180 words), a **Staf
 
 **Staff-level extension:**
 
-The naming is a real, common point of confusion worth clarifying directly: "Angular" (no "JS" suffix, versions 2+) and "AngularJS" (versions 1.x) are different frameworks that happen to share a name and a maintaining organization, not sequential versions of the same codebase — there is no automated upgrade path from one to the other, only a full rewrite or Google's own `@angular/upgrade` compatibility layer for incremental migration. Angular itself follows a predictable, deliberately fast release cadence — a new major version roughly every six months, each with 12 months of active support followed by 12 months of long-term support — which is worth knowing precisely, since it means "which Angular version" is a genuinely load-bearing question for any real codebase, not a formality.
+The naming is a real, common point of confusion worth clarifying directly: "Angular" (no "JS" suffix, versions 2+) and "AngularJS" (versions 1.x) are different frameworks that happen to share a name and a maintaining organization, not sequential versions of the same codebase — there is no automated upgrade path from one to the other, only a full rewrite or Google's own `@angular/upgrade` compatibility layer for incremental migration. Angular itself follows a predictable, published release cadence — a new major version every 12 months, each with 12 months of active support followed by 12 months of long-term support — which is worth knowing precisely, since it means "which Angular version" is a genuinely load-bearing question for any real codebase, not a formality. Worth being precise about the history here too: prior to Angular v22, major versions shipped roughly every six months; the cadence itself slowed to 12 months starting with v22, this guide's own baseline.
 
 **Example:**
 
@@ -329,7 +330,7 @@ export class ModernComponent { show = true; }
 - *"Can a standalone component be used inside an NgModule-based application?"* — Yes — standalone components can be imported directly into an `NgModule`'s `imports` array, which is exactly what makes incremental migration practical rather than requiring a full rewrite.
 - *"What's `bootstrapApplication()`, and how does it relate to standalone?"* — It's the standalone equivalent of the older `platformBrowserDynamic().bootstrapModule(AppModule)` call — it bootstraps an application directly from a root standalone component, with no root `AppModule` required at all.
 
-**Sources:** [Angular — Standalone Components](https://angular.dev/guide/components/importing), [Angular — Roadmap](https://angular.dev/roadmap)
+**Sources:** [Angular — Standalone Components](https://angular.dev/guide/components#using-components), [Angular — Roadmap](https://angular.dev/roadmap)
 
 ---
 
@@ -532,9 +533,61 @@ bootstrapApplication(AppComponent, {
 
 ---
 
+### 13. What Does the Angular Router Provide, and How Do Route Guards Work?
+
+**Core answer:**
+
+"The Router maps URL paths to components, configured as a list of routes — each a `path` paired with a `component` (or, for lazy loading, a `loadComponent` that dynamically imports the component only when that route is actually visited) — registered application-wide via `provideRouter(routes)` in a standalone app. Navigating updates the URL and swaps the rendered component into a `<router-outlet>` placeholder in the template, without a full page reload; `RouterLink` is the template directive for declarative navigation, and `ActivatedRoute` gives a component access to its own route's parameters and data. A guard is a function attached to a route's `canActivate` (or `canActivateChild`, `canDeactivate`) array that runs before the router commits to that navigation — returning `true` lets it proceed, `false` cancels it, and returning a `UrlTree` cancels it and redirects somewhere else instead, which is the standard mechanism for gating a route behind authentication or a permission check."
+
+**Staff-level extension:**
+
+The version-relevant detail worth being precise about: Angular now supports functional guards (`CanActivateFn`, a plain function using `inject()` to reach a service) alongside the older class-based `CanActivate` interface, and the functional style is the current recommended default — the same pattern, and the same reasoning, as the functional interceptors covered in the previous question: less ceremony, no class/DI boilerplate just to gate a route. Resolvers (`ResolveFn`, registered via a route's `resolve` property) are a related but distinct mechanism worth not conflating with guards: a guard decides *whether* navigation is allowed to proceed at all, while a resolver pre-fetches data the destination component needs *before* that navigation completes, making it available immediately via `ActivatedRoute.data` rather than the component having to show a loading state after it's already rendered.
+
+**Example:**
+
+```typescript
+import { CanActivateFn, ResolveFn } from '@angular/router';
+import { inject } from '@angular/core';
+
+// Functional guard — the current recommended style, using inject() for DI
+export const authGuard: CanActivateFn = (route, state) => {
+  const auth = inject(AuthService);
+  if (auth.isLoggedIn()) return true;
+  return inject(Router).createUrlTree(['/login']); // redirect instead of just blocking
+};
+
+// Functional resolver — pre-fetches data before the route activates
+export const heroResolver: ResolveFn<Hero> = (route) => {
+  return inject(HeroService).getHero(route.paramMap.get('id')!);
+};
+
+// Registration
+provideRouter([
+  {
+    path: 'admin',
+    canActivate: [authGuard],
+    loadComponent: () => import('./admin/admin.component').then(m => m.AdminComponent),
+  },
+  {
+    path: 'hero/:id',
+    component: HeroDetailComponent,
+    resolve: { hero: heroResolver }, // HeroDetailComponent reads this via route.data
+  },
+]);
+```
+
+**Follow-up questions:**
+
+- *"What's the practical difference between a guard returning `false` versus returning a `UrlTree`?"* — `false` simply cancels the navigation, leaving the user on whatever page they were already on; a `UrlTree` cancels it and starts a *new* navigation to wherever that tree points — the standard way to redirect an unauthenticated user to a login page rather than just silently blocking them.
+- *"Why use a resolver instead of just fetching data in the destination component's `ngOnInit()`?"* — A resolver fetches before the route activates, so the component never renders in a partially-loaded state at all; fetching in `ngOnInit()` means the component mounts first and has to render its own loading state while the request is still in flight — a legitimate choice too, just a different trade-off between "block navigation until ready" and "navigate immediately, load in place."
+
+**Sources:** [Angular — Common Router Tasks](https://angular.dev/guide/routing/common-router-tasks), [Angular — `CanActivateFn`](https://angular.dev/api/router/CanActivateFn), [Angular — `ResolveFn`](https://angular.dev/api/router/ResolveFn)
+
+---
+
 ## Staff Level
 
-### 13. How Does Angular's Change Detection Actually Work, and What Does Zoneless Angular Change?
+### 14. How Does Angular's Change Detection Actually Work, and What Does Zoneless Angular Change?
 
 **Core answer:**
 
@@ -571,7 +624,7 @@ setTimeout(() => { this.count.update(n => n + 1); }, 1000);
 
 ---
 
-### 14. Signals vs. RxJS — When Would You Use Each, and How Do They Interoperate?
+### 15. Signals vs. RxJS — When Would You Use Each, and How Do They Interoperate?
 
 **Core answer:**
 
@@ -610,7 +663,7 @@ const results = toSignal(results$, { initialValue: [] as Result[] });
 
 ---
 
-### 15. How Would You Optimize the Performance of a Large Angular Application?
+### 16. How Would You Optimize the Performance of a Large Angular Application?
 
 **Core answer:**
 
@@ -650,7 +703,7 @@ export const routes: Routes = [
 
 ---
 
-### 16. How Does Angular's Dependency Injection Hierarchy Work?
+### 17. How Does Angular's Dependency Injection Hierarchy Work?
 
 **Core answer:**
 
@@ -692,7 +745,7 @@ export class ProductWidgetComponent {
 
 ---
 
-### 17. How Would You Approach State Management in a Large Angular Application?
+### 18. How Would You Approach State Management in a Large Angular Application?
 
 **Core answer:**
 
@@ -732,7 +785,7 @@ export class CartStore {
 
 ---
 
-### 18. What Is Server-Side Rendering in Angular, and How Does Hydration Work?
+### 19. What Is Server-Side Rendering in Angular, and How Does Hydration Work?
 
 **Core answer:**
 
@@ -770,7 +823,7 @@ export class ClockComponent {
 
 ---
 
-### 19. How Do You Test an Angular Component?
+### 20. How Do You Test an Angular Component?
 
 **Core answer:**
 
@@ -820,7 +873,7 @@ describe('UserProfileComponent', () => {
 
 ---
 
-### 20. What Are Signal-Based Inputs and Outputs, and How Do They Compare to `@Input()`/`@Output()`?
+### 21. What Are Signal-Based Inputs and Outputs, and How Do They Compare to `@Input()`/`@Output()`?
 
 **Core answer:**
 
@@ -883,7 +936,7 @@ export class QuantityPickerComponent {
 | Angular — Dependency Injection in Angular | https://angular.dev/guide/di |
 | Angular — Hierarchical Injectors | https://angular.dev/guide/di/hierarchical-dependency-injection |
 | Angular — Component Lifecycle | https://angular.dev/guide/components/lifecycle |
-| Angular — Standalone Components | https://angular.dev/guide/components/importing |
+| Angular — Standalone Components | https://angular.dev/guide/components#using-components |
 | Angular — Roadmap | https://angular.dev/roadmap |
 | Angular — `AsyncPipe` | https://angular.dev/api/common/AsyncPipe |
 | RxJS — Observable | https://rxjs.dev/guide/observable |
@@ -896,6 +949,9 @@ export class QuantityPickerComponent {
 | Angular — Template-Driven Forms | https://angular.dev/guide/forms/template-driven-forms |
 | Angular — `HttpClient` | https://angular.dev/guide/http |
 | Angular — Interceptors | https://angular.dev/guide/http/interceptors |
+| Angular — Common Router Tasks | https://angular.dev/guide/routing/common-router-tasks |
+| Angular — `CanActivateFn` | https://angular.dev/api/router/CanActivateFn |
+| Angular — `ResolveFn` | https://angular.dev/api/router/ResolveFn |
 | Angular — Zoneless Change Detection | https://angular.dev/guide/experimental/zoneless |
 | Angular — RxJS Interop | https://angular.dev/ecosystem/rxjs-interop |
 | Angular — Deferred Loading with `@defer` | https://angular.dev/guide/defer |

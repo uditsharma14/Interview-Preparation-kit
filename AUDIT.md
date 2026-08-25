@@ -61,14 +61,14 @@ table above.
 
 ## Repository-wide counts (measured 2026-08-24)
 
-- 34 markdown files (20 Q&A guides, 1 glossary, 2 placeholder stubs, 1
-  Further Reading list, 1 question bank, 3 dated files under `audits/`,
+- 35 markdown files (20 Q&A guides, 1 glossary, 2 placeholder stubs, 1
+  Further Reading list, 1 question bank, 4 dated files under `audits/`,
   plus README/AUDIT/CONTRIBUTING/ROADMAP/LICENSE)
-- 604 numbered questions across 20 guides, plus a 200-term glossary
+- 606 numbered questions across 20 guides, plus a 200-term glossary
 - 0 broken internal links, 0 duplicate headings, 0 missing code-fence
   language tags (`scripts/check_internal_links.py`,
   `scripts/check_duplicate_headings.py`, `scripts/check_code_fences.py`)
-- 2,696 external link occurrences checked, 2,672 OK, 0 errors, 24 excluded
+- 2,713 external link occurrences checked, 2,689 OK, 0 errors, 24 excluded
   (`lychee`, most recent full run 2026-08-24)
 - 20 of 20 Q&A guides have a table of contents
 
@@ -125,6 +125,13 @@ Detailed findings, one file per audit pass:
   version-baseline research, a full JavaScript code-block execution
   audit, two broken external links found and fixed, a bug found and
   fixed in `scripts/add_toc.py`, and README/AUDIT integration.
+- `audits/2026-08-24-frontend-guides-review-fixes.md` — an independent
+  review of the three frontend guides surfaced a wrong version-sensitive
+  claim (Angular's release cadence), a broken/garbled citation (JS
+  debounce/throttle), a stale citation URL, and two coverage gaps
+  (Angular Router/guards, React Error Boundaries) — all fixed, plus two
+  smaller consistency fixes (a `WeakMap` mention, a mixed import-style
+  example).
 
 See `CONTRIBUTING.md` for the accuracy and citation policy new material
 is expected to meet, and `ROADMAP.md` for planned work.

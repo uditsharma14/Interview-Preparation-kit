@@ -21,15 +21,16 @@ How to use this: each question has a **Core answer** (100–180 words), a **Staf
   - [10. What Is a Custom Hook, and When Would You Write One?](#10-what-is-a-custom-hook-and-when-would-you-write-one)
   - [11. What Are Refs For, and How Do They Differ From State?](#11-what-are-refs-for-and-how-do-they-differ-from-state)
   - [12. What's the Difference Between Lifting State Up and Prop Drilling?](#12-whats-the-difference-between-lifting-state-up-and-prop-drilling)
+  - [13. What Are Error Boundaries, and How Do You Implement One?](#13-what-are-error-boundaries-and-how-do-you-implement-one)
 - [Staff Level](#staff-level)
-  - [13. How Does React's Reconciliation Algorithm Actually Work?](#13-how-does-reacts-reconciliation-algorithm-actually-work)
-  - [14. What Is Concurrent Rendering, and How Do `useTransition` and `Suspense` Use It?](#14-what-is-concurrent-rendering-and-how-do-usetransition-and-suspense-use-it)
-  - [15. What Does the React Compiler Do, and How Does It Relate to `useMemo`/`useCallback`?](#15-what-does-the-react-compiler-do-and-how-does-it-relate-to-usememousecallback)
-  - [16. What Are Server Components, and How Do They Differ From Client Components?](#16-what-are-server-components-and-how-do-they-differ-from-client-components)
-  - [17. What Are Actions and `useActionState`, and What Problem Do They Solve?](#17-what-are-actions-and-useactionstate-and-what-problem-do-they-solve)
-  - [18. How Would You Optimize the Performance of a Large React Application?](#18-how-would-you-optimize-the-performance-of-a-large-react-application)
-  - [19. How Would You Approach State Management in a Large React Application?](#19-how-would-you-approach-state-management-in-a-large-react-application)
-  - [20. How Do You Test a React Component?](#20-how-do-you-test-a-react-component)
+  - [14. How Does React's Reconciliation Algorithm Actually Work?](#14-how-does-reacts-reconciliation-algorithm-actually-work)
+  - [15. What Is Concurrent Rendering, and How Do `useTransition` and `Suspense` Use It?](#15-what-is-concurrent-rendering-and-how-do-usetransition-and-suspense-use-it)
+  - [16. What Does the React Compiler Do, and How Does It Relate to `useMemo`/`useCallback`?](#16-what-does-the-react-compiler-do-and-how-does-it-relate-to-usememousecallback)
+  - [17. What Are Server Components, and How Do They Differ From Client Components?](#17-what-are-server-components-and-how-do-they-differ-from-client-components)
+  - [18. What Are Actions and `useActionState`, and What Problem Do They Solve?](#18-what-are-actions-and-useactionstate-and-what-problem-do-they-solve)
+  - [19. How Would You Optimize the Performance of a Large React Application?](#19-how-would-you-optimize-the-performance-of-a-large-react-application)
+  - [20. How Would You Approach State Management in a Large React Application?](#20-how-would-you-approach-state-management-in-a-large-react-application)
+  - [21. How Do You Test a React Component?](#21-how-do-you-test-a-react-component)
 - [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
 
 <!-- /toc -->
@@ -162,7 +163,7 @@ function Child({ onIncrement }) {
 
 **Staff-level extension:**
 
-The precise mechanism worth being able to explain, not just its symptom: React associates each `useState` call with a specific "slot" in that component instance's internal state, tracked by the *order* Hooks are called in during render — which is exactly why Hooks must be called unconditionally, at the top level of a component, never inside a conditional, loop, or nested function; calling a different number or order of Hooks between renders would misalign which stored value corresponds to which `useState` call. Functional updates (`setCount(prev => prev + 1)` instead of `setCount(count + 1)`) matter specifically when multiple updates to the same state might be scheduled before a re-render happens — passing a function guarantees each update operates on the actual latest pending value rather than a stale value captured in the closure from when the event handler was originally created.
+The precise mechanism worth being able to explain, not just its symptom: React associates each `useState` call with a specific "slot" in that component instance's internal state, tracked by the *order* Hooks are called in during render — which is exactly why Hooks must be called unconditionally, at the top level of a component, never inside a conditional, loop, or nested function; calling a different number or order of Hooks between renders would misalign which stored value corresponds to which `useState` call. Functional updates (`setCount(prev => prev + 1)` instead of `setCount(count + 1)`) matter specifically when multiple updates to the same state might be scheduled before a re-render happens — passing a function guarantees each update operates on the actual latest pending value rather than a stale value captured in the closure from when the event handler was originally created. `useReducer` is worth naming as `useState`'s sibling for a reason beyond "it's for complex state": once several `setState` calls in the same handler need to change together as one atomic transition (multiple related fields updating in response to one action, not independently), a reducer's single function encodes exactly which combinations of state changes are valid, where several separate `useState` calls updated ad hoc can drift into an inconsistent combination no single call site fully controls.
 
 **Example:**
 
@@ -190,8 +191,9 @@ function Counter() {
 
 - *"Why does calling the setter three times in a row with `count + 1` not increment by 3?"* — All three calls in the same event handler close over the same `count` value from that render — none of them see each other's effect until the next render — so they all schedule the same "set to `count + 1`" update, not three sequential increments.
 - *"Why must Hooks be called unconditionally, at the top level, never inside an `if`?"* — React tracks which `useState`/`useEffect` call corresponds to which internal state slot purely by the order they're called in during render — a conditional Hook call would change that order between renders and silently misalign every subsequent Hook's stored value.
+- *"When would you reach for `useReducer` instead of `useState`?"* — When a piece of state's next value depends on more than "the new value that was passed in" — several related sub-values that change together in response to a small set of named actions, or a next state that depends on the previous state in a non-trivial way — a reducer function centralizes that transition logic in one place instead of scattering it across every call site that calls `setState`.
 
-**Sources:** [React — `useState`](https://react.dev/reference/react/useState), [React — Rules of Hooks](https://react.dev/warnings/invalid-hook-call-warning)
+**Sources:** [React — `useState`](https://react.dev/reference/react/useState), [React — Rules of Hooks](https://react.dev/warnings/invalid-hook-call-warning), [React — `useReducer`](https://react.dev/reference/react/useReducer)
 
 ---
 
@@ -541,9 +543,65 @@ function FahrenheitDisplay({ celsius }) {
 
 ---
 
+### 13. What Are Error Boundaries, and How Do You Implement One?
+
+**Core answer:**
+
+"An Error Boundary is a component that catches JavaScript errors thrown anywhere in its child component tree during rendering, in a lifecycle method, or in a constructor, and renders a fallback UI instead of letting the error crash the entire application. As of this guide's baseline, an Error Boundary must be a class component — there is still no Hooks-based, functional equivalent in React itself — implemented with the static lifecycle method `getDerivedStateFromError(error)`, which updates state to trigger the fallback render, and typically paired with `componentDidCatch(error, info)` for logging. Wrapping a section of the tree in an Error Boundary means a bug in one feature (a chart that throws on malformed data, say) shows a contained fallback for just that section instead of taking down the whole page, which is exactly the same 'isolate the blast radius' instinct as wrapping a single API call in a `try`/`catch` rather than leaving one unhandled failure able to crash everything around it."
+
+**Staff-level extension:**
+
+The precise scope boundary worth being able to state exactly, since it's a common source of "why didn't my error boundary catch this" confusion: Error Boundaries only catch errors during rendering, in lifecycle methods, and in constructors of the tree below them — they do **not** catch errors in event handlers (a `try`/`catch` inside the handler itself is still required there), errors in asynchronous code (`setTimeout`, a rejected Promise not awaited inside render), errors during server-side rendering, or an error thrown inside the boundary component's own code rather than its children's. The one deliberate exception worth knowing: an error thrown inside `startTransition` *is* caught by an Error Boundary, since React treats that as part of the same rendering work the boundary is already responsible for. Since writing an Error Boundary class from scratch is boilerplate most teams don't want to repeat per feature, the standard practical answer is reaching for the community `react-error-boundary` package, which wraps the same class-based mechanism behind a reusable component and hook-friendly API, rather than every codebase hand-rolling its own.
+
+**Example:**
+
+```jsx
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true }; // triggers the fallback render on the next pass
+  }
+
+  componentDidCatch(error, info) {
+    logErrorToMyService(error, info.componentStack); // side effect — logging, not allowed in getDerivedStateFromError
+  }
+
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
+// Usage — isolates a failure in ChartWidget from crashing the rest of the dashboard
+function Dashboard() {
+  return (
+    <>
+      <Header />
+      <ErrorBoundary fallback={<p>This chart failed to load.</p>}>
+        <ChartWidget />
+      </ErrorBoundary>
+      <Footer /> {/* still renders even if ChartWidget throws */}
+    </>
+  );
+}
+```
+
+**Follow-up questions:**
+
+- *"Why does React require Error Boundaries to be class components, with no Hooks equivalent?"* — `getDerivedStateFromError` needs to run as part of React's own render-phase error handling before any fallback commits, which depends on the class lifecycle model; no built-in Hooks API currently exposes that same hook point, which is exactly why the community `react-error-boundary` package still implements the boundary itself as a class internally, even though it exposes a friendlier functional wrapper around it.
+- *"If an Error Boundary won't catch an error from an `onClick` handler, how do you handle that instead?"* — A regular `try`/`catch` inside the handler itself (or around the `await` if it's async) — the same pattern used for any synchronous or asynchronous error handling outside of rendering, since an Error Boundary's coverage is scoped specifically to the render path.
+
+**Sources:** [React — Catching Rendering Errors with an Error Boundary](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary), [react-error-boundary (GitHub)](https://github.com/bvaughn/react-error-boundary)
+
+---
+
 ## Staff Level
 
-### 13. How Does React's Reconciliation Algorithm Actually Work?
+### 14. How Does React's Reconciliation Algorithm Actually Work?
 
 **Core answer:**
 
@@ -579,7 +637,7 @@ function Header2({ title }) {
 
 ---
 
-### 14. What Is Concurrent Rendering, and How Do `useTransition` and `Suspense` Use It?
+### 15. What Is Concurrent Rendering, and How Do `useTransition` and `Suspense` Use It?
 
 **Core answer:**
 
@@ -625,7 +683,7 @@ function SearchPage({ allItems }) {
 
 ---
 
-### 15. What Does the React Compiler Do, and How Does It Relate to `useMemo`/`useCallback`?
+### 16. What Does the React Compiler Do, and How Does It Relate to `useMemo`/`useCallback`?
 
 **Core answer:**
 
@@ -662,7 +720,7 @@ function ProductListCompiled({ products }) {
 
 ---
 
-### 16. What Are Server Components, and How Do They Differ From Client Components?
+### 17. What Are Server Components, and How Do They Differ From Client Components?
 
 **Core answer:**
 
@@ -706,7 +764,7 @@ function AddToCartButton({ productId }) {
 
 ---
 
-### 17. What Are Actions and `useActionState`, and What Problem Do They Solve?
+### 18. What Are Actions and `useActionState`, and What Problem Do They Solve?
 
 **Core answer:**
 
@@ -719,8 +777,6 @@ The precise problem this replaces, worth naming directly: before Actions, a form
 **Example:**
 
 ```jsx
-import { useActionState } from 'react';
-
 async function updateName(previousState, formData) {
   const name = formData.get('name');
   if (!name) return { error: 'Name is required' };
@@ -729,7 +785,7 @@ async function updateName(previousState, formData) {
 }
 
 function NameForm() {
-  const [state, formAction, isPending] = useActionState(updateName, { error: null });
+  const [state, formAction, isPending] = React.useActionState(updateName, { error: null });
 
   return (
     <form action={formAction}>
@@ -750,7 +806,7 @@ function NameForm() {
 
 ---
 
-### 18. How Would You Optimize the Performance of a Large React Application?
+### 19. How Would You Optimize the Performance of a Large React Application?
 
 **Core answer:**
 
@@ -796,7 +852,7 @@ function BigList({ items }) {
 
 ---
 
-### 19. How Would You Approach State Management in a Large React Application?
+### 20. How Would You Approach State Management in a Large React Application?
 
 **Core answer:**
 
@@ -834,7 +890,7 @@ function UserProfile({ userId }) {
 
 ---
 
-### 20. How Do You Test a React Component?
+### 21. How Do You Test a React Component?
 
 **Core answer:**
 
@@ -896,6 +952,7 @@ describe('LoginForm', () => {
 | React — Passing Props to a Component | https://react.dev/learn/passing-props-to-a-component |
 | React — Your First Component | https://react.dev/learn/your-first-component |
 | React — `useState` | https://react.dev/reference/react/useState |
+| React — `useReducer` | https://react.dev/reference/react/useReducer |
 | React — Rules of Hooks | https://react.dev/warnings/invalid-hook-call-warning |
 | React — Reacting to Input with State | https://react.dev/learn/reacting-to-input-with-state |
 | React — Sharing State Between Components | https://react.dev/learn/sharing-state-between-components |
@@ -927,3 +984,5 @@ describe('LoginForm', () => {
 | TanStack Query — Overview | https://tanstack.com/query/latest/docs/framework/react/overview |
 | React Testing Library — Guiding Principles | https://testing-library.com/docs/guiding-principles/ |
 | Testing Library — `user-event` | https://testing-library.com/docs/user-event/intro/ |
+| React — Catching Rendering Errors with an Error Boundary | https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary |
+| react-error-boundary (GitHub) | https://github.com/bvaughn/react-error-boundary |
