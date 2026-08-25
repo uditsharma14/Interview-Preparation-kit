@@ -62,12 +62,15 @@ def build_toc(content: str) -> str:
 
 
 def insert_or_replace_toc(content: str) -> str:
-    toc = build_toc(content)
+    # Scan with any existing TOC block removed first, so a refresh doesn't
+    # pick up the old block's own "## Table of Contents" heading as an entry.
+    content_for_scan = TOC_BLOCK_RE.sub("", content, count=1)
+    toc = build_toc(content_for_scan)
     if TOC_BLOCK_RE.search(content):
         return TOC_BLOCK_RE.sub(toc, content, count=1)
     # Insert after the intro paragraph, i.e. before the first "---" line,
     # or before the first H2 if there's no "---" separator.
-    lines = content.split("\n")
+    lines = content_for_scan.split("\n")
     insert_at = None
     for i, line in enumerate(lines):
         if line.strip() == "---":

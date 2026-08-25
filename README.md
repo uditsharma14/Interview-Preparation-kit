@@ -6,15 +6,15 @@
 <p align="center"><em>The deep-dive, mid-to-staff-level interview prep kit — written to be said out loud, not skimmed.</em></p>
 <p align="center">
   <a href="https://github.com/uditsharma14/InterviewSmith/actions/workflows/docs-check.yml"><img src="https://github.com/uditsharma14/InterviewSmith/actions/workflows/docs-check.yml/badge.svg" alt="Docs check"></a>
-  <img alt="Guides" src="https://img.shields.io/badge/guides-17-orange">
-  <img alt="Q&A entries" src="https://img.shields.io/badge/Q%26A%20entries-540%2B-orange">
+  <img alt="Guides" src="https://img.shields.io/badge/guides-20-orange">
+  <img alt="Q&A entries" src="https://img.shields.io/badge/Q%26A%20entries-600%2B-orange">
   <img alt="Glossary terms" src="https://img.shields.io/badge/glossary%20terms-200-orange">
   <a href="LICENSE.md"><img alt="License" src="https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0%20(content)%20%2F%20MIT%20(scripts)-blue"></a>
 </p>
 
 Every push and PR runs markdown linting, internal-link/anchor validation, and external-citation link-checking automatically ([`.github/workflows/docs-check.yml`](.github/workflows/docs-check.yml)); a monthly scheduled run catches link rot that happens independent of any edit.
 
-You don't walk into a Staff-level loop and get asked to define a `HashMap`. You get asked why it breaks under concurrent writes, what happens when the load factor tips, and what you'd actually do about it at 2 a.m. InterviewSmith is built to survive that follow-up: **17 guides, 540+ interview questions, and a 200-term glossary** — each question answered the way you'd actually say it out loud, supported by code, configuration, SQL, pseudocode, or design examples as fits the question, and closed out with exactly where a Staff-level interviewer pushes next. Several guides are explicitly graduated Basic → Staff, so the same guide works whether you're building the fundamentals for the first time or forging the deep end the night before a loop.
+You don't walk into a Staff-level loop and get asked to define a `HashMap`. You get asked why it breaks under concurrent writes, what happens when the load factor tips, and what you'd actually do about it at 2 a.m. InterviewSmith is built to survive that follow-up: **20 guides, 600+ interview questions, and a 200-term glossary** — each question answered the way you'd actually say it out loud, supported by code, configuration, SQL, pseudocode, or design examples as fits the question, and closed out with exactly where a Staff-level interviewer pushes next. Several guides are explicitly graduated Basic → Staff, so the same guide works whether you're building the fundamentals for the first time or forging the deep end the night before a loop.
 
 InterviewSmith optimizes for **accuracy over question count**. Every guide has undergone at least one audit pass against primary sources — Oracle/OpenJDK specs, Spring/Hibernate/Kafka/Redis/Kubernetes documentation, IETF RFCs, OWASP. See [`AUDIT.md`](AUDIT.md) for the review status of each guide and every finding, fixed or still open, and [`CONTRIBUTING.md`](CONTRIBUTING.md) for the citation/accuracy policy new material has to meet. An audit pass reduces errors; it doesn't guarantee none remain — version-sensitive claims should still be checked against the linked documentation before you repeat them somewhere it counts, and if you find one that's wrong or stale, `AUDIT.md` and the contribution policy exist to fix it.
 
@@ -43,7 +43,7 @@ Current interview loops for **Full Stack**, **Forward Deployed**, and **Staff** 
 
 | Role | What their loop leans on | Covered here | Still a gap |
 |---|---|---|---|
-| **Full Stack Engineer** | Frontend fundamentals (React/TS, browser/perf) • Backend API design • Databases • Light system design • Testing | [Frameworks](Frameworks/) • [System Design](System%20Design/) (esp. [REST API Design](System%20Design/REST_API_Design_Interview_Prep.md)) • [Testing](Testing/) • [Language](Language/) | [Frontend & Full-Stack](Frontend%20%26%20Full-Stack/) *(reserved)* |
+| **Full Stack Engineer** | Frontend fundamentals (React/TS, browser/perf) • Backend API design • Databases • Light system design • Testing | [Frontend & Full-Stack](Frontend%20%26%20Full-Stack/) • [Frameworks](Frameworks/) • [System Design](System%20Design/) (esp. [REST API Design](System%20Design/REST_API_Design_Interview_Prep.md)) • [Testing](Testing/) • [Language](Language/) | Browser/rendering performance deep dives beyond what's in the frontend guides |
 | **Forward Deployed Engineer** | Rapid prototyping across the stack • Scripting/data wrangling • Ambiguous requirements, messy environments • Stakeholder communication • Deploying into a customer's locked-down infrastructure • Increasingly, LLM/agent integration on client data | [System Design](System%20Design/) (esp. [Cross-Stack Scenarios](System%20Design/Cross_Stack_Design_Scenarios_Interview_Prep.md)) • [Tech Leadership](Tech%20Leadership/) (ambiguity, influence) • [AI Engineering](AI%20Engineering/) • [Kubernetes, Docker & Cloud](Kubernetes%2C%20Docker%20%26%20Cloud/) | [Forward-Deployed & Customer-Facing Engineering](Forward-Deployed%20%26%20Customer-Facing%20Engineering/) *(reserved)* |
 | **Staff Engineer** | Deep fundamentals across the stack • System design and trade-offs • Architecture/design judgment • Organizational leverage and leadership | Nearly everything — [Language](Language/) • [Frameworks](Frameworks/) • [Testing](Testing/) • [System Design](System%20Design/) • [Tech Leadership](Tech%20Leadership/) • [Microservices & Architecture Patterns](Microservices%20%26%20Architecture%20Patterns/) • [Kubernetes, Docker & Cloud](Kubernetes%2C%20Docker%20%26%20Cloud/) | [Design Patterns](Design%20Patterns/) *(reserved)* |
 
@@ -166,6 +166,14 @@ Lead/Staff-level judgment, influence, and organizational impact — not technolo
 
 - **[Docker & Kubernetes Interview Prep](Kubernetes%2C%20Docker%20%26%20Cloud/Kubernetes_Docker_Interview_Prep.md)** — Basic through Staff level: containers vs. VMs, image layers and multi-stage builds, namespaces/cgroups, Pods/Deployments/Services/Ingress, probes, scheduling, StatefulSets, multi-tenancy, etcd, zero-downtime rollouts, cluster security, and service mesh vs. native Kubernetes.
 
+### Frontend & Full-Stack
+
+Client-side fundamentals — the JavaScript language and runtime, plus the two frameworks most commonly asked about in Full Stack loops.
+
+- **[JavaScript Interview Prep](Frontend%20%26%20Full-Stack/JavaScript_Interview_Prep.md)** — `var`/`let`/`const` and hoisting, closures, the event loop and microtask/macrotask queues, Promises and `async`/`await`, prototypal inheritance, memory leaks, debounce vs. throttle, the V8 garbage collector, and XSS defense.
+- **[Angular Interview Prep](Frontend%20%26%20Full-Stack/Angular_Interview_Prep.md)** — Components and data binding, standalone components vs. NgModules, Signals, change detection and zoneless Angular, dependency injection, forms, RxJS interop, SSR/hydration, and state-management trade-offs.
+- **[React Interview Prep](Frontend%20%26%20Full-Stack/React_Interview_Prep.md)** — JSX and the virtual DOM, Hooks, reconciliation and Fiber, concurrent rendering, the React Compiler, Server Components, Actions, and state-management and testing trade-offs.
+
 ### Further Reading
 
 External articles, videos, and engineering-blog write-ups — not InterviewSmith's own Q&A guides, and not held to the same primary-source citation bar (see the note at the top of the list itself).
@@ -174,10 +182,9 @@ External articles, videos, and engineering-blog write-ups — not InterviewSmith
 
 ### Reserved — not yet written
 
-Each of these three folders exists today only as a placeholder README stating its planned scope — there is no guide content in them yet. They're grouped here, separately from the completed topics above, so it's unambiguous which sections you can actually read right now.
+Each of these two folders exists today only as a placeholder README stating its planned scope — there is no guide content in them yet. They're grouped here, separately from the completed topics above, so it's unambiguous which sections you can actually read right now.
 
 - **[Design Patterns](Design%20Patterns/)** — classic GoF patterns and modern applications of them in real codebases.
-- **[Frontend & Full-Stack](Frontend%20%26%20Full-Stack/)** — React/TypeScript fundamentals, browser/rendering performance, state management, and full-stack API integration concerns — the main gap for Full Stack Engineer loops.
 - **[Forward-Deployed & Customer-Facing Engineering](Forward-Deployed%20%26%20Customer-Facing%20Engineering/)** — rapid prototyping under ambiguity, scripting and data wrangling against messy client data/systems, integrating with a customer's existing infrastructure, and the specific communication/expectation-setting skills these roles are actually screened on.
 
 ## How each question is structured
