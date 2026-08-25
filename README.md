@@ -96,7 +96,7 @@ Enough time to go deep, guide by guide, in the order below — it minimizes back
 | [Kafka](System%20Design/Kafka_Interview_Prep.md) | Staff | Assumes basic messaging/pub-sub concepts. |
 | [Redis & Caching](System%20Design/Redis_Caching_Interview_Prep.md) | Staff | Assumes basic Redis commands. |
 | [REST API Design](System%20Design/REST_API_Design_Interview_Prep.md) | Staff | Assumes basic HTTP. |
-| [Microservices & Architecture Patterns](Microservices%20%26%20Architecture%20Patterns/Microservices_Architecture_Patterns_Interview_Prep.md) | Staff | Assumes Transactions, REST API Design, Redis, Kafka. |
+| [Microservices & Architecture Patterns](Microservices%20%26%20Architecture%20Patterns/Microservices_Architecture_Patterns_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. Transactions, REST API Design, Redis, and Kafka are helpful from the Intermediate section onward, not required for Basic. |
 | [Cross-Stack Design Scenarios](System%20Design/Cross_Stack_Design_Scenarios_Interview_Prep.md) | Staff | Assumes the rest of the technical guides — deliberately cross-cutting. |
 | [Kubernetes, Docker & Cloud](Kubernetes%2C%20Docker%20%26%20Cloud/Kubernetes_Docker_Interview_Prep.md) | **Beginner → Staff** | Explicitly graduated internally: Docker Basic → Staff, then Kubernetes Basic → Staff. |
 | [AI Engineering](AI%20Engineering/AI_Engineering_Interview_Prep.md) | Staff | Assumes general backend engineering; fastest-moving guide in the repo — check its "last verified" date. |

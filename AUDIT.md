@@ -40,7 +40,7 @@ what hasn't been done yet.
 | Testing | Yes | Yes | Yes | 2026-08-23 |
 | REST API Design | Yes | No | Yes | 2026-08-22 |
 | Cross-Stack Design Scenarios | Yes | No | Yes | 2026-08-22 |
-| Microservices & Architecture Patterns | Yes | No | Yes | 2026-08-22 |
+| Microservices & Architecture Patterns | Yes | No | Yes | 2026-08-24 |
 | Kubernetes, Docker & Cloud | Yes | No | Yes | 2026-08-22 |
 | AI Engineering | Yes (content changes fast — re-verify figures before relying on them) | No | Yes | 2026-08-22 |
 | Tech Leadership | Yes (behavioral content — checked for fabricated experience, not spec citations) | N/A | Yes | 2026-08-22 |
@@ -61,8 +61,8 @@ table above.
 
 ## Repository-wide counts (measured 2026-08-24)
 
-- 35 markdown files (20 Q&A guides, 1 glossary, 2 placeholder stubs, 1
-  Further Reading list, 1 question bank, 4 dated files under `audits/`,
+- 36 markdown files (20 Q&A guides, 1 glossary, 2 placeholder stubs, 1
+  Further Reading list, 1 question bank, 5 dated files under `audits/`,
   plus README/AUDIT/CONTRIBUTING/ROADMAP/LICENSE)
 - 606 numbered questions across 20 guides, plus a 200-term glossary
 - 0 broken internal links, 0 duplicate headings, 0 missing code-fence
@@ -132,6 +132,12 @@ Detailed findings, one file per audit pass:
   (Angular Router/guards, React Error Boundaries) — all fixed, plus two
   smaller consistency fixes (a `WeakMap` mention, a mixed import-style
   example).
+- `audits/2026-08-24-microservices-restructure.md` — restructured
+  Microservices & Architecture Patterns from a flat, Lead/Staff-only,
+  four-part shape into the graduated Basic → Intermediate → Staff,
+  five-part shape used by Java Collections; all 25 questions
+  re-leveled, reformatted, and re-numbered, with one broken cross-file
+  anchor link (from the Testing guide) found and fixed as a result.
 
 See `CONTRIBUTING.md` for the accuracy and citation policy new material
 is expected to meet, and `ROADMAP.md` for planned work.
