@@ -50,27 +50,27 @@ what hasn't been done yet.
 | JavaScript | Yes | Yes | Yes | 2026-08-24 |
 | Angular | Yes | No | Yes | 2026-08-24 |
 | React | Yes | No | Yes | 2026-08-24 |
+| Design Patterns | Yes | Yes | Yes | 2026-08-24 |
 
-`Design Patterns/README.md` and `Forward-Deployed & Customer-Facing
-Engineering/README.md` are placeholder stubs with no content.
-`Further Reading/System_Design_and_AI_Reading_List.md`
+`Forward-Deployed & Customer-Facing Engineering/README.md` is a
+placeholder stub with no content. `Further Reading/System_Design_and_AI_Reading_List.md`
 is an external link list, exempt from this policy by its own header.
 `System Design/System_Design_Interview_Question_Bank.md` is practice
-prompts, not worked answers. None of these four files are tracked in the
+prompts, not worked answers. None of these three files are tracked in the
 table above.
 
 ## Repository-wide counts (measured 2026-08-24)
 
-- 36 markdown files (20 Q&A guides, 1 glossary, 2 placeholder stubs, 1
-  Further Reading list, 1 question bank, 5 dated files under `audits/`,
+- 37 markdown files (21 Q&A guides, 1 glossary, 1 placeholder stub, 1
+  Further Reading list, 1 question bank, 6 dated files under `audits/`,
   plus README/AUDIT/CONTRIBUTING/ROADMAP/LICENSE)
-- 606 numbered questions across 20 guides, plus a 200-term glossary
+- 621 numbered questions across 21 guides, plus a 200-term glossary
 - 0 broken internal links, 0 duplicate headings, 0 missing code-fence
   language tags (`scripts/check_internal_links.py`,
   `scripts/check_duplicate_headings.py`, `scripts/check_code_fences.py`)
-- 2,713 external link occurrences checked, 2,689 OK, 0 errors, 24 excluded
+- 2,789 external link occurrences checked, 2,765 OK, 0 errors, 24 excluded
   (`lychee`, most recent full run 2026-08-24)
-- 20 of 20 Q&A guides have a table of contents
+- 21 of 21 Q&A guides have a table of contents
 
 ## Open findings
 
@@ -81,11 +81,11 @@ table above.
   Design Scenarios, Transactions) are tagged `text` but read as
   executable-looking code — flagged by `scripts/check_code_fences.py`,
   not yet classified.
-- 14 of 20 guides have never had their code blocks classified or executed
+- 14 of 21 guides have never had their code blocks classified or executed
   (see `ROADMAP.md`). Angular and React's blocks have been classified
   (framework-dependent partial illustrative snippets, API-checked against
   primary docs) but not compiled or executed.
-- 13 of 20 guides have not been measured or restructured for answer
+- 13 of 21 guides have not been measured or restructured for answer
   length since the original repository-wide measurement.
 
 ## Known limitations
@@ -101,11 +101,11 @@ table above.
   repository; a "Yes" there is weaker evidence of current accuracy than
   the same mark on a spec-driven guide.
 - No guide's code has been mechanically tested beyond Computer Science
-  Fundamentals, Testing, Java Collections, and JavaScript. Angular and
-  React's code blocks are TypeScript/JSX examples that assume a full
-  framework build (Angular CLI, or a bundler with a JSX transform) — they
-  were checked for correct API usage against angular.dev/react.dev, not
-  compiled or executed.
+  Fundamentals, Testing, Java Collections, JavaScript, and Design
+  Patterns. Angular and React's code blocks are TypeScript/JSX examples
+  that assume a full framework build (Angular CLI, or a bundler with a
+  JSX transform) — they were checked for correct API usage against
+  angular.dev/react.dev, not compiled or executed.
 
 ## History
 
@@ -138,6 +138,12 @@ Detailed findings, one file per audit pass:
   five-part shape used by Java Collections; all 25 questions
   re-leveled, reformatted, and re-numbered, with one broken cross-file
   anchor link (from the Testing guide) found and fixed as a result.
+- `audits/2026-08-24-design-patterns-creation.md` — creation of a new
+  guide covering 15 Gang-of-Four patterns, organized by category
+  (Creational → Structural → Behavioral) rather than graduated
+  difficulty; every one of the guide's 15 Java code examples was
+  compiled and executed, with output checked against inline comments,
+  and the placeholder stub replaced with real content.
 
 See `CONTRIBUTING.md` for the accuracy and citation policy new material
 is expected to meet, and `ROADMAP.md` for planned work.
