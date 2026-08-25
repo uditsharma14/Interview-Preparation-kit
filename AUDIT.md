@@ -55,20 +55,28 @@ what hasn't been done yet.
 `Forward-Deployed & Customer-Facing Engineering/README.md` is a
 placeholder stub with no content. `Further Reading/System_Design_and_AI_Reading_List.md`
 is an external link list, exempt from this policy by its own header.
-`System Design/System_Design_Interview_Question_Bank.md` is practice
-prompts, not worked answers. None of these three files are tracked in the
-table above.
+`System Design/System_Design_Interview_Question_Bank.md` and
+`Data Structures & Algorithms/DSA_Pattern_Based_Question_Bank.md` are
+practice-prompt/problem lists, not worked answers. None of these four
+files are tracked in the table above. The DSA question bank's ~100
+individual `leetcode.com` problem links could not be automated-link-checked
+at all (the site returns HTTP 403 to every automated fetch attempt) — see
+that file's own top-of-file note and the domain-specific exclusion added
+to `.lychee.toml`.
 
-## Repository-wide counts (measured 2026-08-24)
+## Repository-wide counts (measured 2026-08-25)
 
-- 37 markdown files (21 Q&A guides, 1 glossary, 1 placeholder stub, 1
-  Further Reading list, 1 question bank, 6 dated files under `audits/`,
+- 39 markdown files (21 Q&A guides, 1 glossary, 1 placeholder stub, 1
+  Further Reading list, 2 question banks, 7 dated files under `audits/`,
   plus README/AUDIT/CONTRIBUTING/ROADMAP/LICENSE)
-- 621 numbered questions across 21 guides, plus a 200-term glossary
+- 621 numbered questions across 21 guides, plus a 200-term glossary and a
+  100-problem, pattern-organized DSA question bank
 - 0 broken internal links, 0 duplicate headings, 0 missing code-fence
   language tags (`scripts/check_internal_links.py`,
   `scripts/check_duplicate_headings.py`, `scripts/check_code_fences.py`)
-- 2,789 external link occurrences checked, 2,765 OK, 0 errors, 24 excluded
+- 2,789 external link occurrences checked (Q&A guides only; the DSA
+  question bank's ~100 `leetcode.com` links are excluded from `lychee`
+  entirely, see above), 2,765 OK, 0 errors, 24 excluded
   (`lychee`, most recent full run 2026-08-24)
 - 21 of 21 Q&A guides have a table of contents
 
@@ -144,6 +152,15 @@ Detailed findings, one file per audit pass:
   difficulty; every one of the guide's 15 Java code examples was
   compiled and executed, with output checked against inline comments,
   and the placeholder stub replaced with real content.
+- `audits/2026-08-25-dsa-question-bank-creation.md` — creation of a new
+  Data Structures & Algorithms folder and a 100-problem, pattern-based
+  question bank (20 patterns, curated list style, no worked solutions,
+  matching the System Design Interview Question Bank's format); a bug
+  found and fixed in `scripts/check_duplicate_headings.py` (a
+  leading-digit heading like "1D Dynamic Programming" was incorrectly
+  treated as numbered-list text and collided with "2D Dynamic
+  Programming"); `leetcode.com` added to `.lychee.toml`'s exclusion list
+  since the site blocks all automated link-checking.
 
 See `CONTRIBUTING.md` for the accuracy and citation policy new material
 is expected to meet, and `ROADMAP.md` for planned work.

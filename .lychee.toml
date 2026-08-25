@@ -58,6 +58,16 @@ exclude = [
   # blocking of automated/CI traffic on these Medium-backed domains.
   "^https?://(www\\.)?netflixtechblog\\.com/?",
   "^https?://(www\\.)?instagram-engineering\\.com/?",
+  # leetcode.com returned 403 to every attempted fetch (curl with a browser
+  # user agent, and a second independent fetch tool) across ~100 distinct
+  # problem-page URLs — the same bot-blocking signature as the other
+  # entries above, not evidence any specific problem page is gone. Unlike
+  # the others, individual leetcode.com problem slugs in the DSA question
+  # bank could NOT be confirmed live one-by-one this way; they were
+  # generated mechanically from each problem's stable, well-known public
+  # title using LeetCode's own URL format. See the note at the top of
+  # `Data Structures & Algorithms/DSA_Pattern_Based_Question_Bank.md`.
+  "^https?://(www\\.)?leetcode\\.com/",
 ]
 
 # Anchors on some third-party docs sites are JS-rendered and not present in

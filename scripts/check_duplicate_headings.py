@@ -15,7 +15,7 @@ import sys
 import os
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$", re.MULTILINE)
-LEADING_NUMBER_RE = re.compile(r"^(?:q?\.?\s*)?\d+[.):]?\s*", re.IGNORECASE)
+LEADING_NUMBER_RE = re.compile(r"^(?:q?\.?\s*)?\d+(?:[.):]\s*|\s+)", re.IGNORECASE)
 FENCE_RE = re.compile(r"^```")
 
 
