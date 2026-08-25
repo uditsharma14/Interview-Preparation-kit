@@ -107,7 +107,7 @@ Most of InterviewSmith is genuinely Staff-scoped by design — see [Who this is 
 
 ## Guides by topic
 
-Organized by kind of content, not by role — use [Who this is for](#who-this-is-for) or the table above to figure out what actually matters for your loop. 12 topic areas have content today; 1 is reserved for future material, grouped at the end of this section rather than mixed in among the completed ones.
+Organized by kind of content, not by role — use [Who this is for](#who-this-is-for) or the table above to figure out what actually matters for your loop. 13 topic areas have content today; 1 is reserved for future material, grouped at the end of this section rather than mixed in among the completed ones.
 
 ### Computer Science Fundamentals
 
@@ -180,6 +180,12 @@ Client-side fundamentals — the JavaScript language and runtime, plus the two f
 - **[JavaScript Interview Prep](Frontend%20%26%20Full-Stack/JavaScript_Interview_Prep.md)** — `var`/`let`/`const` and hoisting, closures, the event loop and microtask/macrotask queues, Promises and `async`/`await`, prototypal inheritance, memory leaks, debounce vs. throttle, the V8 garbage collector, and XSS defense.
 - **[Angular Interview Prep](Frontend%20%26%20Full-Stack/Angular_Interview_Prep.md)** — Components and data binding, standalone components vs. NgModules, Signals, change detection and zoneless Angular, dependency injection, forms, RxJS interop, SSR/hydration, and state-management trade-offs.
 - **[React Interview Prep](Frontend%20%26%20Full-Stack/React_Interview_Prep.md)** — JSX and the virtual DOM, Hooks, reconciliation and Fiber, concurrent rendering, the React Compiler, Server Components, Actions, and state-management and testing trade-offs.
+
+### Data Structures & Algorithms
+
+A curated practice list, not a worked-answer guide — 100 problems organized into 20 recognizable patterns (Two Pointers, Sliding Window, Tree BFS/DFS, Dynamic Programming, and more), the same pattern-based approach popularized by "Grokking the Coding Interview" and NeetCode.
+
+- **[DSA Pattern-Based Question Bank](Data%20Structures%20%26%20Algorithms/DSA_Pattern_Based_Question_Bank.md)** — 100 problems across 20 patterns, each with a "recognize it when" signal and typical complexity, grouped into Array/String, Linked List, Interval, Tree/Graph, Searching/Heap, Combinatorial, Dynamic Programming, Greedy/Bit Manipulation, and Stack patterns.
 
 ### Further Reading
 

@@ -117,18 +117,18 @@ renumbered, which is exactly what this check exists to catch).
 - Repository-wide counts in `AUDIT.md` updated (37 → 39 files, question
   banks 1 → 2, external-link count and exclusion note updated to reflect
   the `leetcode.com` exclusion).
-- No top-level `README.md` changes were made in this pass — that
-  integration (adding the new folder/guide to "Guides by topic," "Who
-  this is for," and the difficulty table) is a natural next step but was
-  not explicitly requested and is tracked as follow-up work rather than
-  assumed.
+- Added a new "Data Structures & Algorithms" section to the top-level
+  `README.md`'s "Guides by topic" list (placed before "Further Reading"),
+  and updated the "13 topic areas have content today" count. Not added to
+  the "Difficulty by guide" table, matching the existing precedent that
+  the System Design Interview Question Bank — the other practice-prompt
+  list in the repo — isn't in that table either, since it isn't a
+  worked-answer Q&A guide with a difficulty tier in the same sense.
 
 ## Not done in this pass
 
 - No individual `leetcode.com` link was confirmed to resolve to its
   intended problem — see the citation-limitation section above.
-- The top-level `README.md` was not updated to reference the new folder
-  or guide.
 - No per-problem hints, approach notes, or code were added, per the
   user's explicit scope choice — this is deliberately a checklist, not a
   solutions manual.
