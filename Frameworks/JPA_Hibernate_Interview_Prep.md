@@ -870,7 +870,7 @@ The naive fix people reach for after hitting a `LazyInitializationException` (qu
 // gotcha, since it's the OPPOSITE of the generally-recommended default
 @Entity
 class OrderItem {
-    @ManyToOne // defaults to EAGER per spec — override explicitly, almost always:
+    // @ManyToOne defaults to EAGER per spec — override explicitly, almost always:
     @ManyToOne(fetch = FetchType.LAZY)
     Order order;
 }

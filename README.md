@@ -183,9 +183,10 @@ Client-side fundamentals — the JavaScript language and runtime, plus the two f
 
 ### Data Structures & Algorithms
 
-A curated practice list, not a worked-answer guide — 100 problems organized into 20 recognizable patterns (Two Pointers, Sliding Window, Tree BFS/DFS, Dynamic Programming, and more), the same pattern-based approach popularized by "Grokking the Coding Interview" and NeetCode.
+Curated practice lists, not worked-answer guides — one organized by 20 recognizable algorithmic patterns (Two Pointers, Sliding Window, Tree BFS/DFS, Dynamic Programming, and more), the same approach popularized by "Grokking the Coding Interview" and NeetCode; the other the well-known, minimal "Blind 75" selection, organized by data-structure category instead.
 
 - **[DSA Pattern-Based Question Bank](Data%20Structures%20%26%20Algorithms/DSA_Pattern_Based_Question_Bank.md)** — 100 problems across 20 patterns, each with a "recognize it when" signal and typical complexity, grouped into Array/String, Linked List, Interval, Tree/Graph, Searching/Heap, Combinatorial, Dynamic Programming, Greedy/Bit Manipulation, and Stack patterns.
+- **[Blind 75 Question Bank](Data%20Structures%20%26%20Algorithms/Blind_75_Question_Bank.md)** — the well-known, minimal 75-problem list, organized by data-structure category (Array, Binary, Dynamic Programming, Graph, Interval, Linked List, Matrix, String, Tree, Heap) the way it's traditionally presented.
 
 ### Further Reading
 

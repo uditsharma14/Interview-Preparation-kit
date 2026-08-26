@@ -34,9 +34,9 @@ what hasn't been done yet.
 | Java Collections | Yes | Yes | Yes | 2026-08-23 |
 | Java Concurrency | Yes | Yes | Yes | 2026-08-25 |
 | Java JVM & GC | Yes | Yes | Yes | 2026-08-25 |
-| Spring Boot Internals | Yes | No | Yes | 2026-08-23 |
-| Spring Security & OAuth2 | Yes | No | Yes | 2026-08-23 |
-| JPA & Hibernate | Yes | No | Yes | 2026-08-23 |
+| Spring Boot Internals | Yes | Yes | Yes | 2026-08-25 |
+| Spring Security & OAuth2 | Yes | Yes | Yes | 2026-08-25 |
+| JPA & Hibernate | Yes | Yes | Yes | 2026-08-25 |
 | Testing | Yes | Yes | Yes | 2026-08-23 |
 | REST API Design | Yes | No | Yes | 2026-08-22 |
 | Cross-Stack Design Scenarios | Yes | No | Yes | 2026-08-22 |
@@ -44,7 +44,7 @@ what hasn't been done yet.
 | Kubernetes, Docker & Cloud | Yes | No | Yes | 2026-08-22 |
 | AI Engineering | Yes (content changes fast — re-verify figures before relying on them) | No | Yes | 2026-08-22 |
 | Tech Leadership | Yes (behavioral content — checked for fabricated experience, not spec citations) | N/A | Yes | 2026-08-22 |
-| Kafka | Yes | No | Yes | 2026-08-23 |
+| Kafka | Yes | N/A | Yes | 2026-08-25 |
 | Redis & Caching | Yes | No | Yes | 2026-08-23 |
 | Transactions | Partial (spot-checked on major topics, not every question individually) | No | Yes | 2026-08-23 |
 | JavaScript | Yes | Yes | Yes | 2026-08-24 |
@@ -55,27 +55,32 @@ what hasn't been done yet.
 `Forward-Deployed & Customer-Facing Engineering/README.md` is a
 placeholder stub with no content. `Further Reading/System_Design_and_AI_Reading_List.md`
 is an external link list, exempt from this policy by its own header.
-`System Design/System_Design_Interview_Question_Bank.md` and
-`Data Structures & Algorithms/DSA_Pattern_Based_Question_Bank.md` are
-practice-prompt/problem lists, not worked answers. None of these four
-files are tracked in the table above. The DSA question bank's ~100
-individual `leetcode.com` problem links could not be automated-link-checked
-at all (the site returns HTTP 403 to every automated fetch attempt) — see
-that file's own top-of-file note and the domain-specific exclusion added
-to `.lychee.toml`.
+`System Design/System_Design_Interview_Question_Bank.md`,
+`Data Structures & Algorithms/DSA_Pattern_Based_Question_Bank.md`, and
+`Data Structures & Algorithms/Blind_75_Question_Bank.md` are
+practice-prompt/problem lists, not worked answers. None of these five
+files are tracked in the table above. Both DSA question banks' combined
+~175 individual `leetcode.com` problem links could not be
+automated-link-checked at all (the site returns HTTP 403 to every
+automated fetch attempt) — see each file's own top-of-file note and the
+domain-specific exclusion added to `.lychee.toml`. The Blind 75 list's
+provenance could also not be cross-checked against a single authoritative
+source (both attempted verification pages also refused automated
+fetches) — see that file's own note on this.
 
 ## Repository-wide counts (measured 2026-08-25)
 
-- 39 markdown files (21 Q&A guides, 1 glossary, 1 placeholder stub, 1
-  Further Reading list, 2 question banks, 7 dated files under `audits/`,
+- 41 markdown files (21 Q&A guides, 1 glossary, 1 placeholder stub, 1
+  Further Reading list, 3 question banks, 8 dated files under `audits/`,
   plus README/AUDIT/CONTRIBUTING/ROADMAP/LICENSE)
-- 621 numbered questions across 21 guides, plus a 200-term glossary and a
-  100-problem, pattern-organized DSA question bank
+- 621 numbered questions across 21 guides, plus a 200-term glossary, a
+  100-problem pattern-organized DSA question bank, and a 75-problem
+  Blind 75 question bank
 - 0 broken internal links, 0 duplicate headings, 0 missing code-fence
   language tags (`scripts/check_internal_links.py`,
   `scripts/check_duplicate_headings.py`, `scripts/check_code_fences.py`)
-- 2,789 external link occurrences checked (Q&A guides only; the DSA
-  question bank's ~100 `leetcode.com` links are excluded from `lychee`
+- 2,789 external link occurrences checked (Q&A guides only; both DSA
+  question banks' `leetcode.com` links are excluded from `lychee`
   entirely, see above), 2,765 OK, 0 errors, 24 excluded
   (`lychee`, most recent full run 2026-08-24)
 - 21 of 21 Q&A guides have a table of contents
@@ -89,7 +94,7 @@ to `.lychee.toml`.
   Design Scenarios, Transactions) are tagged `text` but read as
   executable-looking code — flagged by `scripts/check_code_fences.py`,
   not yet classified.
-- 14 of 21 guides have never had their code blocks classified or executed
+- 8 of 21 guides have never had their code blocks classified or executed
   (see `ROADMAP.md`). Angular and React's blocks have been classified
   (framework-dependent partial illustrative snippets, API-checked against
   primary docs) but not compiled or executed.
@@ -109,8 +114,10 @@ to `.lychee.toml`.
   repository; a "Yes" there is weaker evidence of current accuracy than
   the same mark on a spec-driven guide.
 - No guide's code has been mechanically tested beyond Computer Science
-  Fundamentals, Testing, Java Collections, JavaScript, and Design
-  Patterns. Angular and React's code blocks are TypeScript/JSX examples
+  Fundamentals, Testing, Java Collections, JavaScript, Design Patterns,
+  Java Concurrency, Java JVM & GC, Spring Boot Internals, Spring
+  Security & OAuth2, and JPA & Hibernate. Angular and React's code blocks
+  are TypeScript/JSX examples
   that assume a full framework build (Angular CLI, or a bundler with a
   JSX transform) — they were checked for correct API usage against
   angular.dev/react.dev, not compiled or executed.
@@ -161,6 +168,26 @@ Detailed findings, one file per audit pass:
   treated as numbered-list text and collided with "2D Dynamic
   Programming"); `leetcode.com` added to `.lychee.toml`'s exclusion list
   since the site blocks all automated link-checking.
+- `audits/2026-08-25-blind-75-creation.md` — added a second, separate
+  DSA question bank containing the well-known "Blind 75" selection (75
+  problems, organized by data-structure category rather than pattern);
+  provenance could not be cross-checked against a live authoritative
+  source, documented honestly in the file itself rather than presented
+  as a guaranteed-exact reproduction.
+
+- `audits/2026-08-25-jpa-hibernate-code-audit.md` — fifth guide in the
+  code-block validation rollout; classified all 50 code blocks, verified
+  six load-bearing Hibernate mechanisms (persistence-context identity and
+  dirty checking, auto-flush before a JPQL query, the N+1 query problem,
+  owning-vs-inverse-side FK persistence, `persist()`/`merge()` reference
+  semantics, and optimistic-locking conflict detection) against a real
+  Hibernate 6.4 + H2 persistence unit; found and fixed a real compile
+  error (two stacked, non-repeatable `@ManyToOne` annotations on the same
+  field in Q22).
+
+- `audits/2026-08-25-kafka-code-audit.md` — sixth guide in the code-block
+  validation rollout; the guide contains zero fenced code blocks (pure
+  prose/tables), so its code-tested status is N/A rather than a gap.
 
 See `CONTRIBUTING.md` for the accuracy and citation policy new material
 is expected to meet, and `ROADMAP.md` for planned work.

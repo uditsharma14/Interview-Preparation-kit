@@ -1149,7 +1149,7 @@ The practical implication most people get right without thinking about it: a typ
 @Service
 class StatelessOrderService { // thread-safe by construction — no mutable instance state
     private final OrderRepository repository; // final, injected once, never reassigned
-    OrderService(OrderRepository repository) { this.repository = repository; }
+    StatelessOrderService(OrderRepository repository) { this.repository = repository; }
 
     public void placeOrder(Order order) {
         repository.save(order); // local variable `order` — each thread has its own,
