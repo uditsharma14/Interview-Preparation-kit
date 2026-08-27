@@ -34,6 +34,17 @@ How to use this: each question has **the answer the way I'd actually say it out 
 - [25. How Do You Handle PII and Data Privacy When Using a Third-Party LLM API?](#25-how-do-you-handle-pii-and-data-privacy-when-using-a-third-party-llm-api)
 - [26. How Would You Version Prompts So Changes Don't Silently Break Production Behavior?](#26-how-would-you-version-prompts-so-changes-dont-silently-break-production-behavior)
 - [27. Describe a Production Incident Involving an LLM Feature and How You'd Diagnose It](#27-describe-a-production-incident-involving-an-llm-feature-and-how-youd-diagnose-it)
+- [28. What Is LangGraph, and Why Use a Graph Instead of a Simple Chain?](#28-what-is-langgraph-and-why-use-a-graph-instead-of-a-simple-chain)
+- [29. What Is Agent Memory? Short-Term vs. Long-Term?](#29-what-is-agent-memory-short-term-vs-long-term)
+- [30. How Do You Handle Tool Execution Failures Within an Agent Loop?](#30-how-do-you-handle-tool-execution-failures-within-an-agent-loop)
+- [31. What Is Offline vs. Online Evaluation, and Do You Need Both?](#31-what-is-offline-vs-online-evaluation-and-do-you-need-both)
+- [32. How Do You Build a Golden Evaluation Dataset?](#32-how-do-you-build-a-golden-evaluation-dataset)
+- [33. How Do You Measure Answer Relevance and Faithfulness Separately?](#33-how-do-you-measure-answer-relevance-and-faithfulness-separately)
+- [34. What Are Guardrails, and What's the Difference Between Input and Output Guardrails?](#34-what-are-guardrails-and-whats-the-difference-between-input-and-output-guardrails)
+- [35. How Would You Implement a Canary Rollout for a New Model Version?](#35-how-would-you-implement-a-canary-rollout-for-a-new-model-version)
+- [36. How Do You Detect Model-Quality Degradation in Production?](#36-how-do-you-detect-model-quality-degradation-in-production)
+- [37. How Would You Handle an LLM Provider Outage, and Implement Fallback Between Models?](#37-how-would-you-handle-an-llm-provider-outage-and-implement-fallback-between-models)
+- [38. How Would You Structure a Deep-Dive Discussion of Your Own AI/LLM Project?](#38-how-would-you-structure-a-deep-dive-discussion-of-your-own-aillm-project)
 - [Sources & Further Reading — Consolidated](#sources--further-reading--consolidated)
 
 <!-- /toc -->
@@ -1292,6 +1303,471 @@ I'd bring up that this incident's real lesson generalizes directly from the Redi
 
 ---
 
+## 28. What Is LangGraph, and Why Use a Graph Instead of a Simple Chain?
+
+**Answer:**
+
+"A simple chain — call the model, maybe call a tool, call the model again, return — is a fixed, linear pipeline, and it genuinely covers a large fraction of real use cases (question 13's basic agent loop). LangGraph models an agent's workflow explicitly as a **graph**: nodes are units of work (an LLM call, a tool execution, a piece of business logic), and edges define what happens next, including **conditional edges** — a routing function that inspects the current state and picks which node runs next from several options, rather than always proceeding to the same fixed next step.
+
+The concrete capability this unlocks that a linear chain structurally can't express cleanly: **cycles** — an edge can route back to an *earlier* node, which is exactly what a tool-calling agent loop actually is (call the model, execute a tool, feed the result back to the model, repeat until done, question 13) — a chain has to bolt this on as an ad hoc `while` loop wrapped around itself, while a graph represents the loop as a first-class part of its own structure. Beyond looping, a graph's explicit state and structure make **conditional branching** (different paths depending on what the model or a tool returned), **persistence/checkpointing** (saving the graph's state at each step, so a long-running or interrupted agent can resume exactly where it left off), and **human-in-the-loop** (pausing at a specific node for approval before continuing, question 16's approval-gate discussion, expressed as a structural pause in the graph rather than custom control flow) all first-class, supported capabilities rather than something built ad hoc on top of a linear pipeline."
+
+**Code:**
+
+```text
+Simple chain — fixed, linear, no natural way to express a LOOP:
+
+  [Call LLM] -> [Call Tool] -> [Call LLM again] -> [Return]
+  -- looping ("call the tool again if the model isn't done yet")
+  -- has to be hand-rolled as a while loop WRAPPED around this,
+  -- not represented in the pipeline's own structure
+
+LangGraph — an explicit graph, with CONDITIONAL EDGES and CYCLES
+as first-class structure:
+
+  [Call LLM] --(conditional edge: tool_use?)--> [Execute Tool]
+       ^                                              |
+       |                                              v
+       +---------------- (loop back) -----------------+
+       |
+       (conditional edge: done?)
+       |
+       v
+  [Return Final Answer]
+
+  -- the LOOP is part of the GRAPH's own structure, not bolted on;
+  -- a CHECKPOINTER can save state at each node, enabling pause/
+  -- resume for human-in-the-loop approval or fault recovery
+```
+
+**Follow-up:**
+
+I'd bring up that reaching for LangGraph (or an equivalent graph-based orchestration framework) is worth doing specifically once a workflow's control flow genuinely needs conditional branching, loops, or persistence across steps — for a task that's truly linear (retrieve, then generate, with no looping or branching at all), a plain chain is simpler to read, debug, and maintain, and I'd be wary of reaching for graph-based orchestration by default the same way I'd be wary of reaching for a state machine library for logic that's genuinely just sequential steps; the graph's expressiveness is worth its added structure specifically when the underlying workflow actually has the shape a graph is designed to represent. I'd also connect the checkpointing capability directly to question 16's step/cost-budget discussion — a checkpointed graph that hits its step ceiling can persist its exact state and be resumed, retried, or handed off for manual completion, rather than losing all partial progress the way an in-memory-only agent loop would on a crash or a hard timeout.
+
+**Source:** [LangChain — LangGraph](https://www.langchain.com/langgraph), [LangChain — Persistence in LangGraph](https://docs.langchain.com/oss/python/langgraph/persistence)
+
+---
+
+## 29. What Is Agent Memory? Short-Term vs. Long-Term?
+
+**Answer:**
+
+"Agent memory is how an agent retains information across steps or across separate sessions, since an LLM call itself is stateless — nothing persists between one API call and the next unless the application explicitly carries it forward. **Short-term memory** is scoped to a single task or conversation: the running history of messages, tool calls, and results within one agent execution, typically passed directly in the context window on each subsequent call (LangGraph's checkpointed state, question 28, is one concrete mechanism for this) — it doesn't need to survive beyond the current session, and it's bounded by however much of it still fits in the context window as the conversation grows.
+
+**Long-term memory** persists *across* separate sessions — facts about a user, prior conversation summaries, or task-specific knowledge the agent should remember the next time it's invoked, potentially much later and in a completely different context window. This can't simply be 'keep appending to the context' (question 2 in the LLM Fundamentals file's cost/context-window discussion makes clear why that doesn't scale) — it needs its own storage (often a database, or a vector store for semantic retrieval of relevant past information, tying directly to this file's own RAG questions) and an explicit retrieval step to pull in only the relevant subset of long-term memory for the current task, rather than the agent re-reading its entire history on every single call."
+
+**Code:**
+
+```text
+SHORT-TERM memory -- scoped to ONE task/conversation:
+
+  Turn 1: user asks X -> [message history: {user: X}]
+  Turn 2: user asks Y -> [message history: {user: X}, {assistant: ...},
+                          {user: Y}]
+  -- carried directly in the CONTEXT WINDOW, bounded by how much
+  -- fits; doesn't need to survive past this conversation
+
+LONG-TERM memory -- persists ACROSS separate sessions:
+
+  Session 1 (Monday): user mentions they're vegetarian
+    -> extracted fact stored in a separate memory store,
+       NOT just left buried in Monday's conversation transcript
+
+  Session 2 (Friday, a COMPLETELY NEW context window):
+    -> before responding, RETRIEVE relevant long-term facts
+       (e.g. via semantic search over stored facts) ->
+       "user is vegetarian" surfaces and gets included in
+       THIS session's context, even though Friday's conversation
+       never mentioned it
+```
+
+**Follow-up:**
+
+I'd bring up that long-term memory has the exact same staleness and correctness risks as any other stored data a system treats as ground truth — a fact extracted and stored in session 1 can become outdated (the user is no longer vegetarian) or simply wrong (a bad extraction), and an agent that blindly trusts stored long-term memory without any mechanism for updating or correcting it can confidently act on stale or incorrect information indefinitely, which is a genuinely easy failure mode to miss until a user is confused why the agent "remembers" something that's no longer true. I'd also mention that deciding *what* to persist to long-term memory in the first place is itself a real design problem, not automatic — extracting and storing every detail from every conversation is both an unnecessary storage/privacy cost and can pollute future retrieval with irrelevant noise (this file's own duplicate/pollution discussions in the RAG questions apply directly), so I'd treat "what's actually worth remembering long-term for this specific product" as a deliberate, scoped decision rather than a blanket "store everything" default.
+
+**Source:** [LangChain — Memory Concepts](https://docs.langchain.com/oss/python/langgraph/persistence), [Anthropic — Building Effective Agents](https://www.anthropic.com/research/building-effective-agents)
+
+---
+
+## 30. How Do You Handle Tool Execution Failures Within an Agent Loop?
+
+**Answer:**
+
+"A tool call can fail for reasons that have nothing to do with the model's reasoning — a downstream API timing out, a malformed argument the model provided (question 15's untrusted-input discipline), a transient network error, or the tool's own business logic legitimately rejecting the request (insufficient inventory, an invalid order ID). Treating every one of these identically — silently crashing the whole agent run, or blindly retrying every failure the same way — is the wrong default for both categories.
+
+My approach: **feed the failure back to the model as an observation**, the same way a successful tool result would be fed back (question 14) — a well-designed agent can often recover on its own once it knows a specific attempt failed and why, choosing a different tool, adjusting its arguments, or asking the user for clarification, rather than the application needing to hard-code recovery logic for every possible failure mode. For **transient, infrastructure-level failures** specifically (a timeout, a 503), I'd apply the same bounded-retry-with-backoff discipline as any other external call (this file's question 24, and the Cross-Stack Design Scenarios file generally) *before* surfacing the failure to the model at all — a brief network blip shouldn't derail the model's reasoning if a quick, transparent retry would have succeeded. For a **persistent** failure (the retries are exhausted, or it's clearly not a transient issue), surface it to the model as a definitive failure observation and let the agent's own step/cost budget (question 16) bound how many further attempts it makes, rather than looping indefinitely trying to work around a tool that's genuinely unavailable."
+
+**Code:**
+
+```python
+def execute_tool_with_resilience(tool_call):
+    try:
+        # transient-failure retry happens HERE, before the model
+        # ever sees a failure at all -- a brief blip shouldn't
+        # derail the agent's reasoning
+        return call_tool_with_backoff(tool_call, max_attempts=3)
+    except TransientToolError as e:
+        # retries exhausted -- surface a DEFINITIVE failure
+        # observation, not a silent crash
+        return ToolObservation(
+            success=False,
+            message=f"Tool '{tool_call.name}' failed after retries: {e}"
+        )
+    except ToolValidationError as e:
+        # NOT transient -- the model's own arguments were invalid
+        # (question 15) -- feed this back so the model can CORRECT
+        # its own arguments on the next attempt, rather than retrying
+        # the exact same invalid call
+        return ToolObservation(
+            success=False,
+            message=f"Invalid arguments: {e}. Please correct and retry."
+        )
+
+# The agent loop (question 16) continues with this observation fed
+# back as context -- the model can choose to retry differently, try
+# a different tool, or give up and inform the user, all WITHIN its
+# existing step/cost budget bounds
+```
+
+**Follow-up:**
+
+I'd bring up that distinguishing "the model gave a bad argument" from "the tool itself is unavailable" matters concretely for what the model should actually do next — feeding a validation error back invites the model to correct its own input and retry meaningfully, while feeding back "the payment service is down" after retries are exhausted should prompt the model to stop attempting that tool and either try an alternative or clearly inform the user, not keep calling the same failing tool with cosmetically different arguments hoping for a different result — and I'd make sure the failure message fed back to the model is specific enough to actually support that distinction, rather than a generic "tool call failed" that gives the model no useful signal for choosing its next action. I'd also flag that tool failures are exactly the kind of event worth logging and monitoring in aggregate (this file's question 19's evaluation discipline, and question 27's production-incident framing) — a tool with an unusually high failure rate is a concrete, actionable signal worth investigating on its own, independent of any single agent run's outcome.
+
+**Source:** [Anthropic — Tool Use](https://docs.anthropic.com/en/docs/build-with-claude/tool-use), [Anthropic — Building Effective Agents](https://www.anthropic.com/research/building-effective-agents)
+
+---
+
+## 31. What Is Offline vs. Online Evaluation, and Do You Need Both?
+
+**Answer:**
+
+"**Offline evaluation** runs against a fixed, curated dataset (question 19's eval suite) in a controlled environment, before anything ships — it's fast, repeatable, and directly comparable across changes (the same eval set, run against version A and version B, gives an apples-to-apples score difference), which is exactly what makes it suitable as a CI-gated regression check (question 22). Its limitation is equally structural: it can only ever test what's *in* the curated set, and real production traffic reliably includes inputs, edge cases, and usage patterns nobody anticipated when building that set.
+
+**Online evaluation** measures real behavior against real, live production traffic — user feedback signals (explicit ratings, implicit signals like immediate rephrasing suggesting dissatisfaction), sampled human review of actual production interactions, A/B testing a change against a live traffic split, and tracking real downstream business outcomes. Its value is exactly what offline evaluation structurally can't provide: coverage of the genuine, unanticipated long tail of real usage — but it's slower to get a signal from (needs real traffic to accumulate), and by definition means at least some real users experienced whatever behavior is being measured, unlike an offline eval which never touches a real user at all. I'd treat these as complementary layers, not alternatives — the AI Engineering file's own question 19 already frames pre-ship and post-ship evaluation this way; offline evaluation is the fast, cheap gate for known failure modes and regressions, online evaluation is how a team discovers the failure modes it didn't know to test for in the first place, and every real online-evaluation finding worth caring about should, per question 22, get folded back into the offline eval suite as a new permanent regression case."
+
+**Code:**
+
+```text
+OFFLINE evaluation:                    ONLINE evaluation:
+
+  Fixed, curated eval set                Real, live production traffic
+  Runs in CI, before shipping            Runs continuously, in production
+  Fast, cheap, fully repeatable          Slower signal, real user exposure
+  Tests KNOWN failure modes/cases        Surfaces UNANTICIPATED failure
+                                          modes real usage reveals
+  Gates a release (question 22)          Monitors a release, ongoing
+
+  -- COMPLEMENTARY, not either/or: every genuine ONLINE finding
+  -- should become a NEW case in the OFFLINE suite (question 22),
+  -- so the same failure mode is caught pre-ship next time
+```
+
+**Follow-up:**
+
+I'd bring up that a team relying on only one of these has a specific, predictable blind spot — offline-only means real production edge cases go undetected until a user actually hits one and (hopefully) reports it; online-only means every regression is discovered by real users experiencing it, with no fast, pre-ship gate catching an obvious mistake before it ships at all, which is a strictly worse position than catching it in CI. I'd frame the actual maturity signal for an LLM-application team as having a tight feedback loop *between* the two — online findings systematically feeding new offline eval cases, not two disconnected practices that happen to both exist — which is precisely the discipline question 22 already describes, applied here as the general offline/online framing it's a specific instance of.
+
+**Source:** [OpenAI Evals](https://github.com/openai/evals), [Anthropic — Empirical Evaluation](https://docs.anthropic.com/en/docs/test-and-evaluate/develop-tests)
+
+---
+
+## 32. How Do You Build a Golden Evaluation Dataset?
+
+**Answer:**
+
+"A 'golden' dataset is the labeled ground truth question 19's eval suite and this file's own retrieval-recall discussion (Vector Databases & RAG file, question 9) both depend on — a set of realistic inputs, each paired with a confirmed-correct (or at least confirmed-acceptable) expected outcome. Building one well is genuinely the expensive, effortful part of evaluation, not a formality to rush through before getting to 'the real work' of building the pipeline.
+
+My approach: **source real inputs**, not invented ones — sampled from actual production usage logs once they exist, or gathered from domain experts and realistic user-research sessions before launch; engineer-invented examples systematically skew toward cases the engineer already knows the current implementation handles well, which is exactly the wrong bias for a set meant to catch what's *not* working. **Cover the deliberate difficulty spectrum** — not just typical, easy cases, but edge cases (ambiguous phrasing, adversarial inputs, questions genuinely outside the system's scope that it should decline rather than hallucinate an answer to), since a set that's all easy cases will show misleadingly high scores that don't reflect real-world difficulty. **Label with the right rigor for the task** — an exact-match or rubric-based expected answer for tasks with a clear right answer; for open-ended generation, either careful human labeling of what a good response looks like, or an explicit, detailed rubric an LLM-as-judge (question 20) can be validated against. And **grow it continuously**, per question 22's discipline — every real production failure becomes a new permanent case, so the set's coverage compounds over time rather than staying frozen at whatever it covered on day one."
+
+**Code:**
+
+```text
+Golden dataset construction, in order of what actually matters:
+
+  1. SOURCE: real production queries (once available) or realistic
+     domain-expert-authored examples -- NOT just what the engineer
+     building the feature happened to think of
+
+  2. COVERAGE: deliberately include -- typical/easy cases, genuine
+     edge cases, adversarial/injection attempts (question 34), and
+     out-of-scope questions the system SHOULD decline to answer
+     rather than hallucinate a response to
+
+  3. LABELING: exact-match/rubric for well-defined tasks; careful
+     human labeling or a VALIDATED LLM-judge rubric (question 20)
+     for open-ended generation -- never an unvalidated judge as the
+     first and only labeling mechanism
+
+  4. GROWTH: every real production failure (question 22, question 27)
+     becomes a NEW permanent case -- the set compounds, it doesn't
+     stay frozen at its initial size
+```
+
+**Follow-up:**
+
+I'd bring up that dataset size is a much less important lever than most teams initially assume — a smaller set (50-200 cases) that's genuinely representative and well-labeled catches far more real regressions than a much larger set assembled carelessly or skewed toward easy cases, and I'd push back on treating "we need thousands of eval cases" as the priority over "we need our few hundred cases to actually reflect real difficulty and real usage." I'd also flag that a golden dataset needs periodic review for whether its labels are still actually correct, not just growth in size — a product's correct behavior can legitimately change over time (a policy update means an old 'correct' expected answer is now wrong), and an eval set with stale, no-longer-correct labels will actively penalize a model for giving the *new*, actually-correct answer, which is a real, if easy-to-overlook, source of confusing false-positive "regressions."
+
+**Source:** [OpenAI Evals](https://github.com/openai/evals), [Anthropic — Empirical Evaluation](https://docs.anthropic.com/en/docs/test-and-evaluate/develop-tests)
+
+---
+
+## 33. How Do You Measure Answer Relevance and Faithfulness Separately?
+
+**Answer:**
+
+"These measure genuinely different, independent properties of a response, and a system can score well on one while scoring poorly on the other — worth being precise about, since 'is the response good' collapses two distinct failure modes into one vague judgment that doesn't tell you which one to actually fix.
+
+**Faithfulness** measures whether a response's claims are actually supported by the retrieved context it was supposed to be grounded in (directly relevant to hallucination detection, question 21) — the Ragas framework's approach is a concrete, reusable pattern: break the response into individual factual claims, check each claim against the retrieved context, and score as the fraction of claims that are actually supported. **Answer relevance** measures something orthogonal: does the response actually address what the user asked, regardless of whether it's factually correct — a genuinely clever way to measure this without needing a labeled 'correct answer' at all is to have a model generate several plausible *questions* the given response would be answering, then measure the embedding similarity (LLM Fundamentals file, question 10) between those generated questions and the user's *actual* original question; a response that thoroughly, precisely addresses the real question should let a model reconstruct something close to that original question just from reading the response.
+
+The reason both matter independently: a response can be **relevant but not faithful** — it directly addresses the question asked, but with fabricated details not actually in the retrieved context (a confident, on-topic hallucination); or **faithful but not relevant** — every claim it makes is accurately grounded in the retrieved context, but it doesn't actually answer what the user asked (a factually correct non-answer). Measuring only one of these can hide a real, specific problem the other would have caught."
+
+**Code:**
+
+```text
+FAITHFULNESS -- are the response's CLAIMS supported by the context?
+
+  1. Break response into individual claims:
+     "Einstein was born in Germany" + "on 20th March 1879"
+  2. Check EACH claim against the retrieved context independently
+  3. Score = (claims supported by context) / (total claims)
+     e.g. context says "14 March 1879" -> date claim UNSUPPORTED
+     -> faithfulness = 1/2 = 0.5, even though the OTHER claim
+        (born in Germany) was correct
+
+ANSWER RELEVANCE -- does the response actually address the QUESTION?
+
+  1. Given the response, have an LLM generate several plausible
+     questions it would be answering
+  2. Embed those generated questions AND the user's actual question
+  3. Score = average cosine similarity between them
+     -- a response that PRECISELY answers the real question lets a
+     -- model "reconstruct" something close to that real question
+     -- just from reading the response alone
+
+A response can score HIGH on one and LOW on the other -- they are
+measuring genuinely INDEPENDENT properties, not two views of one thing
+```
+
+**Follow-up:**
+
+I'd bring up that faithfulness specifically requires the retrieved context to be part of the evaluation input, not just the final response — a metric computed purely from "is this response generally accurate" (checked against general world knowledge, say) is answering a different, less useful question than "is this response accurate *relative to what it was actually given to work with*," and conflating the two can hide a genuine retrieval failure (question 10 in this same file's RAG discussion, and the Vector Databases & RAG file's question 9) behind a response that happens to still be factually correct by coincidence or by the model's own general training knowledge, rather than because retrieval did its job. I'd also mention that both of these metrics, computed via an LLM-as-judge-style mechanism, inherit every one of question 20's LLM-as-judge pitfalls (inconsistency, rubric ambiguity) — I'd validate the automated faithfulness/relevance scores against human judgment on a sample before trusting them as a primary release gate, the exact same discipline question 20 already insists on generally.
+
+**Source:** [Ragas — Faithfulness](https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/faithfulness/), [Ragas — Response Relevancy](https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/answer_relevance/)
+
+---
+
+## 34. What Are Guardrails, and What's the Difference Between Input and Output Guardrails?
+
+**Answer:**
+
+"Guardrails are checks applied *around* the core LLM call — not part of the model's own generation, but a separate layer of validation that runs before the request reaches the model, after the response leaves it, or both — specifically to catch categories of problem the model's own behavior can't be fully trusted to self-police, echoing the general defense-in-depth framing this file already applies to hallucination (question 21) and prompt injection (question 23).
+
+**Input guardrails** run on the incoming request, before it ever reaches the model: detecting likely prompt-injection attempts (question 23), rejecting requests clearly outside the system's intended scope, or catching obviously malicious content in user input or retrieved context (a RAG document containing an embedded injection attempt, question 23's indirect-injection case). **Output guardrails** run on the model's generated response, before it's returned to the user or acted on: checking for PII leakage the redaction step should have prevented but might have missed (question 25), verifying a structured output actually conforms to the expected schema (question 5) rather than trusting the model's own compliance, screening for genuinely harmful or policy-violating content, or — tying directly to question 33 — running a faithfulness check before allowing a RAG response through at all. The key architectural point: guardrails are a checkable, independently-testable layer *outside* the model's own weights and prompt, which is exactly what makes them auditable and improvable independently of the underlying model itself."
+
+**Code:**
+
+```text
+INPUT guardrails (before the model ever sees the request):
+
+  user_input -> [Injection detector] -> [Scope classifier] ->
+  [Content safety check] -> only THEN does it reach the LLM call
+
+  -- e.g. reject/flag: "ignore previous instructions and..."
+  -- BEFORE it's ever included in a prompt at all
+
+OUTPUT guardrails (after the model generates a response):
+
+  model_response -> [Schema validator (question 5)] ->
+  [PII leak scanner (question 25)] -> [Faithfulness check
+  (question 33)] -> [Content policy check] -> only THEN returned
+  to the user or acted upon by a downstream system
+
+  -- a response FAILING any output guardrail can be REJECTED,
+  -- regenerated, or routed to a fallback -- never silently
+  -- passed through just because generation itself succeeded
+```
+
+**Follow-up:**
+
+I'd bring up that guardrails, like every other mitigation in this file's security discussion, are a defense-in-depth layer, not a provable, complete solution — a sufficiently well-crafted injection attempt or a sufficiently subtle hallucination can still slip past a specific guardrail implementation, and I'd frame guardrails as raising the bar and catching the common/known cases cheaply, not as a guarantee that removes the need for the other layered mitigations (least-privilege tools, human approval gates, monitoring) this file's questions 15-16 and 23 already cover. I'd also mention that guardrails themselves need the same evaluation discipline as the core LLM pipeline (question 19/22) — a guardrail with a high false-positive rate (blocking legitimate requests) is a real product cost, not a free safety margin, and I'd measure both a guardrail's catch rate against known-bad examples *and* its false-positive rate against known-good examples before trusting it in production, rather than assuming stricter is always better.
+
+**Source:** [OWASP — LLM Top 10](https://genai.owasp.org/llm-top-10/), [NVIDIA — NeMo Guardrails](https://github.com/NVIDIA/NeMo-Guardrails)
+
+---
+
+## 35. How Would You Implement a Canary Rollout for a New Model Version?
+
+**Answer:**
+
+"This is the LLM-specific application of the general canary-deployment pattern used for any risky change — route a small percentage of real production traffic to the new model version while the overwhelming majority continues on the current, known-good version, monitor real quality and operational signals on that small slice, and only expand further once those signals look healthy, rather than cutting every request over to a new, unproven model version all at once.
+
+Concretely: I'd start with a small traffic percentage (often single digits), monitored against both the standard operational signals (latency, error rate, cost per request — this file's question 24) *and* quality-specific signals (this file's questions 19/31 online-evaluation discipline: user feedback, sampled human review, and, where feasible, running the same eval suite's cases live against the new version's real traffic) for a defined observation window before expanding — and every request should be tagged with which model version actually served it (this file's question 26's versioning discipline, applied to the model dimension specifically, not just the prompt), so a quality regression can be precisely correlated to 'started when the canary began' rather than investigated blind. A meaningful, unexplained regression on the canary slice should block further rollout and trigger investigation, exactly like a failing CI gate would for any other code change — never something to route around by simply expanding traffic anyway and hoping it resolves itself."
+
+**Code:**
+
+```text
+Canary rollout for a new model version:
+
+  Stage 1: 5% of traffic -> new model version
+           95% of traffic -> current, known-good version
+           MONITOR: latency, error rate, cost/request (question 24),
+                    AND quality signals -- user feedback, sampled
+                    human review, live eval-suite comparison
+                    (questions 19, 31)
+
+  Stage 2 (only if Stage 1 signals are healthy): expand to 25%
+  Stage 3 (only if Stage 2 signals are healthy): expand to 100%
+
+  Every logged request tagged: {model_version: "claude-...-20260301",
+  ...} -- enables PRECISE correlation if a regression appears,
+  exactly like question 26's prompt-versioning discipline
+
+  A REGRESSION at any stage: HALT the rollout, investigate, do NOT
+  expand traffic further hoping it self-resolves
+```
+
+**Follow-up:**
+
+I'd bring up that a new model version's behavior can differ from its predecessor in ways that aren't obviously "worse" but are still meaningfully *different* — a new version might be more verbose, follow instructions slightly differently, or have different latency/cost characteristics even while scoring similarly on raw quality metrics — and I'd treat "quality score didn't regress" and "behavior didn't change in a way that matters for this specific product" as two separate questions worth checking during a canary, since a model swap that scores fine on an eval suite can still surprise users if the response *style* shifted noticeably. I'd also connect this directly to question 36's degradation-detection discussion — the canary rollout's monitoring infrastructure and the ongoing production-quality-degradation monitoring should genuinely be the same system, not two separately-built pieces of tooling, since both are answering the same underlying question ("is quality/behavior currently what we expect it to be") at different points in a model's lifecycle.
+
+**Source:** [Google SRE Workbook — Canary Releases](https://sre.google/workbook/canarying-releases/), [Anthropic — Empirical Evaluation](https://docs.anthropic.com/en/docs/test-and-evaluate/develop-tests)
+
+---
+
+## 36. How Do You Detect Model-Quality Degradation in Production?
+
+**Answer:**
+
+"Degradation can come from several genuinely different sources, and I'd monitor for each rather than relying on one generic 'quality' signal to catch everything: a **provider-side model update** (a hosted model can be updated silently behind a stable API/version string, or an explicit new version can behave subtly differently even on the same eval suite), **data drift** in what users are actually asking (the eval suite's queries no longer reflect current real usage, so a stable eval score can mask real-world degradation on the actual current query distribution), and an **upstream pipeline failure** feeding the model degraded input (the AI Engineering file's own question 27 postmortem — a RAG re-indexing job silently failing, feeding stale context to an otherwise-unchanged model, degrading effective output quality without the model itself changing at all).
+
+My approach: continuous, automated **online evaluation** (question 31) — not just the pre-ship eval suite, but the same or a similar rubric run periodically against a sample of real, live production interactions, tracked as a time series so a gradual decline (not just a sudden step-change) is visible on a dashboard rather than only discoverable once a user complains. I'd pair this with explicit **upstream health monitoring** (per question 27's systemic fix — index freshness, embedding-pipeline success rate, tool-call success rates) specifically because a quality dashboard tracking only the LLM's own output can look perfectly fine even while an upstream dependency has silently degraded the *input* the model is working from — the model can be faithfully doing exactly what it's supposed to with degraded material, which is a very different, and differently-diagnosed, problem than the model itself misbehaving."
+
+**Code:**
+
+```text
+Continuous production quality monitoring, layered:
+
+  1. SAMPLED ONLINE EVAL (question 31): periodically run the
+     eval-suite rubric (or a lighter-weight automated judge,
+     question 20) against a SAMPLE of real production
+     interactions -- tracked as a TIME SERIES, not a one-time check
+
+     quality_score_by_day = [0.91, 0.90, 0.91, 0.87, 0.83, 0.79, ...]
+     -- a GRADUAL decline like this is a strong, actionable signal,
+     -- distinguishable from normal day-to-day noise BECAUSE it's
+     -- tracked continuously, not just spot-checked occasionally
+
+  2. UPSTREAM PIPELINE HEALTH (question 27's systemic fix):
+     "time since last successful re-index," embedding-pipeline
+     success rate, tool-call success rates -- alerted on
+     INDEPENDENTLY of the model's own output quality, since a
+     degraded UPSTREAM input can look like fine model behavior
+     from the output-quality dashboard alone
+
+  3. PROVIDER-SIDE CHANGE detection: log and alert on any change
+     to the ACTUAL model version string returned by the API,
+     even for a "same" model name -- a silent provider-side update
+     is a real, recurring source of unexplained quality shifts
+```
+
+**Follow-up:**
+
+I'd bring up that distinguishing "the model got worse" from "the input the model is working from got worse" from "what users are asking changed" is the actual diagnostic skill this question is testing, and I'd walk through the concrete first steps for each: for a suspected model-side change, re-run the exact same eval-suite inputs and compare scores against the last known-good baseline; for a suspected upstream issue, check the specific pipeline health metrics from layer 2 above directly; for suspected data drift, sample recent real production queries and check whether they still resemble the eval suite's query distribution at all. I'd frame the systemic fix as making all three of these checkable quickly and independently, rather than a team having to guess at the category before even starting to investigate — exactly the diagnostic-sequence discipline the AI Engineering file's own question 27 postmortem builds toward.
+
+**Source:** [Google SRE Book — Monitoring Distributed Systems](https://sre.google/sre-book/monitoring-distributed-systems/), [Anthropic — Empirical Evaluation](https://docs.anthropic.com/en/docs/test-and-evaluate/develop-tests)
+
+---
+
+## 37. How Would You Handle an LLM Provider Outage, and Implement Fallback Between Models?
+
+**Answer:**
+
+"An LLM API is, functionally, just another external dependency with its own latency and failure characteristics (question 24 already makes this point for cost/latency tooling specifically) — the same resilience discipline the Redis and Cross-Stack Design Scenarios files apply to any external dependency applies here directly: timeouts, retries with backoff for transient failures, and a circuit breaker that stops hammering a provider that's clearly down, failing fast instead of letting requests queue up waiting on a dependency that isn't going to respond in time.
+
+Beyond that baseline resilience, the LLM-specific question is **fallback**: what does the system actually do once the primary provider/model is confirmed unavailable, not just slow. Concretely, I'd design for a small number of explicit fallback tiers, decided in advance rather than improvised during an actual outage: a **secondary model provider** (a different vendor entirely, for the highest-stakes features, accepting the real engineering cost of maintaining a second integration and prompt compatibility across two different APIs) for features where availability matters enough to justify that cost; a **smaller or different model from the same provider** as a same-vendor fallback, which is cheaper to maintain but doesn't protect against a vendor-wide outage; and, for the lowest-stakes features, a **degraded, non-LLM response** (a canned message, a simpler rule-based fallback, or gracefully informing the user the feature is temporarily unavailable) rather than forcing every feature to have a full LLM-based fallback path, which isn't always worth the engineering investment for genuinely non-critical functionality."
+
+**Code:**
+
+```python
+llm_breaker = CircuitBreaker(fail_max=5, reset_timeout=60)  # question 24's pybreaker pattern
+
+@llm_breaker
+@retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=0.2, max=2))
+def call_primary_provider(prompt):
+    return primary_client.generate(prompt, timeout=10)
+
+def call_llm_with_fallback(prompt, feature_criticality):
+    try:
+        return call_primary_provider(prompt)
+    except CircuitBreakerError:
+        # primary provider confirmed DOWN, not just slow -- fall
+        # through to the pre-decided fallback tier for THIS feature
+        if feature_criticality == "high":
+            return call_secondary_provider(prompt)  # different VENDOR
+        elif feature_criticality == "medium":
+            return call_same_vendor_smaller_model(prompt)  # cheaper,
+                                                             # same-vendor
+                                                             # fallback
+        else:
+            return degraded_non_llm_response(prompt)  # canned message
+                                                        # or graceful
+                                                        # "unavailable"
+```
+
+**Follow-up:**
+
+I'd bring up that fallback tiers need to be **decided and tested in advance**, exactly like question 20's runbook framing for RAG re-indexing failures or the Kafka/Cross-Stack files' general incident-response discipline — deciding during an actual live outage which features get which fallback, or discovering the fallback path itself has never been exercised and doesn't actually work, is exactly the wrong time to learn either of those things, and I'd advocate for periodically actually exercising the fallback path deliberately (a scheduled game-day simulating the primary provider being unreachable) rather than assuming untested fallback code works correctly the day it's actually needed. I'd also flag prompt compatibility across providers as a real, easy-to-underestimate cost of a genuine multi-vendor fallback — different providers' models can respond meaningfully differently to the same prompt (different instruction-following style, different structured-output mechanisms, question 5), so a fallback path that's never actually been evaluated against the same eval suite (question 19) used for the primary provider is an unverified assumption, not a tested safety net.
+
+**Source:** [Google SRE Workbook — Handling Overload](https://sre.google/sre-book/handling-overload/), [Resilience4j — Circuit Breaker](https://resilience4j.readme.io/docs/circuitbreaker)
+
+---
+
+## 38. How Would You Structure a Deep-Dive Discussion of Your Own AI/LLM Project?
+
+**Answer:**
+
+"I'd structure this the same way I'd prep for any Staff-level project deep-dive — as a genuine account of a real decision, its trade-offs, and its actual outcome, not a rehearsed feature summary. A strong answer for each of the specific angles an interviewer typically probes on an AI/LLM project connects directly back to the concepts this file and its companion files cover, and I'd make sure I can speak concretely, not just abstractly, to each one for my own actual project:
+
+**Why RAG (or fine-tuning, or plain prompting)?** — tie the choice back to question 3's decision framework: what specific knowledge-freshness or proprietary-data need actually drove this, not 'RAG is the standard approach.' **Why this vector database?** — the Vector Databases & RAG file's question 12 framework: what scale, existing infrastructure, and operational trade-offs actually drove the choice. **Chunking strategy and embedding model** — the Vector Databases & RAG file's questions 4 and its companion chunking discussion: what was actually tried, and what did evaluation (not intuition) show worked better. **How was retrieval quality measured?** — question 9 in the Vector Databases & RAG file: was there a real labeled eval set, or was quality assessed by eyeballing a handful of examples (an honest answer, if that's genuinely what happened, is better than an invented rigor that falls apart under a follow-up question). **How were hallucinations reduced, and how was staleness/versioning handled?** — questions 21, 8, and 26 directly. **How was sensitive information secured, and how did the system behave when the provider failed?** — questions 25 and 37. **What was monitored, what was the biggest challenge, what would be redesigned today, and how was business impact quantified?** — these are the genuinely personal parts no framework can supply; I'd prepare a real, specific, honest answer to each from my own actual experience, including the parts that didn't go well, rather than a uniformly polished narrative that reads as rehearsed."
+
+**Code:**
+
+```text
+Structure for each expected deep-dive angle -- CONNECT to the
+concrete concept, then answer with what ACTUALLY happened, not
+what sounds impressive in the abstract:
+
+  "Why RAG?"              -> question 3's framework + the ACTUAL
+                              knowledge-freshness/proprietary-data
+                              need that drove it
+  "Why this vector DB?"   -> Vector DB file question 12's framework
+                              + the ACTUAL scale/infra constraint
+  "Chunking strategy?"    -> what was TRIED, what EVAL data showed
+  "Embedding model?"      -> Vector DB file question 4's framework
+  "Retrieval quality?"    -> Vector DB file question 9 -- was there
+                              a REAL eval set, or honest ad hoc review?
+  "Hallucination
+   mitigation?"           -> question 21's layered approach, as
+                              ACTUALLY implemented
+  "Stale docs / versioning?" -> questions 8, 26 -- what ACTUALLY
+                              broke, if anything, and how it was fixed
+  "Security / PII?"       -> question 25 -- what was ACTUALLY done
+  "Provider failure?"     -> question 37 -- did this ACTUALLY happen,
+                              and what happened when it did?
+  "Biggest challenge /
+   what you'd redesign /
+   business impact?"      -> NO framework substitutes for a real,
+                              honest, specific answer here
+```
+
+**Follow-up:**
+
+> Personal example to add: describe your own AI/LLM project's actual architecture, the specific trade-offs you made at each decision point above, what genuinely went wrong at some stage, and how you measured its real business impact — a fabricated project narrative is worse than an honest, specific account of a smaller real project, and an interviewer probing a Staff-level deep-dive will generally find the seams in an invented one quickly through natural follow-up questions.
+
+I'd emphasize that the actual differentiator at Staff level isn't having worked on a more impressive-sounding project — it's the *specificity and honesty* of the trade-off reasoning at each decision point, and a candidate's willingness to describe what didn't work and what they'd do differently, which demonstrates the same judgment this whole file has been building toward throughout, applied reflectively to their own past decisions rather than a hypothetical.
+
+**Source:** (project-specific — no external citation applies; see the cross-referenced questions above and in the Vector Databases & RAG file for the underlying frameworks)
+
+---
+
 ## Sources & Further Reading — Consolidated
 
 | Topic | Link |
@@ -1334,3 +1810,12 @@ I'd bring up that this incident's real lesson generalizes directly from the Redi
 | Anthropic — Privacy at Anthropic | https://www.anthropic.com/legal/privacy |
 | OpenAI — Enterprise Privacy | https://openai.com/enterprise-privacy/ |
 | Google SRE Book — Postmortem Culture | https://sre.google/sre-book/postmortem-culture/ |
+| LangChain — LangGraph | https://www.langchain.com/langgraph |
+| LangChain — Persistence in LangGraph | https://docs.langchain.com/oss/python/langgraph/persistence |
+| Ragas — Faithfulness | https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/faithfulness/ |
+| Ragas — Response Relevancy | https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/answer_relevance/ |
+| NVIDIA — NeMo Guardrails | https://github.com/NVIDIA/NeMo-Guardrails |
+| Google SRE Workbook — Canary Releases | https://sre.google/workbook/canarying-releases/ |
+| Google SRE Book — Monitoring Distributed Systems | https://sre.google/sre-book/monitoring-distributed-systems/ |
+| Google SRE Workbook — Handling Overload | https://sre.google/sre-book/handling-overload/ |
+| Resilience4j — Circuit Breaker | https://resilience4j.readme.io/docs/circuitbreaker |

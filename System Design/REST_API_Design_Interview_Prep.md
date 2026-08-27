@@ -227,9 +227,12 @@ ResponseEntity<PaymentResult> createPayment(
         return ResponseEntity.ok(result);
     } catch (DuplicateKeyException e) {
         // a concurrent request with the SAME key won the race to insert first —
-        // fetch and return ITS result rather than double-processing
-        return ResponseEntity.status(existing.get().getStatusCode())
-            .body(idempotencyRepository.findByKey(idempotencyKey).get().getStoredResponse());
+        // re-query (the earlier `existing` is still the EMPTY lookup from
+        // before this attempt, not the winner's row) and return ITS result
+        // rather than double-processing
+        IdempotencyRecord winner = idempotencyRepository.findByKey(idempotencyKey)
+            .orElseThrow();
+        return ResponseEntity.status(winner.getStatusCode()).body(winner.getStoredResponse());
     }
 }
 ```
@@ -1133,7 +1136,8 @@ Link: <https://api.example.com/docs/migration/v1-to-v2-orders>; rel="deprecation
 ```java
 // Instrumenting ACTUAL usage before assuming anything about who's still calling it
 @GetMapping("/v1/orders/{id}")
-Order getOrderV1(@PathVariable String id, @RequestHeader("X-Api-Key") String apiKey) {
+Order getOrderV1(@PathVariable String id, @RequestHeader("X-Api-Key") String apiKey,
+        HttpServletResponse response) { // injected as a PARAMETER, not a field —
     deprecationMetrics.recordUsage("v1-orders-get", apiKey); // WHO, not just how many —
     response.setHeader("Deprecation", "true");                 // lets you actually
     response.setHeader("Sunset", "Sat, 30 Jun 2026 00:00:00 GMT"); // reach out to

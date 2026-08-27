@@ -4,28 +4,21 @@ Open, forward-looking work for InterviewSmith. Completed items are removed
 from this file rather than marked done, to keep it a task list rather than
 a changelog — see `AUDIT.md` and `audits/` for what has already happened.
 
-## Code-block validation rollout
+## Angular/React compilation
 
-Computer Science Fundamentals, Testing, and Java Collections have had every
-code block classified and every compilable/runnable block compiled and
-executed (see `audits/2026-08-23-repo-metrics-and-code-validation.md` and
-`audits/2026-08-23-java-collections-code-audit.md`). The remaining 14
-guides have not had their code blocks classified or executed.
-
-Recommended approach: one guide per change, in order of Java/SQL code
-density — Java Concurrency, Java JVM & GC, Spring Boot Internals, Spring
-Security & OAuth2, JPA & Hibernate, then the System Design guides. Each
-pass should classify every code block into one of the five categories
-(compilable example, partial illustrative snippet, pseudocode,
-configuration, shell command), compile and execute every block classified
-as compilable, and record findings in a new dated file under `audits/`.
-
-`scripts/check_code_fences.py` currently flags 4 blocks outside the
-audited guides that are tagged `text` but read as executable-looking code:
-`AI Engineering/AI_Engineering_Interview_Prep.md:668`,
-`System Design/Cross_Stack_Design_Scenarios_Interview_Prep.md:522`, and
-`System Design/Transactions_Interview_Prep.md:116` and `:153`. These need
-classification, not necessarily correction.
+Every guide's code blocks are now classified (the code-block validation
+rollout finished 2026-08-25 — see `AUDIT.md`'s History section for the
+13 dated audit files covering Java Concurrency, Java JVM & GC, Spring
+Boot Internals, Spring Security & OAuth2, JPA & Hibernate, Kafka, Redis &
+Caching, Transactions, REST API Design, Cross-Stack Design Scenarios,
+Microservices & Architecture Patterns, Kubernetes/Docker/Cloud, and AI
+Engineering). The one remaining gap: Angular and React's TypeScript/JSX
+code blocks have been classified (framework-dependent partial
+illustrative snippets, API-checked against angular.dev/react.dev) but
+never actually compiled or executed, since that requires a Node/npm
+toolchain (Angular CLI, or a bundler with a JSX/TS transform) rather than
+the JVM/Python environment the rest of this rollout used — deliberately
+deferred rather than done, per the user's explicit choice on 2026-08-25.
 
 ## Answer-length restructuring rollout
 

@@ -664,7 +664,7 @@ redisTemplate.opsForValue().set("key", "new-value"); // acknowledged as soon
 // Using WAIT explicitly, for writes that need a stronger guarantee before
 // proceeding — trades latency for confidence that at least N replicas have it
 redisTemplate.execute((RedisCallback<Long>) connection ->
-    connection.execute("WAIT", "1".getBytes(), "1000".getBytes())); // wait for
+    (Long) connection.execute("WAIT", "1".getBytes(), "1000".getBytes())); // wait for
     // at least 1 replica to acknowledge, up to 1000ms, before considering
     // this write "safe enough" to proceed on
 ```

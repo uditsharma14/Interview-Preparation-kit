@@ -30,7 +30,7 @@ what hasn't been done yet.
 | Guide | Fact-audited | Code-tested | Structure-validated | Last reviewed |
 |---|---|---|---|---|
 | Computer Science Fundamentals | Yes | Yes | Yes | 2026-08-23 |
-| Computer Science Glossary | Partial (17/200 terms) | N/A | Yes | 2026-08-23 |
+| Computer Science Glossary | Partial (17/222 terms individually source-verified; the 22-term Machine Learning Fundamentals section added 2026-08-27 is standard, uncontested ML terminology, cross-checked against the same primary sources as the LLM Fundamentals guide where they overlap, but not independently re-verified term-by-term) | N/A | Yes | 2026-08-27 |
 | Java Collections | Yes | Yes | Yes | 2026-08-23 |
 | Java Concurrency | Yes | Yes | Yes | 2026-08-25 |
 | Java JVM & GC | Yes | Yes | Yes | 2026-08-25 |
@@ -38,15 +38,18 @@ what hasn't been done yet.
 | Spring Security & OAuth2 | Yes | Yes | Yes | 2026-08-25 |
 | JPA & Hibernate | Yes | Yes | Yes | 2026-08-25 |
 | Testing | Yes | Yes | Yes | 2026-08-23 |
-| REST API Design | Yes | No | Yes | 2026-08-22 |
-| Cross-Stack Design Scenarios | Yes | No | Yes | 2026-08-22 |
-| Microservices & Architecture Patterns | Yes | No | Yes | 2026-08-24 |
-| Kubernetes, Docker & Cloud | Yes | No | Yes | 2026-08-22 |
-| AI Engineering | Yes (content changes fast — re-verify figures before relying on them) | No | Yes | 2026-08-22 |
+| REST API Design | Yes | Yes | Yes | 2026-08-25 |
+| Cross-Stack Design Scenarios | Yes | Yes | Yes | 2026-08-25 |
+| Microservices & Architecture Patterns | Yes | Yes | Yes | 2026-08-25 |
+| Kubernetes, Docker & Cloud | Yes | Yes | Yes | 2026-08-25 |
+| AI Engineering | Yes (content changes fast — re-verify figures before relying on them) | Yes | Yes | 2026-08-27 |
+| LLM Fundamentals | Yes | N/A | Yes | 2026-08-27 |
+| Vector Databases & RAG | Yes | N/A | Yes | 2026-08-27 |
+| LLM System Design | Yes | Partial (one Python block, syntax-checked only, not executed — see its scope note) | Yes | 2026-08-27 |
 | Tech Leadership | Yes (behavioral content — checked for fabricated experience, not spec citations) | N/A | Yes | 2026-08-22 |
 | Kafka | Yes | N/A | Yes | 2026-08-25 |
-| Redis & Caching | Yes | No | Yes | 2026-08-23 |
-| Transactions | Partial (spot-checked on major topics, not every question individually) | No | Yes | 2026-08-23 |
+| Redis & Caching | Yes | Yes | Yes | 2026-08-25 |
+| Transactions | Partial (spot-checked on major topics, not every question individually) | Yes | Yes | 2026-08-25 |
 | JavaScript | Yes | Yes | Yes | 2026-08-24 |
 | Angular | Yes | No | Yes | 2026-08-24 |
 | React | Yes | No | Yes | 2026-08-24 |
@@ -68,36 +71,46 @@ provenance could also not be cross-checked against a single authoritative
 source (both attempted verification pages also refused automated
 fetches) — see that file's own note on this.
 
-## Repository-wide counts (measured 2026-08-25)
+## Repository-wide counts (measured 2026-08-27)
 
-- 41 markdown files (21 Q&A guides, 1 glossary, 1 placeholder stub, 1
-  Further Reading list, 3 question banks, 8 dated files under `audits/`,
+- 57 markdown files (24 Q&A guides, 1 glossary, 1 placeholder stub, 1
+  Further Reading list, 3 question banks, 22 dated files under `audits/`,
   plus README/AUDIT/CONTRIBUTING/ROADMAP/LICENSE)
-- 621 numbered questions across 21 guides, plus a 200-term glossary, a
+- 666 numbered questions across 24 guides, plus a 222-term glossary, a
   100-problem pattern-organized DSA question bank, and a 75-problem
   Blind 75 question bank
 - 0 broken internal links, 0 duplicate headings, 0 missing code-fence
   language tags (`scripts/check_internal_links.py`,
   `scripts/check_duplicate_headings.py`, `scripts/check_code_fences.py`)
-- 2,789 external link occurrences checked (Q&A guides only; both DSA
-  question banks' `leetcode.com` links are excluded from `lychee`
-  entirely, see above), 2,765 OK, 0 errors, 24 excluded
-  (`lychee`, most recent full run 2026-08-24)
-- 21 of 21 Q&A guides have a table of contents
+- 3,221 external link occurrences checked repository-wide, 3,014 OK, 6
+  errors, 201 excluded (`lychee`, most recent full run 2026-08-27). All 6
+  errors are the same pre-existing citation
+  (`microservices.io/patterns/communication-style/idempotent-consumer.html`,
+  cited in Kafka, Transactions, and Cross-Stack Design Scenarios) —
+  confirmed via a direct `curl` that the site itself is currently
+  returning a live `503`, not a stale/dead link; unrelated to this
+  session's additions and left as-is pending the site's own recovery.
+- 24 of 24 Q&A guides have a table of contents
 
 ## Open findings
 
 - `Language/Java_Collections_Interview_Prep.md` Q22 and
   `Language/Java_JVM_GC_Interview_Prep.md` Q24 cover overlapping ground
   (heap-dump/memory-leak diagnosis) — not consolidated, low priority.
-- 4 code fences outside the audited guides (AI Engineering, Cross-Stack
-  Design Scenarios, Transactions) are tagged `text` but read as
-  executable-looking code — flagged by `scripts/check_code_fences.py`,
-  not yet classified.
-- 8 of 21 guides have never had their code blocks classified or executed
-  (see `ROADMAP.md`). Angular and React's blocks have been classified
-  (framework-dependent partial illustrative snippets, API-checked against
-  primary docs) but not compiled or executed.
+- All 4 code fences originally flagged by `scripts/check_code_fences.py`
+  as ambiguous (`text`-tagged but executable-looking) have now been
+  reviewed as part of their respective guides' 2026-08-25 code audits —
+  Transactions' two, Cross-Stack Design Scenarios' one, and AI
+  Engineering's one — and confirmed correctly tagged (narrative/
+  architecture pseudocode, or a JSON-schema comparison with one small
+  embedded, independently syntax-checked Python function), not real bugs.
+- Every guide's code blocks are now classified — the code-block
+  validation rollout finished 2026-08-25 (see the 13 dated audit files
+  in the History section below). Angular and React's blocks have been
+  classified (framework-dependent partial illustrative snippets,
+  API-checked against primary docs) but still not compiled or executed
+  — the one remaining gap, since they need a Node/npm toolchain with
+  JSX/TS support, not just a JVM/Python environment; see `ROADMAP.md`.
 - 13 of 21 guides have not been measured or restructured for answer
   length since the original repository-wide measurement.
 
@@ -113,14 +126,17 @@ fetches) — see that file's own note on this.
 - AI Engineering's content is explicitly the fastest-moving in the
   repository; a "Yes" there is weaker evidence of current accuracy than
   the same mark on a spec-driven guide.
-- No guide's code has been mechanically tested beyond Computer Science
-  Fundamentals, Testing, Java Collections, JavaScript, Design Patterns,
-  Java Concurrency, Java JVM & GC, Spring Boot Internals, Spring
-  Security & OAuth2, and JPA & Hibernate. Angular and React's code blocks
-  are TypeScript/JSX examples
+- Every guide's code has now been classified and, where compilable,
+  mechanically tested except Angular and React — see each guide's own
+  dated audit file under `audits/` for the exact scope and rigor of what
+  was checked (several guides without a live dependency available, e.g.
+  Redis & Caching without a live Redis instance and Kubernetes/Docker
+  without a live cluster, used compile-checks and schema/lint validators
+  instead of full execution — documented per guide, not a gap unique to
+  this list). Angular and React's code blocks are TypeScript/JSX examples
   that assume a full framework build (Angular CLI, or a bundler with a
   JSX transform) — they were checked for correct API usage against
-  angular.dev/react.dev, not compiled or executed.
+  angular.dev/react.dev, not compiled or executed; see `ROADMAP.md`.
 
 ## History
 
@@ -188,6 +204,70 @@ Detailed findings, one file per audit pass:
 - `audits/2026-08-25-kafka-code-audit.md` — sixth guide in the code-block
   validation rollout; the guide contains zero fenced code blocks (pure
   prose/tables), so its code-tested status is N/A rather than a gap.
+
+- `audits/2026-08-25-redis-caching-code-audit.md` — seventh guide in the
+  code-block validation rollout; no live Redis available, so verification
+  used compile-checks against the real Spring Data Redis API (12
+  snippets) plus an executed unit test for the guide's one dependency-free
+  class (`TokenBucket`, Q21); found and fixed a real compile error (Q16's
+  `WAIT`-command lambda returning `Object` where `RedisCallback<Long>`
+  requires `Long`).
+
+- `audits/2026-08-25-transactions-code-audit.md` — eighth guide in the
+  code-block validation rollout; classified all 37 code blocks; verified
+  five transaction-propagation/rollback claims (`REQUIRED` join-and-share-
+  rollback, `REQUIRES_NEW` independence, `NESTED` savepoint-scoped
+  partial rollback, and the checked-vs-unchecked default rollback rule)
+  against a real Spring `DataSourceTransactionManager` + H2; no bugs
+  found; resolved the two previously-flagged ambiguous code fences in
+  this guide as correctly-tagged diagrams, not real code.
+
+- `audits/2026-08-25-rest-api-design-code-audit.md` — ninth guide in the
+  code-block validation rollout; classified all 40 code blocks; compiled
+  6 of 9 java blocks against real Spring Web/Retry/Resilience4j APIs;
+  found and fixed two real bugs (Q5's stale-`Optional.get()` in a
+  concurrent-retry catch block, and Q25's undeclared `response` symbol).
+
+- `audits/2026-08-25-cross-stack-design-scenarios-code-audit.md` — tenth
+  guide in the code-block validation rollout; classified all 20 code
+  blocks; verified the one genuinely new API claim (Q9's
+  `KafkaListenerEndpointRegistry` pause/resume) against the real
+  `spring-kafka` API; no bugs found; resolved its one previously-flagged
+  ambiguous code fence as correctly-tagged narrative pseudocode.
+
+- `audits/2026-08-25-microservices-architecture-patterns-code-audit.md`
+  — eleventh guide in the code-block validation rollout; classified all
+  26 code blocks (25 diagrams, 1 compilable); the guide's single Java
+  block (an anti-corruption-layer `switch` expression) compiled cleanly;
+  no bugs found.
+
+- `audits/2026-08-25-kubernetes-docker-cloud-code-audit.md` — twelfth
+  guide in the code-block validation rollout, and the first with no
+  Java/application code; classified all 52 blocks; schema-validated 9
+  Kubernetes manifests with `kubeconform` and linted all 7 Dockerfiles
+  with `hadolint` (both installed for this pass); no bugs found.
+
+- `audits/2026-08-25-ai-engineering-code-audit.md` — thirteenth guide in
+  the code-block validation rollout, and the first with Python code;
+  classified all 30 blocks; verified 6 code paths against real,
+  installed third-party libraries (the `anthropic` SDK's actual type
+  definitions, real Pydantic validation, and real `pybreaker`/`tenacity`
+  circuit-breaker/retry behavior); no bugs found; resolved the guide's
+  one previously-flagged ambiguous code fence.
+
+- `audits/2026-08-27-ai-llm-content-expansion.md` — added three new
+  guides (LLM Fundamentals, Vector Databases & RAG, LLM System Design),
+  11 new questions appended to AI Engineering (Q28-38, covering
+  LangGraph/agent memory/tool-failure handling, offline/online
+  evaluation, faithfulness/relevance metrics, guardrails, canary
+  rollout, degradation detection, provider fallback, and a project-
+  deep-dive structuring question), and a 22-term Machine Learning
+  Fundamentals section in the Computer Science Glossary, in response to
+  a user-provided AI/LLM interview-question checklist; every
+  architectural/mathematical claim in the new LLM Fundamentals guide was
+  checked against its primary paper before writing; found and fixed two
+  real bugs introduced during writing (Python code mistagged as `text`,
+  one with an actual syntax error caught by `ast.parse`).
 
 See `CONTRIBUTING.md` for the accuracy and citation policy new material
 is expected to meet, and `ROADMAP.md` for planned work.

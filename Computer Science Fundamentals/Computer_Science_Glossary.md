@@ -1,6 +1,6 @@
 # Computer Science Glossary — Quick Reference
 
-> **Purpose:** a fast, scannable glossary of 200 core CS/software-engineering terms — 2–3 lines each, not full interview answers. **Last verified:** 2026-08-23.
+> **Purpose:** a fast, scannable glossary of 222 core CS/software-engineering/ML terms — 2–3 lines each, not full interview answers. **Last verified:** 2026-08-27.
 
 How to use this: this is deliberately a **glossary, not a guide** — no code, no Follow-up, no per-term citation, just a quick, accurate definition to jog your memory or fill a gap before an interview. Where a term already has real interview-depth treatment elsewhere in InterviewSmith, the entry ends with a *See:* pointer — follow it for the version-scoped, staff-level version of the same topic. Terms are grouped by theme in roughly the order a CS curriculum introduces them, not alphabetically, since related terms are easier to hold in your head together.
 
@@ -19,6 +19,7 @@ How to use this: this is deliberately a **glossary, not a guide** — no code, n
 - [Software Architecture & Engineering Practice](#software-architecture--engineering-practice)
 - [Security](#security)
 - [Distributed Systems & Infrastructure](#distributed-systems--infrastructure)
+- [Machine Learning Fundamentals](#machine-learning-fundamentals)
 
 <!-- /toc -->
 
@@ -467,5 +468,53 @@ How to use this: this is deliberately a **glossary, not a guide** — no code, n
 **Consumer** — A component that reads and processes messages/events from a message broker or queue, independent of and decoupled from whatever produced them.
 
 **Idempotent operation** — An operation that produces the same end result no matter how many times it's performed — the specific property that makes automatic retries safe. *See: [REST API Design Interview Prep](../System%20Design/REST_API_Design_Interview_Prep.md).*
+
+---
+
+## Machine Learning Fundamentals
+
+**Supervised learning** — Training a model on labeled data (input paired with the correct output), so it learns to predict the output for new, unseen inputs — classification (predicting a category) and regression (predicting a number) are the two main supervised task types.
+
+**Unsupervised learning** — Training a model on unlabeled data, looking for structure (clusters, patterns) in the data itself rather than predicting a known correct answer — clustering and dimensionality reduction are the classic examples.
+
+**Training set** — The portion of a dataset a model's parameters are actually fit to during training — the data the model directly learns from.
+
+**Validation set** — A separate portion of data, held out from training, used to tune a model's hyperparameters and check its performance *during* development — since it's not used for training, it gives an honest read on generalization, but repeated tuning against it can still indirectly overfit to it.
+
+**Test set** — A final, held-out portion of data touched only once, after all training and tuning is complete, to report a model's true, unbiased performance — using it for any tuning decision defeats its purpose.
+
+**Overfitting** — A model that has learned the training data's noise and specific quirks rather than the underlying general pattern — it performs well on training data but poorly on new, unseen data.
+
+**Underfitting** — A model too simple (or undertrained) to capture the underlying pattern in the data at all — it performs poorly on both training and new data.
+
+**Bias-variance trade-off** — Bias is error from a model being too simple to capture the true pattern (underfitting); variance is error from a model being too sensitive to the specific training data it saw (overfitting) — reducing one typically increases the other, and the practical goal is the best balance for a given task, not minimizing either alone.
+
+**Precision** — Of everything a model *predicted* as positive, the fraction that was actually positive — `TP / (TP + FP)`. High precision means few false alarms.
+
+**Recall** — Of everything that was *actually* positive, the fraction the model correctly identified — `TP / (TP + FN)`. High recall means few missed positives. *See: [Vector Databases & RAG Interview Prep](../AI%20Engineering/Vector_Databases_and_RAG_Interview_Prep.md#9-what-is-retrieval-recall-and-how-do-you-measure-it) for this same metric applied to retrieval specifically.*
+
+**F1 score** — The harmonic mean of precision and recall, `2 × (precision × recall) / (precision + recall)` — a single number balancing both, useful when neither false positives nor false negatives alone tell the whole story and a simple average would be misleadingly dominated by whichever metric is higher.
+
+**ROC-AUC** — The Area Under the Receiver Operating Characteristic curve, which plots a binary classifier's true-positive rate against its false-positive rate across every possible decision threshold — an AUC of 1.0 is a perfect classifier, 0.5 is no better than random guessing, and it measures a model's overall ability to rank positives above negatives, independent of any one specific threshold choice.
+
+**Gradient descent** — The core optimization algorithm behind training most machine learning models: repeatedly compute how a small change in each parameter would affect the loss (the gradient), then adjust every parameter a small step in the direction that reduces loss, until the loss stops meaningfully improving.
+
+**Learning rate** — How large a step gradient descent takes on each update — too high and training can overshoot and never converge (or diverge outright); too low and training converges correctly but impractically slowly.
+
+**Backpropagation** — The algorithm that efficiently computes the gradient (needed for gradient descent) for *every* parameter in a neural network, by applying the chain rule backward from the output layer's error through each preceding layer — without it, computing each parameter's individual contribution to the error would be computationally intractable for a network with many layers.
+
+**Activation function** — A non-linear function applied to a neural network layer's output (ReLU, sigmoid, softmax) — without one, stacking multiple layers would be mathematically equivalent to a single linear layer, no matter how many layers were stacked, since a composition of purely linear functions is itself just another linear function.
+
+**CNN** (Convolutional Neural Network) — A network architecture built around convolutional layers that slide a small learned filter across an input, making it especially effective for spatially-structured data like images, where the same local pattern (an edge, a texture) can appear anywhere in the input.
+
+**RNN / LSTM** (Recurrent Neural Network / Long Short-Term Memory) — Architectures designed for sequential data, processing one element at a time while carrying a hidden state forward — LSTMs add explicit gating mechanisms specifically to help preserve information over longer sequences than a plain RNN can reliably manage. Largely superseded by the Transformer architecture for language tasks. *See: [LLM Fundamentals Interview Prep](../AI%20Engineering/LLM_Fundamentals_Interview_Prep.md#2-what-is-self-attention-and-what-problem-does-it-solve) for exactly why — RNNs process sequentially (slow to train, struggles with long-range dependencies) while self-attention connects any two positions directly and computes in parallel.*
+
+**Cross-entropy loss** — The standard loss function for classification tasks (including next-token prediction in a language model) — it measures how different a model's predicted probability distribution is from the true distribution, penalizing a confident wrong prediction far more heavily than an unconfident one.
+
+**Regularization** — Any technique that discourages a model from overfitting by penalizing excessive complexity — L1/L2 penalties on parameter magnitudes, and techniques like dropout below, are all forms of regularization.
+
+**Batch normalization** — Normalizing a layer's inputs (to zero mean, unit variance) across each training batch before they reach the next layer — stabilizes and speeds up training by keeping the scale of values flowing through the network consistent as parameters update.
+
+**Dropout** — A regularization technique that randomly disables (zeroes out) a fraction of a layer's neurons during each training step — prevents the network from becoming overly reliant on any single neuron or narrow co-adapted group of them, encouraging more robust, redundant representations.
 
 **Distributed transaction** — A transaction spanning multiple database nodes or systems — whether genuinely separate databases or shards of one distributed database — that must all commit or all roll back together. Genuinely hard to achieve reliably (classic two-phase commit has its own failure modes), which is exactly why patterns like the saga and the transactional outbox exist as alternatives. *See: [Transactions Interview Prep](../System%20Design/Transactions_Interview_Prep.md).*
