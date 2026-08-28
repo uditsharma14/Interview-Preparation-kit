@@ -42,11 +42,11 @@ How to use this: each question has a **Core answer** (100–180 words, the versi
 
 **Core answer:**
 
-"`var` is function-scoped (or global-scoped if declared outside a function) and is hoisted with its value initialized to `undefined`, which is exactly why you can reference a `var` before its declaration line without an error — you just get `undefined` instead of the real value. `let` and `const` are block-scoped instead — confined to the nearest `{}`, including a bare block, an `if`, or a `for` loop — and while they're also hoisted, they sit in a 'temporal dead zone' until their declaration actually runs, so accessing one before that line throws a `ReferenceError` instead of silently giving `undefined`. `const` additionally prevents reassignment of the binding itself — the variable can't be pointed at a new value — but that says nothing about the value's own mutability: a `const` array or object can still have its contents changed freely."
+"`var` is function-scoped (or global-scoped if declared outside a function) and is hoisted with its value initialized to `undefined`. That's exactly why you can reference a `var` before its declaration line without an error — you just get `undefined` instead of the real value. `let` and `const` are block-scoped instead — confined to the nearest `{}`, including a bare block, an `if`, or a `for` loop. They're also hoisted, but they sit in a 'temporal dead zone' until their declaration actually runs, so accessing one before that line throws a `ReferenceError` instead of silently giving `undefined`. `const` additionally prevents reassignment of the binding itself — the variable can't be pointed at a new value — but that says nothing about the value's own mutability: a `const` array or object can still have its contents changed freely."
 
 **Staff-level extension:**
 
-The practical default worth stating explicitly: reach for `const` first, `let` only when a binding genuinely needs reassignment, and treat `var` as legacy syntax with essentially no reason to write it in new code. The function-scoping vs. block-scoping distinction is what actually causes the classic "loop variable captured by closure" bug: a `var` in a `for` loop is one shared binding across every iteration, so callbacks registered inside the loop all close over the same final value; a `let` creates a fresh binding per iteration, which is why switching `var` to `let` is often the entire fix for that bug, not a stylistic preference.
+The practical default: reach for `const` first, `let` only when a binding actually needs reassignment, and treat `var` as legacy syntax with essentially no reason to write it in new code. The function-scoping vs. block-scoping distinction is what actually causes the classic "loop variable captured by closure" bug: a `var` in a `for` loop is one shared binding across every iteration, so callbacks registered inside the loop all close over the same final value. A `let` creates a fresh binding per iteration, which is why switching `var` to `let` is often the entire fix for that bug, not a stylistic preference.
 
 **Example:**
 
@@ -82,7 +82,7 @@ console.log(arr);  // [1, 2, 3, 4]
 
 **Staff-level extension:**
 
-The detail worth being precise about in a Staff-level answer: hoisting isn't literally moving code to the top of the file — it's that the engine builds the scope's variable/function bindings during a compilation phase before execution, so the *effect* looks like the declaration moved, without anything actually being rearranged in source order. Function expressions and arrow functions assigned to a `var`/`let`/`const` are not hoisted the way function declarations are — only the variable binding is hoisted, following that binding's own hoisting rules, while the function value itself is only assigned when that line executes.
+A detail worth getting right in a Staff-level answer: hoisting isn't literally moving code to the top of the file. The engine builds the scope's variable/function bindings during a compilation phase before execution, so the *effect* looks like the declaration moved, without anything actually being rearranged in source order. Function expressions and arrow functions assigned to a `var`/`let`/`const` aren't hoisted the way function declarations are — only the variable binding is hoisted, following that binding's own hoisting rules, while the function value itself is only assigned when that line executes.
 
 **Example:**
 
@@ -110,11 +110,11 @@ var sayBye = function () { console.log("bye"); };
 
 **Core answer:**
 
-"`===` is strict equality: it compares both value and type, with no conversion — `5 === "5"` is `false`, since one's a number and the other's a string. `==` is loose equality: if the two operands are different types, it applies a documented set of coercion rules before comparing — `5 == "5"` is `true`, because the string gets coerced to a number first. The coercion rules for `==` are genuinely specified and consistent, not random, but they're specific enough (how `null`/`undefined`/booleans/objects each coerce) that most style guides, and the language's own idiomatic advice, recommend defaulting to `===` and only reaching for `==` in the couple of narrow cases where the coercion is exactly what you want."
+"`===` is strict equality: it compares both value and type, with no conversion — `5 === "5"` is `false`, since one's a number and the other's a string. `==` is loose equality: if the two operands are different types, it applies a documented set of coercion rules before comparing — `5 == "5"` is `true`, because the string gets coerced to a number first. The coercion rules for `==` are specified and consistent, not random, but they're specific enough (how `null`/`undefined`/booleans/objects each coerce) that most style guides, and the language's own idiomatic advice, recommend defaulting to `===` and only reaching for `==` in the couple of narrow cases where the coercion is exactly what you want."
 
 **Staff-level extension:**
 
-The one broadly-accepted exception worth naming explicitly: `value == null` is a common, deliberate idiom for checking "is this `null` or `undefined`" in one comparison, since `null == undefined` is `true` under `==`'s coercion rules, while `null === undefined` is `false`. Outside that specific idiom, unexplained `==` in a code review is worth asking about, since the coercion table has enough surprising entries (`"" == 0` is `true`, `[] == false` is `true`) that relying on it correctly, rather than accidentally, is a real skill most people don't have memorized.
+The one broadly-accepted exception worth naming: `value == null` is a common, deliberate idiom for checking "is this `null` or `undefined`" in one comparison, since `null == undefined` is `true` under `==`'s coercion rules, while `null === undefined` is `false`. Outside that specific idiom, unexplained `==` in a code review is worth asking about — the coercion table has enough surprising entries (`"" == 0` is `true`, `[] == false` is `true`) that relying on it correctly, rather than accidentally, is a real skill most people don't have memorized.
 
 **Example:**
 
@@ -146,7 +146,7 @@ null == undefined;  // true — the one common, deliberate use of ==
 
 **Staff-level extension:**
 
-That last point is worth stating precisely, since "pass by reference" is the wrong way to describe it and trips people up: JavaScript is always pass-by-value, including for objects — what's passed is a copy of the reference (the memory address), not the object itself. That's why reassigning the parameter inside a function (`param = {}`) never affects the caller's variable, but mutating a property on it (`param.x = 1`) does, since both the caller's variable and the parameter still point at the same underlying object.
+That last point is worth stating carefully, since "pass by reference" is the wrong way to describe it and trips people up: JavaScript is always pass-by-value, including for objects — what's passed is a copy of the reference (the memory address), not the object itself. That's why reassigning the parameter inside a function (`param = {}`) never affects the caller's variable, but mutating a property on it (`param.x = 1`) does, since both the caller's variable and the parameter still point at the same underlying object.
 
 **Example:**
 
@@ -219,7 +219,7 @@ greet();                 // undefined — no argument supplied
 
 **Staff-level extension:**
 
-This is precisely why arrow functions are the wrong choice for object methods and class fields that need dynamic `this`: a `{ value: 1, getValue: () => this.value }` object's `getValue` doesn't bind `this` to the object at all — it inherits `this` from whatever scope the object literal itself was written in, which is almost never what's intended. The rule of thumb worth stating directly: use a regular function (or method shorthand) when `this` should depend on the call site, and an arrow function specifically when you want `this` to stay fixed to the surrounding context regardless of how the function gets invoked later.
+This is exactly why arrow functions are the wrong choice for object methods and class fields that need dynamic `this`: a `{ value: 1, getValue: () => this.value }` object's `getValue` doesn't bind `this` to the object at all. It inherits `this` from whatever scope the object literal itself was written in, which is almost never what's intended. The rule of thumb: use a regular function (or method shorthand) when `this` should depend on the call site, and an arrow function specifically when you want `this` to stay fixed to the surrounding context regardless of how the function gets invoked later.
 
 **Example:**
 
@@ -256,11 +256,11 @@ const obj = {
 
 **Core answer:**
 
-"A closure is a function bundled together with references to the variables from its enclosing scope, such that the function keeps access to those variables even after the outer function that created them has already returned. In JavaScript this happens automatically, every time — any function defined inside another function closes over its parent's variables by default, not as an opt-in feature. The practical uses are genuinely common: private state (a counter whose internal value can't be touched except through the functions returned alongside it), function factories (a function that returns a customized function, like `makeMultiplier(3)` returning a function that always multiplies by 3), and memoization or caching, where a closure holds onto a cache object across calls."
+"A closure is a function bundled together with references to the variables from its enclosing scope, such that the function keeps access to those variables even after the outer function that created them has already returned. In JavaScript this happens automatically, every time — any function defined inside another function closes over its parent's variables by default, not as an opt-in feature. The practical uses are common: private state (a counter whose internal value can't be touched except through the functions returned alongside it), function factories (a function that returns a customized function, like `makeMultiplier(3)` returning a function that always multiplies by 3), and memoization or caching, where a closure holds onto a cache object across calls."
 
 **Staff-level extension:**
 
-The precise mechanism worth being able to explain, not just the definition: a closure doesn't copy the outer variables at the time the inner function is created — it keeps a live reference to the actual variable binding, so if the outer variable changes after the closure is created, the closure sees the updated value, not a snapshot. This is exactly the mechanism behind the classic `var`-in-a-loop bug from the `let`/`var` question earlier in this guide: every closure created in that loop shares the same live `i` binding, so they all eventually see its final value, not the value at the time each closure was created.
+The mechanism worth being able to explain, not just the definition: a closure doesn't copy the outer variables at the time the inner function is created — it keeps a live reference to the actual variable binding. If the outer variable changes after the closure is created, the closure sees the updated value, not a snapshot. This is exactly the mechanism behind the classic `var`-in-a-loop bug from the `let`/`var` question earlier in this guide: every closure created in that loop shares the same live `i` binding, so they all eventually see its final value, not the value at the time each closure was created.
 
 **Example:**
 
@@ -277,7 +277,7 @@ const counter = makeCounter();
 counter.increment();
 counter.increment();
 console.log(counter.getValue()); // 2
-console.log(counter.count);      // undefined — genuinely private, not just a naming convention
+console.log(counter.count);      // undefined — actually private, not just a naming convention
 
 function makeMultiplier(factor) {
   return (n) => n * factor; // closes over `factor`
@@ -303,7 +303,7 @@ console.log(triple(7)); // 21
 
 **Staff-level extension:**
 
-The detail that separates a surface-level answer from a precise one: there isn't just one queue. The distinction between the microtask queue (Promises, `queueMicrotask`) and the macrotask/task queue (`setTimeout`, DOM events, I/O callbacks) — and the fact that the *entire* microtask queue drains completely before the event loop picks even one macrotask — is covered in depth in the next Staff-level question in this guide, since it's exactly the kind of ordering detail that separates knowing the event loop exists from being able to predict real output.
+The detail that separates a surface-level answer from a solid one: there isn't just one queue. The distinction between the microtask queue (Promises, `queueMicrotask`) and the macrotask/task queue (`setTimeout`, DOM events, I/O callbacks) — and the fact that the *entire* microtask queue drains completely before the event loop picks even one macrotask — is covered in depth in the next Staff-level question in this guide, since it's exactly the kind of ordering detail that separates knowing the event loop exists from being able to predict real output.
 
 **Example:**
 
@@ -331,11 +331,11 @@ console.log("2: synchronous");
 
 **Core answer:**
 
-"A Promise represents a value that isn't available yet but will be, eventually — it's in one of three states: pending, fulfilled (with a value), or rejected (with a reason), and once it settles into fulfilled or rejected it stays that way permanently. `.then()`/`.catch()` are how you register callbacks to run once it settles. `async`/`await` is syntax built directly on top of Promises, not a separate mechanism — an `async` function always returns a Promise, and `await` inside it pauses that function's execution until the awaited Promise settles, then either returns the resolved value or throws the rejection as a catchable exception. It's genuinely just syntactic sugar: anything written with `await` can be rewritten with `.then()` chains, but `async`/`await` reads like synchronous code, which is exactly why it displaced `.then()` chains as the default style for anything beyond a single async step."
+"A Promise represents a value that isn't available yet but will be, eventually — it's in one of three states: pending, fulfilled (with a value), or rejected (with a reason), and once it settles into fulfilled or rejected it stays that way permanently. `.then()`/`.catch()` are how you register callbacks to run once it settles. `async`/`await` is syntax built directly on top of Promises, not a separate mechanism — an `async` function always returns a Promise, and `await` inside it pauses that function's execution until the awaited Promise settles, then either returns the resolved value or throws the rejection as a catchable exception. It's really just syntactic sugar: anything written with `await` can be rewritten with `.then()` chains, but `async`/`await` reads like synchronous code, which is exactly why it displaced `.then()` chains as the default style for anything beyond a single async step."
 
 **Staff-level extension:**
 
-The precise mechanical point worth stating: `await` doesn't block the thread — it suspends the `async` function's own execution and yields control back to the event loop, letting other code run while the awaited Promise is still pending, and resumes the function, via the microtask queue, once it settles. A common real mistake worth naming: awaiting Promises sequentially in a loop when they're actually independent (`for (const url of urls) { await fetch(url); }`) serializes work that could run concurrently — `Promise.all(urls.map(url => fetch(url)))` starts every request at once and is the fix when the requests genuinely don't depend on each other's results.
+The mechanical point worth stating: `await` doesn't block the thread. It suspends the `async` function's own execution and yields control back to the event loop, letting other code run while the awaited Promise is still pending, then resumes the function, via the microtask queue, once it settles. A common real mistake: awaiting Promises sequentially in a loop when they're actually independent (`for (const url of urls) { await fetch(url); }`) serializes work that could run concurrently. `Promise.all(urls.map(url => fetch(url)))` starts every request at once and is the fix when the requests don't depend on each other's results.
 
 **Example:**
 
@@ -380,7 +380,7 @@ async function concurrent(ids) {
 
 **Staff-level extension:**
 
-The thing worth stating precisely to show real understanding, not just familiarity with the `class` keyword: methods defined in a `class` body live on the prototype, shared by every instance, while properties assigned in the constructor (or as class fields) live on the instance itself — which is why `instance.hasOwnProperty('method')` is `false` but `instance.method()` still works, resolved via the prototype chain. This also explains a genuinely common performance/behavior distinction: adding a method to `Array.prototype` affects every array in the entire program, since they all share that one prototype object through the chain — which is exactly why extending built-in prototypes is broadly discouraged, despite technically working.
+Worth stating clearly, to show real understanding rather than just familiarity with the `class` keyword: methods defined in a `class` body live on the prototype, shared by every instance, while properties assigned in the constructor (or as class fields) live on the instance itself. That's why `instance.hasOwnProperty('method')` is `false` but `instance.method()` still works, resolved via the prototype chain. This also explains a common gotcha: adding a method to `Array.prototype` affects every array in the entire program, since they all share that one prototype object through the chain — exactly why extending built-in prototypes is broadly discouraged, despite technically working.
 
 **Example:**
 
@@ -409,7 +409,7 @@ class DogClass extends AnimalClass {
 
 **Follow-up questions:**
 
-- *"What does `Object.create(null)` give you that a plain `{}` doesn't?"* — An object with no prototype at all — no inherited `toString`, `hasOwnProperty`, etc. — useful as a genuinely clean dictionary/map when inherited properties could collide with real data keys.
+- *"What does `Object.create(null)` give you that a plain `{}` doesn't?"* — An object with no prototype at all — no inherited `toString`, `hasOwnProperty`, etc. — useful as a truly clean dictionary/map when inherited properties could collide with real data keys.
 - *"Why is modifying a built-in prototype like `Array.prototype` risky?"* — It affects every array in the entire program, including ones from third-party libraries that may not expect the new property, and a future spec-added method with the same name would silently override yours.
 
 **Sources:** [MDN — Inheritance and the prototype chain](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Inheritance_and_the_prototype_chain)
@@ -424,7 +424,7 @@ class DogClass extends AnimalClass {
 
 **Staff-level extension:**
 
-The precise distinction worth stating explicitly in a Staff-level answer: `call`/`apply` are for a one-off invocation with a borrowed `this` — a classic use is invoking `Array.prototype.slice.call(arrayLikeObject)` to convert an array-like object (like the old `arguments` object) into a real array — while `bind` is for producing a reusable, pre-configured function, commonly to preserve `this` for a callback that will be invoked later by something else (an event handler, a `setTimeout`), the same problem arrow functions solve lexically instead. Once a function's `this` has been `bind`-locked, calling `.call()` or `.apply()` on the resulting bound function to try to override `this` again has no effect — the binding, once set via `bind`, cannot be overridden a second time.
+The distinction worth stating clearly in a Staff-level answer: `call`/`apply` are for a one-off invocation with a borrowed `this` — a classic use is invoking `Array.prototype.slice.call(arrayLikeObject)` to convert an array-like object (like the old `arguments` object) into a real array. `bind` is for producing a reusable, pre-configured function, commonly to preserve `this` for a callback that will be invoked later by something else (an event handler, a `setTimeout`) — the same problem arrow functions solve lexically instead. Once a function's `this` has been `bind`-locked, calling `.call()` or `.apply()` on the resulting bound function to try to override `this` again has no effect — the binding, once set via `bind`, cannot be overridden a second time.
 
 **Example:**
 
@@ -459,7 +459,7 @@ boundIntroduce.call(other, "Hey"); // still "Hey, I'm Alex" — bind's `this` ca
 
 **Staff-level extension:**
 
-`reduce()` is worth understanding as the genuinely general-purpose tool underneath the other two — `map()` and `filter()` can each be implemented in terms of `reduce()`, since folding into an accumulator is expressive enough to build up any output shape, including another array. That said, reaching for `reduce()` when a simpler `map()` or `filter()` would express the same intent more directly is a real, common readability regression — the practical guidance is to use the most specific method that expresses what's actually happening, and reserve `reduce()` for genuinely aggregate operations (a sum, a grouped object, a single combined value) rather than using it as a universal hammer.
+`reduce()` is worth understanding as the general-purpose tool underneath the other two — `map()` and `filter()` can each be implemented in terms of `reduce()`, since folding into an accumulator is expressive enough to build up any output shape, including another array. That said, reaching for `reduce()` when a simpler `map()` or `filter()` would express the same intent more directly is a real, common readability regression. The practical guidance is to use the most specific method that expresses what's actually happening, and reserve `reduce()` for genuinely aggregate operations (a sum, a grouped object, a single combined value) rather than using it as a universal hammer.
 
 **Example:**
 
@@ -473,7 +473,7 @@ const sum = nums.reduce((acc, n) => acc + n, 0); // 15
 // map() implemented via reduce(), to show reduce()'s generality:
 const doubledViaReduce = nums.reduce((acc, n) => { acc.push(n * 2); return acc; }, []);
 
-// A genuinely aggregate use reduce() is well-suited for, that map/filter can't express directly:
+// A true aggregate use reduce() is well-suited for, that map/filter can't express directly:
 const grouped = nums.reduce((acc, n) => {
   const key = n % 2 === 0 ? "even" : "odd";
   (acc[key] ??= []).push(n);
@@ -484,7 +484,7 @@ const grouped = nums.reduce((acc, n) => {
 **Follow-up questions:**
 
 - *"Do `map`/`filter`/`reduce` mutate the original array?"* — No — all three read the original and return a new array or value; the source array is untouched (though the callback itself could mutate elements if they're objects, which is a separate concern from the method itself).
-- *"When would a plain `for` loop still be the better choice?"* — When you need to break out early (`map`/`filter`/`reduce` always run to completion) or when the performance-critical hot path genuinely benefits from avoiding the per-call callback overhead — both real but comparatively rare in typical application code.
+- *"When would a plain `for` loop still be the better choice?"* — When you need to break out early (`map`/`filter`/`reduce` always run to completion) or when a performance-critical hot path actually benefits from avoiding the per-call callback overhead — both real but comparatively rare in typical application code.
 
 **Sources:** [MDN — `Array.prototype.map()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map), [MDN — `Array.prototype.filter()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter), [MDN — `Array.prototype.reduce()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce)
 
@@ -500,7 +500,7 @@ const grouped = nums.reduce((acc, n) => {
 
 **Staff-level extension:**
 
-This ordering is a genuine, common source of subtle bugs when code assumes `setTimeout(fn, 0)` and a resolved Promise's `.then()` are interchangeable ways to "defer to the next tick" — they are not interchangeable, since a chain of Promise callbacks that keeps scheduling more microtasks can starve macrotasks (including rendering) indefinitely, a real, documented pathological case. The practical mental model worth stating explicitly: after every single macrotask, the engine drains microtasks completely before doing anything else, including a rendering pass — which is also why a burst of synchronous-looking Promise chaining can visibly block the UI even though no individual operation looks like a long-running loop.
+This ordering is a genuine, common source of subtle bugs when code assumes `setTimeout(fn, 0)` and a resolved Promise's `.then()` are interchangeable ways to "defer to the next tick." They are not interchangeable: a chain of Promise callbacks that keeps scheduling more microtasks can starve macrotasks (including rendering) indefinitely — a real, documented pathological case. The practical mental model: after every single macrotask, the engine drains microtasks completely before doing anything else, including a rendering pass. That's also why a burst of synchronous-looking Promise chaining can visibly block the UI even though no individual operation looks like a long-running loop.
 
 **Example:**
 
@@ -535,7 +535,7 @@ console.log("2: sync");
 
 **Staff-level extension:**
 
-The genuinely subtle version of this worth naming for a Staff-level answer: a closure that only uses one small variable from its enclosing scope can still, in some engine implementations, keep the *entire* enclosing scope's variables alive, not just the one it references, since the scope is captured as a whole. Detached DOM nodes are the other classic instance of the same underlying pattern — a JavaScript reference (often via a closure) held onto a DOM element that's since been removed from the document keeps that entire node, and everything it once referenced, from being collected, which is exactly why "detached DOM tree" is one of the most common leak categories a heap snapshot in browser DevTools surfaces in practice. `WeakMap` and `WeakSet` exist specifically to sidestep this class of leak for a cache keyed by object identity: an entry keyed by a `WeakMap` doesn't count as a reference for garbage-collection purposes, so a cache built on `WeakMap` never keeps its keys (or their values) alive on its own — the moment nothing else references a given key object, that entry is eligible for collection automatically, with no manual cache-eviction logic needed at all.
+A subtler version of this worth naming for a Staff-level answer: a closure that only uses one small variable from its enclosing scope can still, in some engine implementations, keep the *entire* enclosing scope's variables alive, not just the one it references, since the scope is captured as a whole. Detached DOM nodes are the other classic instance of the same underlying pattern — a JavaScript reference (often via a closure) held onto a DOM element that's since been removed from the document keeps that entire node, and everything it once referenced, from being collected. That's exactly why "detached DOM tree" is one of the most common leak categories a heap snapshot in browser DevTools surfaces in practice. `WeakMap` and `WeakSet` exist specifically to sidestep this class of leak for a cache keyed by object identity: an entry keyed by a `WeakMap` doesn't count as a reference for garbage-collection purposes, so a cache built on `WeakMap` never keeps its keys (or their values) alive on its own. The moment nothing else references a given key object, that entry is eligible for collection automatically, with no manual cache-eviction logic needed at all.
 
 **Example:**
 
@@ -577,7 +577,7 @@ function setupCleanListener() {
 
 **Staff-level extension:**
 
-A genuinely common implementation mistake worth naming: a debounce or throttle implementation that doesn't correctly preserve `this` and the original arguments when invoking the wrapped function breaks any code that relied on either — the fix is invoking the wrapped function via `.apply(this, args)` (or spreading arguments) inside the returned wrapper, not just calling the original function with no arguments. It's also worth being able to state precisely that neither technique is free: debounce's delay means the UI update is deliberately deferred, which is the wrong trade-off for something that must feel instantaneous (a button's own visual press state, say), and throttle's periodic-but-not-immediate updates can still feel laggy if the interval is set too generously for the interaction it's gating.
+A common implementation mistake worth naming: a debounce or throttle implementation that doesn't correctly preserve `this` and the original arguments when invoking the wrapped function breaks any code that relied on either. The fix is invoking the wrapped function via `.apply(this, args)` (or spreading arguments) inside the returned wrapper, not just calling the original function with no arguments. It's also worth stating clearly that neither technique is free: debounce's delay means the UI update is deliberately deferred, which is the wrong trade-off for something that must feel instantaneous (a button's own visual press state, say), and throttle's periodic-but-not-immediate updates can still feel laggy if the interval is set too generously for the interaction it's gating.
 
 **Example:**
 
@@ -607,8 +607,8 @@ const throttledScroll = throttle(() => console.log("scroll position updated"), 2
 
 **Follow-up questions:**
 
-- *"What happens if `delay` in the debounce example above is set to 0?"* — It still defers to a macrotask via `setTimeout`, so it's not synchronous, but with no meaningful "quiet period" — effectively collapsing multiple synchronous calls in the same tick into one, rather than genuinely waiting for user activity to pause.
-- *"Would you ever combine debounce and throttle for the same handler?"* — Yes — a search box that throttles for periodic 'still typing' feedback while also debouncing the actual expensive search request until typing stops is a real, common pattern, though it's genuinely more complexity than most cases need.
+- *"What happens if `delay` in the debounce example above is set to 0?"* — It still defers to a macrotask via `setTimeout`, so it's not synchronous, but with no meaningful "quiet period" — effectively collapsing multiple synchronous calls in the same tick into one, rather than actually waiting for user activity to pause.
+- *"Would you ever combine debounce and throttle for the same handler?"* — Yes — a search box that throttles for periodic 'still typing' feedback while also debouncing the actual expensive search request until typing stops is a real, common pattern, though it's more complexity than most cases need.
 
 **Sources:** [MDN — `setTimeout()`](https://developer.mozilla.org/en-US/docs/Web/API/Window/setTimeout), [CSS-Tricks — Debouncing and Throttling Explained Through Examples](https://css-tricks.com/debouncing-throttling-explained-examples/) (secondary source — debounce/throttle aren't part of any spec, so no primary source exists for the pattern itself)
 
@@ -618,11 +618,11 @@ const throttledScroll = throttle(() => console.log("scroll position updated"), 2
 
 **Core answer:**
 
-"CommonJS (`require()`/`module.exports`) is Node.js's original module system, and it's synchronous and dynamic: `require()` can be called conditionally, inside an `if` block or a function, and modules are resolved and loaded at the moment `require()` actually executes, not ahead of time. ES Modules (`import`/`export`), standardized as part of the language itself, are statically analyzable instead: `import` statements must appear at the top level of a file, can't be conditional, and the entire module graph is resolved before any module's code actually runs, which is exactly what enables 'tree shaking' — a bundler statically determining which exports are genuinely used and excluding the rest from the final bundle, something CommonJS's dynamic `require()` calls fundamentally can't support, since the bundler can't always know in advance which module will be requested."
+"CommonJS (`require()`/`module.exports`) is Node.js's original module system, and it's synchronous and dynamic: `require()` can be called conditionally, inside an `if` block or a function, and modules are resolved and loaded at the moment `require()` actually executes, not ahead of time. ES Modules (`import`/`export`), standardized as part of the language itself, are statically analyzable instead: `import` statements must appear at the top level of a file, can't be conditional, and the entire module graph is resolved before any module's code actually runs. That's exactly what enables 'tree shaking' — a bundler statically determining which exports are actually used and excluding the rest from the final bundle, something CommonJS's dynamic `require()` calls fundamentally can't support, since the bundler can't always know in advance which module will be requested."
 
 **Staff-level extension:**
 
-The practical interop detail worth knowing precisely, since it's a genuinely common source of confusing bugs: Node.js supports both systems, but they don't mix seamlessly — a CommonJS module `require()`-ing an ES Module gets back a Promise (since ESM loading is inherently asynchronous, even for a single file), not the module's exports directly, while an ES Module `import`-ing a CommonJS module generally gets the whole `module.exports` object as the default export, which can produce surprising results with named-export syntax if the CommonJS module wasn't authored with ESM interop in mind. Package.json's `"type": "module"` field (or a `.mjs`/`.cjs` extension) is how a project declares which system a given file uses, and getting this wrong is the single most common cause of "works locally, breaks in this other environment" module errors in real Node projects.
+The interop detail worth knowing, since it's a common source of confusing bugs: Node.js supports both systems, but they don't mix seamlessly. A CommonJS module `require()`-ing an ES Module gets back a Promise (since ESM loading is inherently asynchronous, even for a single file), not the module's exports directly, while an ES Module `import`-ing a CommonJS module generally gets the whole `module.exports` object as the default export — which can produce surprising results with named-export syntax if the CommonJS module wasn't authored with ESM interop in mind. Package.json's `"type": "module"` field (or a `.mjs`/`.cjs` extension) is how a project declares which system a given file uses, and getting this wrong is the single most common cause of "works locally, breaks in this other environment" module errors in real Node projects.
 
 **Example:**
 
@@ -660,7 +660,7 @@ import { add } from "./math.mjs"; // a bundler can statically see ONLY `add` is 
 
 **Staff-level extension:**
 
-The practical, application-facing consequence worth stating: an object that's short-lived is essentially free from a GC-pressure standpoint, since Scavenger handles the young generation cheaply and quickly, but an application pattern that accidentally keeps large numbers of objects alive just long enough to get promoted into the old generation — a subtle closure leak, or a cache with no eviction — creates real, comparatively expensive Major GC pressure over time, exactly the class of problem the memory-leak question earlier in this guide is describing from the application-code side rather than the engine-internals side. Worth naming that this is genuinely engine-specific, not part of the ECMAScript specification at all — the spec says nothing about how memory is managed, only about observable language semantics, so a different engine (JavaScriptCore in Safari, SpiderMonkey in Firefox) can and does implement different GC strategies while remaining fully spec-compliant.
+The practical, application-facing consequence: an object that's short-lived is essentially free from a GC-pressure standpoint, since Scavenger handles the young generation cheaply and quickly. But an application pattern that accidentally keeps large numbers of objects alive just long enough to get promoted into the old generation — a subtle closure leak, or a cache with no eviction — creates real, comparatively expensive Major GC pressure over time. That's exactly the class of problem the memory-leak question earlier in this guide is describing from the application-code side rather than the engine-internals side. Worth noting: this is entirely engine-specific, not part of the ECMAScript specification at all. The spec says nothing about how memory is managed, only about observable language semantics, so a different engine (JavaScriptCore in Safari, SpiderMonkey in Firefox) can and does implement different GC strategies while remaining fully spec-compliant.
 
 **Example:**
 
@@ -690,11 +690,11 @@ V8 heap, conceptually:
 
 **Core answer:**
 
-"Cross-Site Scripting (XSS) is an attack where an attacker gets their own JavaScript to execute in another user's browser, in the context of your site — most commonly by injecting a `<script>` tag or an event-handler attribute into content that later gets rendered as HTML without being escaped, letting the injected script read cookies, make authenticated requests, or manipulate the page as if it were the real site's own code. The core defense is output encoding: never insert untrusted user input directly into the DOM as raw HTML — use `textContent` rather than `innerHTML` when inserting plain text, and if HTML genuinely needs to be rendered from user input, sanitize it first with a dedicated library rather than a hand-rolled regex, since HTML/JS injection has enough edge cases that ad hoc escaping reliably misses some. Modern frameworks (React, Angular — covered in their own guides) escape interpolated content by default, which closes off the most common injection path automatically, but that protection has real, specific bypasses worth knowing precisely, not just trusting blindly."
+"Cross-Site Scripting (XSS) is an attack where an attacker gets their own JavaScript to execute in another user's browser, in the context of your site — most commonly by injecting a `<script>` tag or an event-handler attribute into content that later gets rendered as HTML without being escaped, letting the injected script read cookies, make authenticated requests, or manipulate the page as if it were the real site's own code. The core defense is output encoding: never insert untrusted user input directly into the DOM as raw HTML. Use `textContent` rather than `innerHTML` when inserting plain text, and if HTML actually needs to be rendered from user input, sanitize it first with a dedicated library rather than a hand-rolled regex, since HTML/JS injection has enough edge cases that ad hoc escaping reliably misses some. Modern frameworks (React, Angular — covered in their own guides) escape interpolated content by default, which closes off the most common injection path automatically, but that protection has real, specific bypasses worth knowing about, not just trusting blindly."
 
 **Staff-level extension:**
 
-A Content Security Policy (CSP) response header is the layered, defense-in-depth complement to output encoding, not a substitute for it: a strict CSP (disallowing inline scripts, restricting script sources to an explicit allowlist) means that even if an XSS injection somehow gets past encoding, the browser itself refuses to execute the injected script, since it doesn't match the policy — a real, independent second line of defense. The specific framework bypasses worth naming precisely: React's `dangerouslySetInnerHTML` and Angular's `[innerHTML]` binding (or explicit `bypassSecurityTrustHtml()` calls) exist specifically to opt back *out* of the framework's default escaping, and using either on genuinely untrusted input reintroduces the exact vulnerability the framework was otherwise preventing — the name `dangerouslySetInnerHTML` is a deliberate, literal warning, not decoration.
+A Content Security Policy (CSP) response header is the layered, defense-in-depth complement to output encoding, not a substitute for it: a strict CSP (disallowing inline scripts, restricting script sources to an explicit allowlist) means that even if an XSS injection somehow gets past encoding, the browser itself refuses to execute the injected script, since it doesn't match the policy — a real, independent second line of defense. The specific framework bypasses worth naming: React's `dangerouslySetInnerHTML` and Angular's `[innerHTML]` binding (or explicit `bypassSecurityTrustHtml()` calls) exist specifically to opt back *out* of the framework's default escaping. Using either on genuinely untrusted input reintroduces the exact vulnerability the framework was otherwise preventing — the name `dangerouslySetInnerHTML` is a deliberate, literal warning, not decoration.
 
 **Example:**
 
@@ -729,11 +729,11 @@ Content-Security-Policy: default-src 'self'; script-src 'self' https://trusted-c
 
 **Core answer:**
 
-"Event delegation means attaching a single event listener to a common ancestor element instead of attaching a separate listener to every individual child element, relying on event bubbling — the fact that most DOM events fire on the target element and then propagate upward through each of its ancestors — to let that one listener handle events from any current or future child, since the event handler can inspect `event.target` to determine which specific child actually triggered it. This matters for performance directly when there are many similar children (a list with thousands of rows, each needing a click handler) — one listener instead of thousands is cheaper to set up and consumes less memory — but the more common, practical reason to reach for it is correctness with dynamic content: children added to the DOM after the initial listeners were attached automatically work with a delegated listener on their parent, with zero extra wiring, while individually-attached listeners would need to be re-attached to every newly-added element by hand."
+"Event delegation means attaching a single event listener to a common ancestor element instead of attaching a separate listener to every individual child element, relying on event bubbling — the fact that most DOM events fire on the target element and then propagate upward through each of its ancestors — to let that one listener handle events from any current or future child, since the event handler can inspect `event.target` to determine which specific child actually triggered it. This matters for performance directly when there are many similar children (a list with thousands of rows, each needing a click handler) — one listener instead of thousands is cheaper to set up and consumes less memory. But the more common, practical reason to reach for it is correctness with dynamic content: children added to the DOM after the initial listeners were attached automatically work with a delegated listener on their parent, with zero extra wiring, while individually-attached listeners would need to be re-attached to every newly-added element by hand."
 
 **Staff-level extension:**
 
-The precise mechanical detail worth being able to state: delegation relies specifically on the bubbling phase of the DOM event model, so it doesn't work at all for the handful of events that don't bubble by default (`focus`, `blur`, and a few others) unless the code explicitly uses the capturing phase or listens for a bubbling equivalent (`focusin`/`focusout` bubble, while `focus`/`blur` don't) — a real, specific gotcha worth knowing rather than assuming delegation is universally applicable to any event type. Framework code (React's synthetic event system, in particular) already implements a form of delegation internally, attaching a small number of listeners at the root and dispatching synthetically from there — which is worth mentioning as evidence this isn't just a vanilla-JS micro-optimization, it's a pattern serious frameworks build in as a foundational design choice.
+The mechanical detail worth being able to state: delegation relies specifically on the bubbling phase of the DOM event model, so it doesn't work at all for the handful of events that don't bubble by default (`focus`, `blur`, and a few others) unless the code explicitly uses the capturing phase or listens for a bubbling equivalent (`focusin`/`focusout` bubble, while `focus`/`blur` don't) — a real, specific gotcha worth knowing rather than assuming delegation is universally applicable to any event type. Framework code (React's synthetic event system, in particular) already implements a form of delegation internally, attaching a small number of listeners at the root and dispatching synthetically from there — worth mentioning as evidence this isn't just a vanilla-JS micro-optimization, it's a pattern serious frameworks build in as a foundational design choice.
 
 **Example:**
 
@@ -768,7 +768,7 @@ document.querySelector(".list").addEventListener("click", (event) => {
 
 **Staff-level extension:**
 
-The detail that's easy to get wrong and worth calling out explicitly while implementing this live: results must be written into the pre-allocated results array by *index*, not pushed in resolution order, since Promises can resolve in a different order than they appear in the input array — a genuinely common bug in a naive first attempt is treating "the third resolution to happen" as "goes at index 2," which silently scrambles the output order whenever the Promises don't happen to resolve in their original sequence. It's also worth handling the edge case of an empty input array explicitly (should resolve immediately with `[]`, never hang waiting for zero completions) and non-Promise values in the input array (`Promise.all()` treats them as already-resolved values, via an implicit `Promise.resolve()` wrap) — both are easy to miss and are exactly the kind of edge case a Staff-level interviewer will probe for after the happy path works.
+The detail that's easy to get wrong and worth calling out explicitly while implementing this live: results must be written into the pre-allocated results array by *index*, not pushed in resolution order, since Promises can resolve in a different order than they appear in the input array. A common bug in a naive first attempt is treating "the third resolution to happen" as "goes at index 2," which silently scrambles the output order whenever the Promises don't happen to resolve in their original sequence. It's also worth handling the edge case of an empty input array explicitly (should resolve immediately with `[]`, never hang waiting for zero completions) and non-Promise values in the input array (`Promise.all()` treats them as already-resolved values, via an implicit `Promise.resolve()` wrap) — both are easy to miss and are exactly the kind of edge case a Staff-level interviewer will probe for after the happy path works.
 
 **Example:**
 

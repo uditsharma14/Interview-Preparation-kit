@@ -39,9 +39,9 @@ How to use this: each question has a **core answer** (100–180 words — roughl
 
 **Core answer:**
 
-"**Encapsulation** (question 2) — bundling data and the methods that operate on it together, and controlling access to that data so it can't be put into an invalid state from outside. **Abstraction** (question 3) — exposing only what a consumer needs to know to use something correctly, hiding the implementation details behind that interface. **Inheritance** (question 4) — a class acquiring the fields and behavior of another class, expressing an 'is-a' relationship, so shared behavior is defined once and reused. **Polymorphism** (question 5) — code written against a general type (an interface or superclass) working correctly with any specific subtype, without needing to know which concrete type it's actually handling at compile time.
+"**Encapsulation** (question 2) — bundling data with the methods that operate on it, and controlling access so that data can't be put into an invalid state from outside. **Abstraction** (question 3) — exposing only what a consumer needs to use something correctly, and hiding the rest behind that interface. **Inheritance** (question 4) — a class acquiring the fields and behavior of another class, expressing an 'is-a' relationship, so shared behavior is defined once and reused. **Polymorphism** (question 5) — code written against a general type, like an interface or superclass, that works correctly with any specific subtype, without needing to know which concrete type it's actually handling at compile time.
 
-These four aren't independent, isolated features — they compose: encapsulation is what makes abstraction possible (you can't hide an implementation that's fully exposed), and polymorphism is what makes inheritance actually *useful* for more than just code reuse (a collection of a shared supertype, each element behaving according to its own real subtype, is where inheritance's design value actually shows up)."
+These four work together rather than standing alone. Encapsulation is what makes abstraction possible — you can't hide an implementation that's already fully exposed. And polymorphism is what makes inheritance useful for more than just code reuse: it's why a collection of some shared supertype can hold different subtypes and have each one behave correctly on its own."
 
 **Code:**
 
@@ -75,8 +75,8 @@ void processPayment(PaymentMethod method, double amount) {  // POLYMORPHISM —
 
 **Follow-up questions:**
 
-- *"Which of the four pillars is most fundamental to the other three?"* — Encapsulation, arguably — it's the mechanism that makes abstraction meaningful (there's something real to hide) and is a prerequisite most OOP designs assume before inheritance/polymorphism add value.
-- *"Do all object-oriented languages implement all four the same way?"* — No — question 16 covers where Java's own implementation has real gaps (primitives aren't objects, for instance).
+- *"Which of the four pillars is most fundamental to the other three?"* — Encapsulation, arguably. It's the mechanism that makes abstraction meaningful — there's something real to hide — and most OOP designs assume it before inheritance or polymorphism add value.
+- *"Do all object-oriented languages implement all four the same way?"* — No. Question 16 covers where Java's own implementation has real gaps, like primitives not being objects.
 
 **Source:** [Oracle Java Tutorials — Object-Oriented Programming Concepts](https://docs.oracle.com/javase/tutorial/java/concepts/)
 
@@ -86,9 +86,9 @@ void processPayment(PaymentMethod method, double amount) {  // POLYMORPHISM —
 
 **Core answer:**
 
-"Encapsulation is bundling an object's internal state with the methods that operate on it, and restricting direct access to that state from outside the class — in Java, mechanically, `private` fields exposed (if at all) only through public methods that enforce whatever invariants matter. The 'private fields, public getters/setters' pattern is the mechanism, but it's not the actual point — a class with private fields and a public getter/setter for every single one, with zero validation logic in the setters, has the *syntax* of encapsulation with none of its actual benefit, since external code can still put the object into any state it wants, just through an extra method call instead of direct field access.
+"Encapsulation is bundling an object's internal state with the methods that operate on it, and restricting direct access to that state from outside the class. In Java that means `private` fields, exposed if at all only through public methods that enforce whatever invariants matter. The 'private fields, public getters and setters' pattern is the mechanism, but it's not the point. A class with private fields and a public getter/setter for every single one, with no validation in the setters, has the syntax of encapsulation with none of the benefit — external code can still put the object into any state it wants, just through an extra method call instead of direct field access.
 
-The real value is **invariant protection**: a class controls exactly how its state can change, so it can guarantee that state is always valid — a `BankAccount` class can reject a negative balance in its `withdraw()` method, something a public, unguarded `balance` field could never enforce. This is also what makes a class's internals genuinely changeable later without breaking callers — as long as the public method signatures and their behavioral contracts stay the same, the actual internal representation can be swapped freely, since nothing outside the class ever depended on it directly."
+The real value is **invariant protection**: a class controls exactly how its state can change, so it can guarantee that state stays valid. A `BankAccount` class can reject a negative balance in its `withdraw()` method — something a public, unguarded `balance` field could never enforce. This is also what lets a class's internals change later without breaking callers. As long as the public method signatures and their behavior stay the same, the internal representation can be swapped freely, since nothing outside the class ever depended on it directly."
 
 **Code:**
 
@@ -123,8 +123,8 @@ class BankAccount {
 
 **Follow-up questions:**
 
-- *"Is a class with only getters, no setters, more encapsulated than one with both?"* — Not automatically — it depends on whether the getters/setters that do exist enforce real invariants; immutability (question 10 in the Java Coding guide) is a related but distinct concept from encapsulation itself.
-- *"Does encapsulation conflict with testability?"* — It can, if taken to an extreme (hiding state a test genuinely needs to verify) — the practical balance is exposing enough for tests to assert on outcomes through the public API, not reaching into private state via reflection.
+- *"Is a class with only getters, no setters, more encapsulated than one with both?"* — Not automatically. It depends on whether the getters and setters that do exist enforce real invariants. Immutability (question 10 in the Java Coding guide) is a related but distinct concept from encapsulation itself.
+- *"Does encapsulation conflict with testability?"* — It can, if taken to an extreme — hiding state a test genuinely needs to verify. The practical balance is exposing enough for tests to assert on outcomes through the public API, not reaching into private state via reflection.
 
 **Source:** [Oracle Java Tutorials — Object-Oriented Programming Concepts](https://docs.oracle.com/javase/tutorial/java/concepts/)
 
@@ -134,9 +134,9 @@ class BankAccount {
 
 **Core answer:**
 
-"Abstraction is about **what** a consumer needs to know to use something correctly — modeling a real-world or logical concept by exposing only its essential, relevant behavior and hiding everything else as an implementation detail. A `List` interface abstracts 'an ordered collection you can add to, remove from, and index into' — a caller writes against that abstraction without needing to know or care whether the concrete implementation is an `ArrayList` backed by a resizable array or a `LinkedList` backed by nodes.
+"Abstraction is about **what** a consumer needs to know to use something correctly. It models a real-world or logical concept by exposing only its essential behavior and hiding the rest as an implementation detail. A `List` interface abstracts 'an ordered collection you can add to, remove from, and index into' — a caller writes against that without needing to know or care whether the concrete implementation is an `ArrayList` backed by a resizable array or a `LinkedList` backed by nodes.
 
-Encapsulation and abstraction are genuinely related but answer different questions, and conflating them is a common, imprecise habit worth correcting explicitly in an interview: **encapsulation** is the *mechanism* — bundling data with behavior and restricting direct access (question 2) — while **abstraction** is the *design intent* — deciding what to expose and what to hide in the first place. A well-designed interface is the clearest expression of abstraction (it defines *what*, not *how*), while private fields and access modifiers are the encapsulation mechanism that makes hiding the 'how' actually possible; you can have encapsulation with poor abstraction (private fields behind a leaky, over-exposed API) but you can't really have good abstraction without encapsulation backing it, since a fully exposed implementation isn't hidden at all."
+Encapsulation and abstraction are related but answer different questions, and mixing them up is a common habit worth correcting in an interview. **Encapsulation** is the mechanism — bundling data with behavior and restricting direct access (question 2). **Abstraction** is the design intent — deciding what to expose and what to hide in the first place. A well-designed interface is the clearest expression of abstraction, since it defines *what*, not *how*, while private fields and access modifiers are the encapsulation mechanism that makes hiding the 'how' actually possible. You can have encapsulation with poor abstraction — private fields behind a leaky, over-exposed API — but you can't really have good abstraction without encapsulation backing it, since a fully exposed implementation isn't hidden at all."
 
 **Code:**
 
@@ -174,8 +174,8 @@ double totalArea(List<Shape> shapes) {
 
 **Follow-up questions:**
 
-- *"Can you have abstraction without an interface or abstract class?"* — Yes, more weakly — even a single concrete class with a well-designed public API is practicing abstraction if its internals are hidden and its public contract is what callers actually depend on.
-- *"Which pillar does an interface's Javadoc actually document?"* — The abstraction — a well-written interface's documentation describes contractual *behavior* (what each method guarantees), not any specific implementation's internal mechanism.
+- *"Can you have abstraction without an interface or abstract class?"* — Yes, more weakly. Even a single concrete class with a well-designed public API is practicing abstraction, as long as its internals are hidden and callers only depend on its public contract.
+- *"Which pillar does an interface's Javadoc actually document?"* — The abstraction. A well-written interface's documentation describes what each method guarantees, not any specific implementation's internal mechanism.
 
 **Source:** [Oracle Java Tutorials — Object-Oriented Programming Concepts](https://docs.oracle.com/javase/tutorial/java/concepts/)
 
@@ -185,9 +185,9 @@ double totalArea(List<Shape> shapes) {
 
 **Core answer:**
 
-"Inheritance lets a class (the subclass) acquire the fields and methods of another class (the superclass), expressing an **'is-a' relationship** — a `Car` *is a* `Vehicle`, so `Car` can extend `Vehicle` and inherit its common fields/behavior (a top speed, a `startEngine()` method) rather than redefining them. The problem it solves is avoiding duplicated code across types that genuinely share both structure and behavior — without it, every `Vehicle` subtype would need to reimplement identical logic independently, and a bug fix or behavior change would need to be applied in every duplicate copy rather than once, in the shared superclass.
+"Inheritance lets a class, the subclass, acquire the fields and methods of another class, the superclass, expressing an **'is-a' relationship**. A `Car` *is a* `Vehicle`, so `Car` can extend `Vehicle` and inherit its common fields and behavior — a top speed, a `startEngine()` method — rather than redefining them. The problem it solves is avoiding duplicated code across types that genuinely share both structure and behavior. Without it, every `Vehicle` subtype would need to reimplement the same logic independently, and a bug fix would need to be applied in every duplicate copy instead of once, in the shared superclass.
 
-The precise test for whether inheritance is actually the right tool, worth stating explicitly: the relationship has to be genuinely **'is-a,' not just 'happens to share some fields.'** A `Square` extending `Rectangle` because they share `width`/`height`-shaped state is a classic example of inheritance used for the wrong reason — it looks like code reuse, but it creates a real behavioral problem the moment `Rectangle`'s `setWidth()`/`setHeight()` methods are called independently on a `Square`, which shouldn't allow width and height to differ at all (question 15 covers exactly this shape of Liskov Substitution Principle violation)."
+The real test for whether inheritance is the right tool: the relationship has to actually be **'is-a,' not just 'happens to share some fields.'** A `Square` extending `Rectangle` because they share `width`/`height`-shaped state is a classic example of inheritance used for the wrong reason. It looks like code reuse, but it breaks the moment `Rectangle`'s `setWidth()`/`setHeight()` methods get called independently on a `Square`, which shouldn't allow width and height to differ at all (question 15 covers exactly this shape of Liskov Substitution Principle violation)."
 
 **Code:**
 
@@ -216,8 +216,8 @@ class Motorcycle extends Vehicle {   // Motorcycle IS-A Vehicle too --
 
 **Follow-up questions:**
 
-- *"What's the actual test for whether inheritance is the right tool here?"* — Genuine substitutability, not just shared fields — question 15's Liskov Substitution Principle is the formal version of this exact test.
-- *"Why might inheritance be the wrong choice even for a genuine is-a relationship?"* — Question 9's composition-over-inheritance discussion — a genuine is-a relationship can still create tight coupling and fragile-base-class problems that composition avoids.
+- *"What's the actual test for whether inheritance is the right tool here?"* — Real substitutability, not just shared fields. Question 15's Liskov Substitution Principle is the formal version of this test.
+- *"Why might inheritance be the wrong choice even for a genuine is-a relationship?"* — See question 9's composition-over-inheritance discussion. Even a real is-a relationship can create tight coupling and fragile-base-class problems that composition avoids.
 
 **Source:** [Oracle Java Tutorials — Object-Oriented Programming Concepts](https://docs.oracle.com/javase/tutorial/java/concepts/)
 
@@ -227,9 +227,9 @@ class Motorcycle extends Vehicle {   // Motorcycle IS-A Vehicle too --
 
 **Core answer:**
 
-"Polymorphism ('many forms') is code that behaves correctly across multiple different types, without needing to know at the call site exactly which concrete type it's dealing with. Java has two genuinely distinct mechanisms both called polymorphism, and conflating them is a common imprecision worth avoiding: **compile-time (static) polymorphism** is method **overloading** (question 7) — which overloaded method to call is resolved by the compiler, based on the *declared* argument types at the call site, before the program ever runs. **Runtime (dynamic) polymorphism** is method **overriding** — which actual method implementation runs is resolved at runtime, based on the object's *actual* runtime type, not its declared/reference type — this is what lets a `List<Shape> shapes` loop call `shape.area()` and get each element's own correct, type-specific behavior, even though every element is referenced through the same `Shape` type.
+"Polymorphism ('many forms') is code that behaves correctly across multiple different types, without needing to know at the call site exactly which concrete type it's dealing with. Java has two distinct mechanisms both called polymorphism, and mixing them up is a common mistake worth avoiding. **Compile-time (static) polymorphism** is method **overloading** (question 7) — which overloaded method to call is resolved by the compiler, based on the declared argument types at the call site, before the program ever runs. **Runtime (dynamic) polymorphism** is method **overriding** — which actual implementation runs is resolved at runtime, based on the object's actual type, not its declared reference type. That's what lets a `List<Shape> shapes` loop call `shape.area()` and get each element's own correct, type-specific behavior, even though every element is referenced through the same `Shape` type.
 
-Runtime polymorphism specifically depends on **dynamic dispatch** (question 11) — the JVM looking up the actual method to invoke based on the object's real class at the moment of the call, not the static type of the reference variable holding it."
+Runtime polymorphism depends on **dynamic dispatch** (question 11) — the JVM looking up the actual method to invoke based on the object's real class at the moment of the call, not the static type of the reference variable holding it."
 
 **Code:**
 
@@ -265,8 +265,8 @@ calc.add(1.5, 2.5);  // compiler picks double version -- decided HERE,
 
 **Follow-up questions:**
 
-- *"Is compile-time polymorphism 'real' polymorphism, or just overloading with a fancier name?"* — Both terms are standard and correct — it's genuinely a form of polymorphism (one method name, multiple forms/behaviors), just resolved at a different phase than runtime polymorphism.
-- *"What happens if you pass `null` to an overloaded method where multiple overloads could match?"* — A compile error (ambiguous method call) unless one overload is unambiguously more specific — the compiler must resolve overloading fully at compile time, and an ambiguous case simply doesn't compile.
+- *"Is compile-time polymorphism 'real' polymorphism, or just overloading with a fancier name?"* — Both terms are standard and correct. It's a real form of polymorphism — one method name, multiple behaviors — just resolved at a different phase than runtime polymorphism.
+- *"What happens if you pass `null` to an overloaded method where multiple overloads could match?"* — A compile error, unless one overload is unambiguously more specific. The compiler has to resolve overloading fully at compile time, and an ambiguous case just doesn't compile.
 
 **Source:** [Oracle Java Tutorials — Polymorphism](https://docs.oracle.com/javase/tutorial/java/IandI/polymorphism.html)
 
@@ -276,9 +276,9 @@ calc.add(1.5, 2.5);  // compiler picks double version -- decided HERE,
 
 **Core answer:**
 
-"An **abstract class** can hold state (instance fields), a constructor, and a mix of both abstract (unimplemented) and concrete (implemented) methods — a subclass extends it and inherits all of that, but Java only allows extending **one** class, so a type committing to an abstract-class base can't also extend anything else. An **interface** traditionally held only method signatures (no state, no constructors) — since Java 8, it can also have `default` and `static` methods with real implementations, and since Java 9, `private` helper methods too, narrowing the practical gap — but a class can implement **multiple** interfaces simultaneously, which is the single biggest structural difference that actually drives the choice in practice.
+"An **abstract class** can hold state, a constructor, and a mix of abstract and concrete methods. A subclass extends it and inherits all of that, but Java only allows extending one class, so a type committing to an abstract-class base can't also extend anything else. An **interface** traditionally held only method signatures — no state, no constructors. Since Java 8 it can also have `default` and `static` methods with real implementations, and since Java 9, `private` helper methods too, which narrows the gap. But a class can implement **multiple** interfaces at once, and that's the biggest structural difference driving the choice in practice.
 
-The practical decision: reach for an abstract class when subtypes genuinely share common **state or constructor logic** that's cleanest to define once, in one place (a shared field every subtype needs, initialized consistently). Reach for an interface when you're defining a **capability/contract** multiple, otherwise-unrelated classes might implement (`Comparable`, `Serializable`, `Runnable`) — since a class can implement many interfaces but extend only one class, interfaces compose far more flexibly across an otherwise-unrelated type hierarchy."
+The practical decision: reach for an abstract class when subtypes genuinely share common state or constructor logic that's cleanest to define once, in one place. Reach for an interface when you're defining a capability or contract that multiple, otherwise unrelated classes might implement — `Comparable`, `Serializable`, `Runnable`. Since a class can implement many interfaces but extend only one class, interfaces compose far more flexibly across an unrelated type hierarchy."
 
 **Code:**
 
@@ -320,9 +320,9 @@ class Contractor implements Payable {   // does NOT extend Employee at all --
 
 **Follow-up questions:**
 
-- *"Since Java 8 default methods narrowed the gap, is there any reason to still use abstract classes at all?"* — Yes — state and constructor logic still can't live in an interface; a default method can provide behavior, but it can't declare or initialize an instance field.
-- *"What happens if a class implements two interfaces with conflicting default methods?"* — Question 13's diamond-problem discussion covers this exactly — it's a compile error unless the class explicitly overrides the method to resolve the conflict.
-- *"If a class satisfies an interface method via an inherited method from an unrelated superclass, does that inherited method's own visibility matter?"* — Yes, directly — interface methods are implicitly `public`, so any method a class relies on to satisfy that contract must itself be `public` (question 7's overriding-visibility rule applies here too); a package-private or `protected` method inherited from a superclass is not enough, and Java will refuse to compile the class ("attempting to assign weaker access privileges") until it's widened.
+- *"Since Java 8 default methods narrowed the gap, is there any reason to still use abstract classes at all?"* — Yes. State and constructor logic still can't live in an interface. A default method can provide behavior, but it can't declare or initialize an instance field.
+- *"What happens if a class implements two interfaces with conflicting default methods?"* — Question 13's diamond-problem discussion covers this exactly. It's a compile error unless the class explicitly overrides the method to resolve the conflict.
+- *"If a class satisfies an interface method via an inherited method from an unrelated superclass, does that inherited method's own visibility matter?"* — Yes. Interface methods are implicitly `public`, so any method a class relies on to satisfy that contract must itself be `public` (question 7's overriding-visibility rule applies here too). A package-private or `protected` method inherited from a superclass isn't enough — Java will refuse to compile the class ("attempting to assign weaker access privileges") until it's widened.
 
 **Source:** [Oracle Java Tutorials — Interfaces](https://docs.oracle.com/javase/tutorial/java/IandI/createinterface.html), [Oracle Java Tutorials — Abstract Methods and Classes](https://docs.oracle.com/javase/tutorial/java/IandI/abstract.html)
 
@@ -332,9 +332,9 @@ class Contractor implements Payable {   // does NOT extend Employee at all --
 
 **Core answer:**
 
-"**Overloading** is defining multiple methods with the **same name but different parameter lists** (different number, type, or order of parameters) within the same class — it's resolved at **compile time** based on the declared argument types at the call site (question 5's compile-time polymorphism). **Overriding** is a subclass providing its **own implementation of a method it inherited**, with the exact same signature (same name, same parameter types) — it's resolved at **runtime**, based on the object's actual type (question 5's runtime polymorphism), and it requires an actual inheritance/interface-implementation relationship to exist at all, unlike overloading which happens entirely within one class.
+"**Overloading** is defining multiple methods with the same name but different parameter lists, within the same class. It's resolved at compile time based on the declared argument types at the call site (question 5's compile-time polymorphism). **Overriding** is a subclass providing its own implementation of a method it inherited, with the exact same signature. It's resolved at runtime, based on the object's actual type (question 5's runtime polymorphism), and it requires an actual inheritance or interface relationship to exist — unlike overloading, which happens entirely within one class.
 
-The concrete rules worth being precise about: overriding requires the same method signature and a **covariant or identical return type** (the override can return a subtype of the original return type, not an unrelated one), can't reduce the method's visibility (an overridden `protected` method can't become `private`), and can't throw new or broader checked exceptions than the method it overrides. Overloading has none of these constraints — the return type alone, with an identical parameter list, isn't even enough to distinguish two overloads (that's a compile error, 'ambiguous/duplicate method'), since overload resolution is based purely on parameters, not return type."
+The concrete rules: overriding requires the same method signature and a covariant or identical return type (the override can return a subtype, not an unrelated type), can't reduce the method's visibility (an overridden `protected` method can't become `private`), and can't throw new or broader checked exceptions than the method it overrides. Overloading has none of these constraints. The return type alone, with an identical parameter list, isn't even enough to distinguish two overloads — that's a compile error, 'ambiguous/duplicate method' — since overload resolution is based purely on parameters, not return type."
 
 **Code:**
 
@@ -365,8 +365,8 @@ class Derived extends Base {
 
 **Follow-up questions:**
 
-- *"Can a subclass override a method and throw a broader checked exception than the superclass version?"* — No — this would break callers written against the superclass's declared `throws` clause, which is exactly why overriding restricts exceptions to the same or narrower, never broader.
-- *"What's the difference between overload resolution ambiguity and override incompatibility, as compile errors?"* — Ambiguous overload resolution happens when the compiler can't decide which overload matches a specific call (often with autoboxing/varargs involved); override incompatibility happens when a subclass method's signature doesn't satisfy the rules above and the compiler rejects it as not actually being a valid override at all.
+- *"Can a subclass override a method and throw a broader checked exception than the superclass version?"* — No. That would break callers written against the superclass's declared `throws` clause, which is exactly why overriding restricts exceptions to the same or narrower, never broader.
+- *"What's the difference between overload resolution ambiguity and override incompatibility, as compile errors?"* — Ambiguous overload resolution happens when the compiler can't decide which overload matches a specific call, often with autoboxing or varargs involved. Override incompatibility happens when a subclass method's signature doesn't satisfy the rules above, and the compiler rejects it as not being a valid override at all.
 
 **Source:** [Oracle Java Tutorials — Defining Methods](https://docs.oracle.com/javase/tutorial/java/javaOO/methods.html), [Java Language Specification §8.4.8 — Inheritance, Overriding, and Hiding](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8)
 
@@ -378,9 +378,9 @@ class Derived extends Base {
 
 **Core answer:**
 
-"These describe increasingly strong relationships between two classes, distinct from inheritance's 'is-a' — all three describe a 'has-a'/'uses-a' relationship, but they differ in **lifecycle dependency** and **ownership strength**.
+"These describe increasingly strong relationships between two classes, distinct from inheritance's 'is-a.' All three are a 'has-a' or 'uses-a' relationship, but they differ in lifecycle dependency and ownership strength.
 
-**Association** is the weakest and most general — one class simply uses or references another, with no ownership implied and no lifecycle dependency at all (a `Driver` and a `Car` can each exist completely independently of the other; a driver can drive many different cars over time). **Aggregation** is a 'has-a' relationship with a whole-part structure, but the parts can **exist independently** of the whole — a `Department` has `Employee`s, but if the `Department` is dissolved, the employees still exist and can be reassigned elsewhere; this is sometimes drawn as a 'has-a, but not exclusively owns' relationship. **Composition** is the strongest — a whole-part relationship where the parts' lifecycle is **bound to** the whole's — a `House` has `Room`s, and if the `House` object is destroyed, its `Room` objects have no independent existence or meaning at all; in Java, this is typically expressed by the containing class creating and fully owning its parts' instances itself, often in its own constructor, rather than accepting them as externally-supplied, independently-existing references."
+**Association** is the weakest and most general — one class simply uses or references another, with no ownership and no lifecycle dependency at all. A `Driver` and a `Car` can each exist completely independently, and a driver can drive many different cars over time. **Aggregation** is a 'has-a' relationship with a whole-part structure, but the parts can exist independently of the whole. A `Department` has `Employee`s, but if the `Department` is dissolved, the employees still exist and can be reassigned elsewhere — sometimes described as 'has-a, but doesn't exclusively own.' **Composition** is the strongest: a whole-part relationship where the parts' lifecycle is bound to the whole's. A `House` has `Room`s, and if the `House` object is destroyed, its `Room` objects have no independent existence at all. In Java, this is typically expressed by the containing class creating and fully owning its parts' instances itself, often in its own constructor, rather than accepting them as externally supplied references."
 
 **Code:**
 
@@ -415,8 +415,8 @@ class Room {}                                                          // the Ro
 
 **Follow-up questions:**
 
-- *"Is the distinction between aggregation and composition enforced by the Java language itself?"* — No — Java has no syntax that distinguishes them; it's purely a design/convention distinction expressed through how a class's constructor and fields are structured, not a language-level guarantee.
-- *"How does this relate to question 9's composition-over-inheritance advice?"* — Directly — "composition" in that principle means exactly this: building behavior by holding references to other objects (aggregation or composition as defined here) rather than through an inheritance hierarchy.
+- *"Is the distinction between aggregation and composition enforced by the Java language itself?"* — No. Java has no syntax that distinguishes them. It's a design convention expressed through how a class's constructor and fields are structured, not a language-level guarantee.
+- *"How does this relate to question 9's composition-over-inheritance advice?"* — Directly. "Composition" in that principle means exactly this: building behavior by holding references to other objects, whether aggregation or composition as defined here, rather than through an inheritance hierarchy.
 
 **Source:** [Oracle Java Tutorials — Object-Oriented Programming Concepts](https://docs.oracle.com/javase/tutorial/java/concepts/)
 
@@ -426,9 +426,9 @@ class Room {}                                                          // the Ro
 
 **Core answer:**
 
-"This is one of the most consequential, widely-cited pieces of OOP design guidance (formalized prominently in *Design Patterns* by the Gang of Four), and the reasoning is concrete, not just stylistic preference: inheritance creates the **tightest possible coupling** between two classes — a subclass depends not just on its superclass's public contract, but potentially on its actual implementation details, since a subclass can call, be called by, and be affected by protected/inherited internals in ways that are easy to accidentally depend on. This is the **fragile base class problem**: a seemingly safe, internal change to a superclass (even one that doesn't touch its public API at all) can silently break a subclass that happened to depend on the old internal behavior, and this risk compounds with every additional layer of a deep inheritance hierarchy (question 17).
+"This is one of the most widely-cited pieces of OOP design advice — the Gang of Four's *Design Patterns* book made it prominent — and there's a real reason behind it, not just style preference. Inheritance creates the tightest coupling possible between two classes: a subclass doesn't just depend on its superclass's public API, it can depend on internal details too, since it can call and be affected by protected or inherited internals in ways that are easy to pick up without realizing it. That's the **fragile base class problem** — a superclass change that looks completely safe, and doesn't touch the public API at all, can silently break a subclass that happened to rely on the old internal behavior. And it gets worse with every extra layer in the hierarchy (question 17).
 
-**Composition** — a class holding a reference to another object and delegating to it, rather than inheriting from it — avoids this: the composed object is used only through its public interface, so changes to its internals that don't affect that public contract genuinely can't break the composing class. Inheritance still makes sense when the relationship is a genuine, stable 'is-a' (question 4) where polymorphic substitutability (question 15) is actually needed and the shared behavior is unlikely to need per-subtype internal-detail coupling — but I'd treat that as the exception requiring justification, not the default reflexive choice for 'these two classes share some behavior.'"
+**Composition** avoids this: a class holds a reference to another object and delegates to it, rather than inheriting from it. The composed object is used only through its public interface, so changes to its internals that don't affect that contract can't break the composing class. Inheritance still makes sense when the relationship is a genuine, stable 'is-a' (question 4) where polymorphic substitutability (question 15) is actually needed and the shared behavior isn't likely to need per-subtype internal-detail coupling. I'd treat that as the exception that needs justifying, not the default choice whenever two classes happen to share some behavior."
 
 **Code:**
 
@@ -460,8 +460,8 @@ class RobustStack<T> {
 
 **Follow-up questions:**
 
-- *"You mentioned `java.util.Stack` — is that a real, acknowledged design mistake?"* — Yes — it's a commonly-cited real example precisely because it extends `Vector`, inheriting a large public API that has nothing to do with stack semantics, and Java's own official Javadoc for `Deque` now recommends using it as `Stack`'s superior, composition-friendly replacement.
-- *"Does 'favor composition' mean 'never use inheritance'?"* — No — it means inheritance should be a deliberate choice justified by genuine is-a substitutability and stable shared behavior (question 4/15), not the reflexive first tool reached for whenever two classes share some code.
+- *"You mentioned `java.util.Stack` — is that a real, acknowledged design mistake?"* — Yes. It's a commonly-cited example precisely because it extends `Vector`, inheriting a large public API that has nothing to do with stack semantics. Java's own official Javadoc for `Deque` now recommends it as `Stack`'s superior, composition-friendly replacement.
+- *"Does 'favor composition' mean 'never use inheritance'?"* — No. It means inheritance should be a deliberate choice, justified by genuine is-a substitutability and stable shared behavior (question 4/15), not the first tool you reach for whenever two classes share some code.
 
 **Source:** [Gamma, Helm, Johnson, Vlissides — Design Patterns (the Gang of Four book)](https://en.wikipedia.org/wiki/Design_Patterns), [Oracle Javadoc — java.util.Stack](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Stack.html)
 
@@ -471,9 +471,9 @@ class RobustStack<T> {
 
 **Core answer:**
 
-"**Coupling** measures how much one module/class depends on the internal details of another — **low coupling** (loosely coupled) means a class depends only on other classes' stable, public contracts, so changes elsewhere in the system rarely force a change here; **high coupling** (tightly coupled) means classes are intertwined enough that a change in one frequently requires a corresponding change in the other. **Cohesion** measures how strongly a single class's own responsibilities belong together — **high cohesion** means a class does one clearly-defined thing, with all its methods and fields genuinely related to that single purpose; **low cohesion** means a class has been handed multiple, only loosely-related responsibilities (a classic 'God class' symptom), making it harder to understand, test, and change safely.
+"**Coupling** measures how much one module or class depends on the internal details of another. Low coupling means a class depends only on other classes' stable, public contracts, so changes elsewhere in the system rarely force a change here. High coupling means classes are intertwined enough that a change in one frequently requires a corresponding change in the other. **Cohesion** measures how strongly a single class's own responsibilities belong together. High cohesion means a class does one clearly-defined thing, with all its methods and fields related to that purpose. Low cohesion means a class has been handed multiple, loosely-related responsibilities — a classic 'God class' symptom — making it harder to understand, test, and change safely.
 
-The design goal, stated together since they're closely related: **low coupling, high cohesion** — classes that each do one thing well internally, and depend on each other only through stable, minimal public contracts. This is directly the same underlying principle the Single Responsibility Principle (question 14) formalizes for cohesion specifically, and it's why 'favor composition over inheritance' (question 9) and 'program to an interface, not an implementation' both exist — both are concrete techniques for keeping coupling low."
+The design goal, since these two are closely related: low coupling, high cohesion. Classes that each do one thing well internally, and depend on each other only through stable, minimal public contracts. This is the same principle the Single Responsibility Principle (question 14) formalizes for cohesion specifically, and it's why 'favor composition over inheritance' (question 9) and 'program to an interface, not an implementation' both exist — both are concrete ways to keep coupling low."
 
 **Code:**
 
@@ -506,8 +506,8 @@ class OrderServiceLooselyCoupled {
 
 **Follow-up questions:**
 
-- *"How would you actually measure coupling or cohesion in a real codebase, not just recognize an obvious example?"* — Static-analysis tools can approximate it (afferent/efferent coupling metrics, counting cross-class dependencies), but the more practical, everyday signal is: does a typical small change require touching many unrelated files/classes (high coupling), and does a single class's changelog show unrelated reasons for change over time (low cohesion, tying directly to the Single Responsibility Principle's own definition, question 14).
-- *"Is dependency injection a coupling-reduction technique?"* — Yes, directly — injecting a dependency (typically as an interface type) rather than a class constructing its own concrete dependencies internally is exactly the "depend on the abstraction, not the implementation" pattern that keeps coupling low.
+- *"How would you actually measure coupling or cohesion in a real codebase, not just recognize an obvious example?"* — Static-analysis tools can approximate it with afferent/efferent coupling metrics, but the more practical everyday signal is simpler: does a typical small change require touching many unrelated files or classes (high coupling), and does a single class's changelog show unrelated reasons for change over time (low cohesion, tying directly to the Single Responsibility Principle, question 14).
+- *"Is dependency injection a coupling-reduction technique?"* — Yes, directly. Injecting a dependency, typically as an interface type, rather than having a class construct its own concrete dependencies internally, is exactly the "depend on the abstraction, not the implementation" pattern that keeps coupling low.
 
 **Source:** [Oracle Java Tutorials — Object-Oriented Programming Concepts](https://docs.oracle.com/javase/tutorial/java/concepts/)
 
@@ -517,9 +517,9 @@ class OrderServiceLooselyCoupled {
 
 **Core answer:**
 
-"Binding is the process of associating a method **call** with the actual method **implementation** that runs. **Static (early) binding** happens at compile time — the compiler determines exactly which method implementation to call based on the declared (static) type of the reference, and this applies to `private`, `static`, and `final` methods, as well as all overloaded method resolution (question 5/7's compile-time polymorphism) — the JVM doesn't need to do any runtime lookup for these, since there's only ever one possible target. **Dynamic (late) binding** happens at runtime — for an overridden instance method called through a reference, the JVM looks up the actual method to invoke based on the object's *actual* runtime class, not the reference's declared type, which is the mechanism that makes runtime polymorphism (question 5) actually work.
+"Binding is the process of connecting a method call to the actual implementation that runs. **Static (early) binding** happens at compile time. The compiler determines exactly which implementation to call based on the declared type of the reference. This applies to `private`, `static`, and `final` methods, as well as all overloaded method resolution (question 5/7's compile-time polymorphism) — the JVM doesn't need any runtime lookup for these, since there's only ever one possible target. **Dynamic (late) binding** happens at runtime. For an overridden instance method called through a reference, the JVM looks up the actual method based on the object's actual runtime class, not the reference's declared type. That's the mechanism that makes runtime polymorphism (question 5) work.
 
-Mechanically, dynamic binding in the JVM is implemented via a **virtual method table (vtable)**-style dispatch — each class has a table mapping method signatures to the actual implementation to invoke for instances of that class, and a call through a reference does a lookup in the *actual object's* table at the moment of the call, not the reference's declared type's table."
+Mechanically, dynamic binding in the JVM works through a **virtual method table (vtable)**-style dispatch. Each class has a table mapping method signatures to the implementation to invoke for instances of that class, and a call through a reference looks up the actual object's table at the moment of the call, not the reference's declared type's table."
 
 **Code:**
 
@@ -547,8 +547,8 @@ a.identify();     // "Animal" -- STATIC binding: resolved by the
 
 **Follow-up questions:**
 
-- *"You said `a.identify()` prints 'Animal' — isn't that surprising given `a` actually holds a `Dog`?"* — This is exactly the point, and a very common source of real confusion: static methods are resolved by the *reference's declared type*, completely ignoring the object's actual runtime type, precisely because static methods aren't part of any object's virtual dispatch table at all — question 12 covers this "hiding, not overriding" distinction directly.
-- *"Does dynamic binding have a real performance cost versus static binding?"* — Historically yes, a small one (an extra table lookup versus a direct call), though modern JIT compilers (JVM/GC file's own inlining/escape-analysis discussion) can often optimize this away via inline caching or speculative devirtualization when a call site's actual type is predictably stable at runtime.
+- *"You said `a.identify()` prints 'Animal' — isn't that surprising given `a` actually holds a `Dog`?"* — That's exactly the point, and a common source of real confusion. Static methods are resolved by the reference's declared type, completely ignoring the object's actual runtime type, because static methods aren't part of any object's virtual dispatch table at all. Question 12 covers this "hiding, not overriding" distinction directly.
+- *"Does dynamic binding have a real performance cost versus static binding?"* — Historically yes, a small one — an extra table lookup versus a direct call. Modern JIT compilers (see the JVM/GC file's inlining/escape-analysis discussion) can often optimize this away through inline caching or speculative devirtualization when a call site's actual type is predictably stable at runtime.
 
 **Source:** [Java Language Specification §15.12 — Method Invocation Expressions](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12)
 
@@ -558,9 +558,9 @@ a.identify();     // "Animal" -- STATIC binding: resolved by the
 
 **Core answer:**
 
-"None of these can be genuinely overridden, but for three different reasons worth distinguishing precisely, since 'you can't override it' actually means something different in each case. A **static method** can't be overridden because overriding is a dynamic-dispatch (question 11) concept, and static methods are resolved by the reference's declared type at compile time — a subclass defining a same-signature static method **hides** the superclass's version rather than overriding it, which behaves completely differently (question 11's example shows this directly: calling it through a superclass-typed reference invokes the superclass's version, even if the reference holds a subclass instance, which is never true for genuine overriding).
+"None of these can be genuinely overridden, but for three different reasons worth telling apart, since 'you can't override it' means something different in each case. A **static method** can't be overridden because overriding is a dynamic-dispatch (question 11) concept, and static methods are resolved by the reference's declared type at compile time. A subclass defining a same-signature static method **hides** the superclass's version instead of overriding it, which behaves completely differently — question 11's example shows this directly: calling it through a superclass-typed reference invokes the superclass's version even if the reference holds a subclass instance, which is never true for genuine overriding.
 
-A **private method** can't be overridden because it isn't even visible to, or inherited by, a subclass at all — a subclass declaring a method with the exact same signature as a superclass's private method isn't overriding or hiding anything; it's simply defining an entirely new, unrelated method that happens to share a name, with no relationship to the superclass's version whatsoever. A **final method** genuinely cannot be redefined by a subclass at all — attempting to do so is a compile error, since `final` on a method is specifically the language's mechanism for a class to declare 'this method's behavior must not be changed by any subclass,' which is a deliberate design guarantee, not just a naming collision or a dispatch-mechanism detail like the other two."
+A **private method** can't be overridden because it isn't even visible to, or inherited by, a subclass at all. A subclass declaring a method with the exact same signature as a superclass's private method isn't overriding or hiding anything — it's simply defining a new, unrelated method that happens to share a name. A **final method** genuinely can't be redefined by a subclass at all. Attempting to do so is a compile error, since `final` on a method is the language's mechanism for a class to declare 'this method's behavior must not be changed by any subclass' — a deliberate design guarantee, not just a naming collision or dispatch detail like the other two."
 
 **Code:**
 
@@ -587,8 +587,8 @@ class Child extends Parent {
 
 **Follow-up questions:**
 
-- *"If `privateMethod()` isn't inherited, what does calling `super.privateMethod()` even do if attempted from Child?"* — It would be a compile error — `super.` syntax only works for members actually inherited and accessible from the subclass, and a private member of the superclass is neither.
-- *"Why does Java even allow declaring a static method with the same signature in a subclass, if it's not overriding anything?"* — It's a legitimate, if easy-to-misuse, feature (method hiding) — mostly relevant for utility/factory-style static methods where a subclass legitimately wants its own class-level version, but it's a common source of confusion specifically because it looks syntactically identical to overriding while behaving completely differently.
+- *"If `privateMethod()` isn't inherited, what does calling `super.privateMethod()` even do if attempted from Child?"* — It would be a compile error. `super.` syntax only works for members actually inherited and accessible from the subclass, and a private member of the superclass is neither.
+- *"Why does Java even allow declaring a static method with the same signature in a subclass, if it's not overriding anything?"* — It's a legitimate, if easy-to-misuse, feature called method hiding, mostly relevant for utility or factory-style static methods where a subclass wants its own class-level version. It's a common source of confusion because it looks syntactically identical to overriding while behaving completely differently.
 
 **Source:** [Java Language Specification §8.4.8 — Inheritance, Overriding, and Hiding](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.4.8)
 
@@ -598,9 +598,9 @@ class Child extends Parent {
 
 **Core answer:**
 
-"The diamond problem is the classic multiple-inheritance ambiguity: if a type `D` inherits from two types `B` and `C`, both of which independently inherit from (or define) a common method from `A`, and `B` and `C` provide *different* implementations, which one should `D` actually get? Java sidesteps this for classes entirely by only allowing single inheritance of implementation (`extends` accepts exactly one class) — but Java 8's **default methods** on interfaces reintroduced a real version of this problem, since a class can implement multiple interfaces, and two different interfaces can now each provide a *default*, concrete implementation of the same method signature.
+"The diamond problem is the classic multiple-inheritance ambiguity: if a type `D` inherits from two types `B` and `C`, both of which independently inherit from or define a common method from `A`, and `B` and `C` provide different implementations, which one should `D` get? Java sidesteps this for classes entirely by only allowing single inheritance of implementation — `extends` accepts exactly one class. But Java 8's **default methods** on interfaces reintroduced a real version of this problem, since a class can implement multiple interfaces, and two different interfaces can each provide a default, concrete implementation of the same method signature.
 
-Java's resolution: if a class implements two interfaces with **conflicting default methods** (same signature, different default bodies), it's a **compile error** — the class is *required* to explicitly override the method itself, resolving the ambiguity directly rather than the language guessing which default 'wins.' Inside that override, the class can still explicitly choose to invoke one specific interface's default implementation via `InterfaceName.super.methodName()` syntax, rather than being forced to write an entirely new implementation from scratch."
+Java's resolution: if a class implements two interfaces with conflicting default methods — same signature, different bodies — it's a compile error. The class has to explicitly override the method itself, resolving the ambiguity directly rather than the language guessing which default wins. Inside that override, the class can still choose to invoke one specific interface's default implementation via `InterfaceName.super.methodName()`, rather than writing an entirely new implementation from scratch."
 
 **Code:**
 
@@ -630,8 +630,8 @@ System.out.println(new Duck().move());  // "flying and swimming" --
 
 **Follow-up questions:**
 
-- *"What if only ONE of the two interfaces provides a default implementation, and the other just declares the abstract method signature?"* — No conflict, no error — the concrete default implementation is used automatically, since there's genuinely only one candidate; the ambiguity specifically requires two *competing, different* default implementations of the same signature.
-- *"Why did Java 8 add default methods at all, given this reintroduced a real ambiguity problem?"* — Primarily for interface evolution — it let the JDK add new methods to existing interfaces (like `List.forEach()`) with a sensible default implementation, without breaking every existing class that already implemented that interface before the new method existed.
+- *"What if only ONE of the two interfaces provides a default implementation, and the other just declares the abstract method signature?"* — No conflict, no error. The concrete default implementation is used automatically since there's only one candidate. The ambiguity specifically needs two competing, different default implementations of the same signature.
+- *"Why did Java 8 add default methods at all, given this reintroduced a real ambiguity problem?"* — Mainly for interface evolution. It let the JDK add new methods to existing interfaces, like `List.forEach()`, with a sensible default implementation, without breaking every existing class that already implemented that interface before the new method existed.
 
 **Source:** [Oracle Java Tutorials — Default Methods](https://docs.oracle.com/javase/tutorial/java/IandI/defaultmethods.html), [Java Language Specification §9.4.1.3 — Inheriting Methods with Override-Equivalent Signatures](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.4.1.3)
 
@@ -643,13 +643,13 @@ System.out.println(new Duck().move());  // "flying and swimming" --
 
 **Core answer:**
 
-"SOLID is five principles for keeping object-oriented designs maintainable as they grow, and I'd explain each with a concrete violation and fix rather than reciting definitions, since that's what actually demonstrates understanding versus memorization.
+"SOLID is five principles for keeping object-oriented designs maintainable as they grow. I'd explain each with a concrete violation and fix rather than reciting definitions, since that's what actually shows understanding instead of memorization.
 
-**S — Single Responsibility Principle**: a class should have exactly one reason to change. Violation: question 10's `OrderManager` God-class handling orders, email, PDFs, and database connections in one class. Fix: split into `OrderService`, `EmailService`, `InvoiceGenerator` — each with one reason to change.
+**S — Single Responsibility Principle**: a class should have exactly one reason to change. Violation: question 10's `OrderManager` God-class, handling orders, email, PDFs, and database connections in one class. Fix: split into `OrderService`, `EmailService`, `InvoiceGenerator`, each with one reason to change.
 
-**O — Open/Closed Principle**: a class should be open for extension but closed for modification — adding new behavior shouldn't require editing existing, already-tested code. Violation: a `PaymentProcessor` with an `if/else if` chain checking `paymentType.equals(\"CREDIT_CARD\")`, requiring every new payment type to add another branch to the same method. Fix: a `PaymentMethod` interface (question 1's example) — adding a new payment type means adding a new class, not modifying existing logic.
+**O — Open/Closed Principle**: a class should be open for extension but closed for modification. Adding new behavior shouldn't require editing existing, already-tested code. Violation: a `PaymentProcessor` with an `if/else if` chain checking `paymentType.equals(\"CREDIT_CARD\")`, so every new payment type adds another branch to the same method. Fix: a `PaymentMethod` interface (question 1's example) — a new payment type just means a new class, not modified logic.
 
-**L — Liskov Substitution Principle**: subtypes must be substitutable for their base type without breaking correctness (question 15 covers this in depth with its own dedicated example).
+**L — Liskov Substitution Principle**: subtypes must be substitutable for their base type without breaking correctness (question 15 covers this in depth with its own example).
 
 **I — Interface Segregation Principle**: clients shouldn't be forced to depend on methods they don't use. Violation: one fat `Worker` interface with `work()` and `eat()`, forcing a `RobotWorker` to implement a meaningless `eat()` method. Fix: split into separate `Workable` and `Eatable` interfaces.
 
@@ -691,8 +691,8 @@ class RobotWorkerFixed implements Workable {  // no forced, meaningless eat()
 
 **Follow-up questions:**
 
-- *"Which SOLID principle do you see violated most often in real codebases?"* — Single Responsibility, in my experience — a class starting with one clear purpose accreting unrelated responsibilities over time (question 10's cohesion discussion) is a very common, gradual drift, versus the other four, which are more often violated as a one-time design decision.
-- *"Can following SOLID too rigidly become its own problem?"* — Yes — over-applying Open/Closed or Interface Segregation to code that genuinely doesn't need that flexibility yet produces unnecessary abstraction layers and indirection for a requirement that may never materialize; I'd apply these principles where the actual cost of *not* following them has already shown up (a class that keeps needing modification for new cases) rather than preemptively on everything.
+- *"Which SOLID principle do you see violated most often in real codebases?"* — Single Responsibility, in my experience. A class starting with one clear purpose and picking up unrelated responsibilities over time (question 10's cohesion discussion) is a common, gradual drift, versus the other four, which tend to get violated as a one-time design decision.
+- *"Can following SOLID too rigidly become its own problem?"* — Yes. Over-applying Open/Closed or Interface Segregation to code that doesn't need that flexibility yet just adds unnecessary abstraction and indirection for a requirement that may never show up. I'd apply these principles once the actual cost of not following them has already shown up — a class that keeps needing modification for new cases — rather than preemptively on everything.
 
 **Source:** [Robert C. Martin — SOLID Principles](https://en.wikipedia.org/wiki/SOLID), [Oracle Java Tutorials — Interfaces](https://docs.oracle.com/javase/tutorial/java/IandI/createinterface.html)
 
@@ -702,9 +702,9 @@ class RobotWorkerFixed implements Workable {  // no forced, meaningless eat()
 
 **Core answer:**
 
-"The Liskov Substitution Principle states that if `S` is a subtype of `T`, objects of type `T` should be replaceable with objects of type `S` without altering the correctness of the program — meaning any code written against the supertype's contract must continue to behave correctly when handed *any* subtype, not just the ones the original author happened to test against.
+"The Liskov Substitution Principle says that if `S` is a subtype of `T`, objects of type `T` should be replaceable with objects of type `S` without breaking the program's correctness. Any code written against the supertype's contract has to keep behaving correctly when handed any subtype, not just the ones the original author happened to test against.
 
-The canonical, concrete violation, worth being able to walk through precisely: `Square extends Rectangle`. A `Rectangle` has independent `setWidth()`/`setHeight()` methods, and any code using a `Rectangle` reference reasonably assumes calling `setWidth(5)` changes only the width, leaving height untouched. A `Square`, to remain a valid square, *must* keep width and height equal — so its overridden `setWidth()` has to also change height (or vice versa) to preserve its own invariant. That's a genuine LSP violation: code that does `rect.setWidth(5); rect.setHeight(10); assert rect.getArea() == 50;` works correctly for an actual `Rectangle`, but silently breaks if handed a `Square` instead, since setting height afterward also changed the width back — the `Square` is *not* actually substitutable for a `Rectangle` in this common usage pattern, even though 'a square is a rectangle' sounds like an obviously correct is-a relationship geometrically."
+The canonical, concrete violation, worth being able to walk through: `Square extends Rectangle`. A `Rectangle` has independent `setWidth()`/`setHeight()` methods, and any code using a `Rectangle` reference reasonably assumes calling `setWidth(5)` changes only the width, leaving height untouched. A `Square`, to remain a valid square, has to keep width and height equal, so its overridden `setWidth()` also changes height, and vice versa, to preserve its own invariant. That's a genuine LSP violation: code that does `rect.setWidth(5); rect.setHeight(10); assert rect.getArea() == 50;` works correctly for an actual `Rectangle`, but silently breaks if handed a `Square` instead, since setting height afterward also changed the width back. The `Square` isn't actually substitutable for a `Rectangle` in this common usage pattern, even though 'a square is a rectangle' sounds like an obviously correct is-a relationship geometrically."
 
 **Code:**
 
@@ -750,8 +750,8 @@ class SquareShape implements Shape2 {
 
 **Follow-up questions:**
 
-- *"Is the fix always 'don't use inheritance at all' once an LSP violation is found?"* — Not necessarily — sometimes the fix is narrowing the supertype's contract (removing the assumption that's actually being violated, if it wasn't load-bearing), but when the assumption genuinely needs to hold for the supertype's contract to be meaningful, replacing inheritance with a shared abstraction that doesn't carry the problematic assumption (as shown above) is usually cleaner than trying to patch the hierarchy.
-- *"How would you actually catch an LSP violation in code review, before it becomes a production bug?"* — Ask explicitly, for any override: 'does this override strengthen preconditions or weaken postconditions relative to the method it's overriding?' — an override that requires more from the caller, or guarantees less to the caller, than the original contract promised is exactly the shape of an LSP violation, and that's a concrete, checkable question rather than an abstract principle.
+- *"Is the fix always 'don't use inheritance at all' once an LSP violation is found?"* — Not necessarily. Sometimes the fix is narrowing the supertype's contract, if the assumption being violated wasn't load-bearing. But when that assumption genuinely needs to hold for the supertype's contract to be meaningful, replacing inheritance with a shared abstraction that doesn't carry the problem, as shown above, is usually cleaner than patching the hierarchy.
+- *"How would you actually catch an LSP violation in code review, before it becomes a production bug?"* — Ask, for any override: does this override strengthen preconditions or weaken postconditions relative to the method it's overriding? An override that requires more from the caller, or guarantees less to the caller, than the original contract promised is exactly the shape of an LSP violation — a concrete, checkable question rather than an abstract principle.
 
 **Source:** [Barbara Liskov — A Behavioral Notion of Subtyping](https://www.cs.cmu.edu/~wing/publications/LiskovWing94.pdf), [Robert C. Martin — SOLID Principles](https://en.wikipedia.org/wiki/SOLID)
 
@@ -761,9 +761,9 @@ class SquareShape implements Shape2 {
 
 **Core answer:**
 
-"No, and I'd say so directly rather than reflexively defending Java as 'fully OOP' — Java is a **hybrid**, object-oriented language with several deliberate, pragmatic exceptions to pure OOP principles, made for performance and practicality reasons, not out of some pure-OOP failure.
+"No, and I'd say so directly rather than reflexively defending Java as 'fully OOP.' Java is a hybrid, object-oriented language with several deliberate, pragmatic exceptions to pure OOP principles, made for performance and practicality, not because of some pure-OOP failure.
 
-The clearest gap: **primitive types** (`int`, `double`, `boolean`, etc.) are **not objects** at all — they have no methods, don't participate in inheritance, and aren't instances of any class, existing specifically because boxing every single numeric value into a full object (`Integer` instead of `int`) would carry real memory and performance overhead for extremely common operations (arithmetic, loop counters). **Static members** are another gap — a `static` field/method belongs to the class itself, not to any object instance, which is a fundamentally class-based, not object-based, concept, and static methods (question 12) don't participate in dynamic dispatch/polymorphism at all, one of OOP's core pillars. And Java also supports **procedural-style code** at the syntax level — nothing stops a class from being a bag of static utility methods (a `MathUtils`-style class) that's never actually instantiated, meaning the language doesn't *force* genuinely object-oriented design even where it's syntactically possible to write class-shaped, non-object-oriented code."
+The clearest gap: **primitive types** like `int`, `double`, and `boolean` aren't objects at all. They have no methods, don't participate in inheritance, and aren't instances of any class. That's specifically because boxing every numeric value into a full object — `Integer` instead of `int` — would carry real memory and performance overhead for extremely common operations like arithmetic and loop counters. **Static members** are another gap. A `static` field or method belongs to the class itself, not to any object instance, which is a class-based rather than object-based concept, and static methods (question 12) don't participate in dynamic dispatch at all — one of OOP's core pillars. Java also supports procedural-style code at the syntax level. Nothing stops a class from being a bag of static utility methods, a `MathUtils`-style class that's never actually instantiated, so the language doesn't force genuinely object-oriented design even where it's syntactically possible to write it."
 
 **Code:**
 
@@ -789,8 +789,8 @@ MathUtils.square(5);                                    // OBJECT creation
 
 **Follow-up questions:**
 
-- *"Does the existence of primitives actually hurt Java's design, or is it a reasonable trade-off?"* — A reasonable, deliberate trade-off — the performance cost of universally boxing every numeric value (extra memory per value, extra indirection, garbage collection pressure for values that could otherwise live on the stack or in a register) would be real and significant for how pervasively primitives are used, and Java's autoboxing bridges the gap when object behavior is genuinely needed.
-- *"Are there languages that avoid this trade-off and are more 'purely' object-oriented?"* — Smalltalk and Ruby are commonly cited as closer to pure OOP, where even integers are genuinely objects with methods — the trade-off there is a different, generally higher per-operation performance cost for extremely common primitive-style operations.
+- *"Does the existence of primitives actually hurt Java's design, or is it a reasonable trade-off?"* — A reasonable, deliberate trade-off. The performance cost of universally boxing every numeric value — extra memory per value, extra indirection, GC pressure for values that could otherwise live on the stack — would be real and significant given how pervasively primitives are used. Java's autoboxing bridges the gap when object behavior is actually needed.
+- *"Are there languages that avoid this trade-off and are more 'purely' object-oriented?"* — Smalltalk and Ruby are commonly cited as closer to pure OOP, where even integers are genuinely objects with methods. The trade-off there is a higher per-operation cost for extremely common primitive-style operations.
 
 **Source:** [Oracle Java Tutorials — Primitive Data Types](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html)
 
@@ -800,9 +800,9 @@ MathUtils.square(5);                                    // OBJECT creation
 
 **Core answer:**
 
-"A deep inheritance hierarchy (many levels of `extends` stacked on top of each other) compounds every one of the real costs question 9's fragile-base-class discussion introduces, rather than just adding them up linearly — a change to a class near the *root* of a five-level-deep hierarchy potentially affects every single subclass at every level below it, and understanding any one concrete class's actual, complete behavior requires reading and mentally merging behavior scattered across every ancestor in the chain, not just its own immediate, visible code.
+"A deep inheritance hierarchy — many levels of `extends` stacked on top of each other — compounds every cost question 9's fragile-base-class discussion introduces, rather than just adding them up. A change to a class near the root of a five-level-deep hierarchy potentially affects every subclass at every level below it, and understanding any one concrete class's actual behavior means reading and mentally merging behavior scattered across every ancestor in the chain, not just its own visible code.
 
-This creates a specific, real comprehension cost: a developer reading `class ConcreteWidget extends StyledWidget extends InteractiveWidget extends BaseWidget` has to trace through *four* separate class definitions to understand what a single method call on a `ConcreteWidget` instance actually does, especially if intermediate levels override the same method — and a bug introduced by an unexpected interaction between two different ancestors' overrides (one ancestor's override calling a method a different ancestor also overrides, in a way the original author of either class never anticipated) is a genuinely difficult class of bug to trace, since no single class's code, read in isolation, reveals the actual runtime behavior. The general guidance I'd give: prefer **shallow hierarchies** (rarely more than one or two levels deep) combined with composition (question 9) for anything beyond that, and treat 'this hierarchy needs a fourth level' as a signal to reconsider the design, not a normal, expected outcome of continued feature growth."
+That's a real comprehension cost. A developer reading `class ConcreteWidget extends StyledWidget extends InteractiveWidget extends BaseWidget` has to trace through four separate class definitions to understand what a single method call on a `ConcreteWidget` instance actually does, especially if intermediate levels override the same method. A bug caused by an unexpected interaction between two different ancestors' overrides — one ancestor's override calling a method a different ancestor also overrides, in a way neither author anticipated — is genuinely hard to trace, since no single class's code, read in isolation, reveals the actual runtime behavior. My general guidance: prefer shallow hierarchies, rarely more than one or two levels deep, combined with composition (question 9) for anything beyond that. Treat 'this hierarchy needs a fourth level' as a signal to reconsider the design, not a normal outcome of continued feature growth."
 
 **Code:**
 
@@ -836,8 +836,8 @@ visible in ONE place, delegating to explicitly-named collaborators:
 
 **Follow-up questions:**
 
-- *"Is there a rule of thumb for how deep is 'too deep'?"* — No universal number, but I'd treat more than two or three levels as worth actively questioning — the JDK's own well-known example, the `Throwable` → `Exception` → `RuntimeException` → ... chain, works reasonably well specifically because exception *types* rarely override each other's behavior (they're mostly used for their type identity in a catch clause, not their inherited method implementations), which is a genuinely different, lower-risk usage pattern than a deep hierarchy of classes whose *behavior* actually differs and interacts at every level.
-- *"How would you refactor an existing deep hierarchy without a risky, big-bang rewrite?"* — Incrementally — identify the specific behaviors different levels actually vary on, extract those into composed collaborator objects/strategies one at a time, and flatten the hierarchy gradually as each piece of behavior moves out, rather than attempting to redesign the whole hierarchy in one large, high-risk change.
+- *"Is there a rule of thumb for how deep is 'too deep'?"* — No universal number, but I'd question anything past two or three levels. The JDK's own well-known `Throwable` → `Exception` → `RuntimeException` chain works reasonably well specifically because exception types rarely override each other's behavior — they're mostly used for type identity in a catch clause, not inherited method implementations. That's a much lower-risk usage pattern than a deep hierarchy of classes whose behavior actually differs and interacts at every level.
+- *"How would you refactor an existing deep hierarchy without a risky, big-bang rewrite?"* — Incrementally. Identify the specific behaviors that actually vary across levels, extract those into composed collaborator objects one at a time, and flatten the hierarchy gradually as each piece of behavior moves out, rather than redesigning the whole thing in one high-risk change.
 
 **Source:** [Gamma, Helm, Johnson, Vlissides — Design Patterns (the Gang of Four book)](https://en.wikipedia.org/wiki/Design_Patterns)
 
