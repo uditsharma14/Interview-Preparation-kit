@@ -64,9 +64,9 @@ How to use this: each question has **the answer the way I'd actually say it out 
 
 **Answer:**
 
-"Spring Security is Spring's framework for authentication (confirming who a caller is) and authorization (deciding what they're allowed to do) — implemented primarily as a chain of servlet filters that intercept every incoming HTTP request before it reaches application code, covered in depth later in this guide. In modern Spring Boot (2.x+), adding the `spring-boot-starter-security` dependency already activates Spring Security with sensible defaults (every endpoint requires authentication, a generated login form, a randomly-generated default password logged at startup) — `@EnableWebSecurity` isn't strictly required to turn security on at all in a Boot application; its real job is signaling that you're providing **custom** security configuration (your own `SecurityFilterChain` bean) rather than accepting the auto-configured defaults, and it ensures Spring MVC integration hooks (like resolving `Authentication` as a controller method argument) are wired up correctly.
+"Spring Security handles authentication (confirming who a caller is) and authorization (deciding what they're allowed to do). Under the hood it's a chain of servlet filters that intercept every incoming HTTP request before it reaches your application code — more on that later in this guide. In modern Spring Boot, just adding the `spring-boot-starter-security` dependency already turns Spring Security on with sensible defaults: every endpoint requires authentication, you get a generated login form, and a random default password gets logged at startup. So `@EnableWebSecurity` isn't actually required to turn security on. Its real job is signaling that you're providing **custom** security configuration — your own `SecurityFilterChain` bean — instead of accepting the defaults, and it wires up Spring MVC integration hooks like resolving `Authentication` as a controller method argument.
 
-The actual security rules — which endpoints require authentication, what login mechanism to use — are configured via a `SecurityFilterChain` `@Bean`, covered next, not via `@EnableWebSecurity` itself."
+The actual security rules — which endpoints need authentication, what login mechanism to use — get configured via a `SecurityFilterChain` bean, which we'll get to next. Not via `@EnableWebSecurity` itself."
 
 **Code:**
 
@@ -88,7 +88,7 @@ class SecurityConfig {
 
 **Follow-up:**
 
-I'd mention that just adding the security starter dependency, with zero configuration at all, is a genuinely reasonable way to quickly verify Spring Security is active during initial setup — every endpoint immediately requires authentication, which confirms the filter chain is running — but it's never a production configuration on its own: real applications almost always need a custom `SecurityFilterChain` to express which endpoints are actually public, which authentication mechanism to use, and how authorization should work, which is exactly what the rest of this guide covers.
+Adding the security starter with zero configuration is a fine way to quickly confirm Spring Security is active — every endpoint immediately requires authentication, so you know the filter chain is running. But it's never a real production setup. Real applications need a custom `SecurityFilterChain` to say which endpoints are actually public, which authentication mechanism to use, and how authorization should work — which is what the rest of this guide covers.
 
 **Source:** [Spring Security Reference — Getting Started](https://docs.spring.io/spring-security/reference/servlet/getting-started.html)
 
@@ -98,9 +98,9 @@ I'd mention that just adding the security starter dependency, with zero configur
 
 **Answer:**
 
-"`UserDetailsService` is the interface Spring Security uses to load a user's credentials and authorities given a username — a single method, `loadUserByUsername(String username)`, that returns a `UserDetails` object containing the username, the (hashed) password, and the user's granted authorities/roles. During username/password authentication, `DaoAuthenticationProvider` calls this method to fetch the stored user record, then compares the submitted password (after hashing it) against the stored hash — `UserDetailsService` itself doesn't do the password comparison; it's purely responsible for *retrieving* the user's data from wherever it actually lives (a database, an LDAP directory, an in-memory list for testing).
+"`UserDetailsService` is the interface Spring Security uses to load a user's credentials and authorities given a username. It's a single method, `loadUserByUsername(String username)`, that returns a `UserDetails` object with the username, the hashed password, and the user's granted authorities/roles. During username/password authentication, `DaoAuthenticationProvider` calls this method to fetch the stored user record, then hashes the submitted password and compares it against the stored hash. `UserDetailsService` itself doesn't do that comparison — it's just responsible for retrieving the user's data from wherever it lives, whether that's a database, an LDAP directory, or an in-memory list for testing.
 
-In a real application, you provide your own `UserDetailsService` implementation backed by your actual user store (typically a Spring Data repository querying a `users` table) — Spring Security ships a couple of basic implementations (in-memory, JDBC-based) mainly useful for prototyping or testing, not production use with a real user base."
+In a real application you write your own implementation backed by your actual user store, typically a Spring Data repository querying a `users` table. Spring Security ships basic in-memory and JDBC-based implementations too, but those are mainly for prototyping and testing, not a production user base."
 
 **Code:**
 
@@ -126,7 +126,7 @@ class DatabaseUserDetailsService implements UserDetailsService {
 
 **Follow-up:**
 
-I'd flag that `UserDetailsService` is specifically tied to the username/password authentication flow — it has no role at all in OAuth2/JWT-based authentication, where the resource server validates a token issued by a separate authorization server instead of looking up credentials locally; conflating the two (expecting `UserDetailsService` to somehow be involved in JWT validation) is a common early-learning confusion worth being precise about, since they're genuinely separate authentication mechanisms covered in different parts of this guide.
+One thing worth flagging: `UserDetailsService` is tied specifically to the username/password flow. It plays no role at all in OAuth2/JWT authentication, where the resource server validates a token issued by a separate authorization server instead of looking up credentials locally. Expecting `UserDetailsService` to somehow be involved in JWT validation is a common early confusion — they're genuinely separate mechanisms, covered in different parts of this guide.
 
 **Source:** [Spring Security Reference — `UserDetailsService`](https://docs.spring.io/spring-security/reference/servlet/authentication/passwords/user-details-service.html)
 
@@ -136,9 +136,9 @@ I'd flag that `UserDetailsService` is specifically tied to the username/password
 
 **Answer:**
 
-"**HTTP Basic authentication** sends credentials on *every single request*, base64-encoded (not encrypted — base64 is trivially reversible, so this absolutely requires HTTPS) in the `Authorization: Basic <credentials>` header, and the browser's own built-in credential prompt handles collecting them, with no custom login page involved. It's stateless (no server-side session needed) and simple, which makes it a reasonable fit for machine-to-machine or API-client scenarios, but a poor fit for a real end-user-facing web application, since there's no real 'log out' (the browser just keeps resending the cached credentials) and the built-in browser prompt is not customizable at all.
+"**HTTP Basic authentication** sends credentials on every single request, base64-encoded in the `Authorization: Basic <credentials>` header. Base64 isn't encryption — it's trivially reversible — so this absolutely requires HTTPS. The browser's built-in credential prompt handles collecting the credentials, with no custom login page involved. It's stateless and simple, which makes it a reasonable fit for machine-to-machine or API-client scenarios, but a poor fit for an end-user-facing web app: there's no real logout (the browser just keeps resending cached credentials), and the built-in prompt isn't customizable at all.
 
-**Form-based login** presents a proper HTML login form, and on successful submission, the server creates a session (or issues a token) and typically sets a session cookie — subsequent requests carry the session identifier instead of resending the raw credentials every time. This is the standard pattern for browser-based end-user applications, since it supports a real logout, a customizable UI, and doesn't require re-sending the password on every single request."
+**Form-based login** presents a proper HTML login form. On successful submission, the server creates a session (or issues a token) and typically sets a session cookie, so subsequent requests carry that identifier instead of resending raw credentials every time. This is the standard pattern for browser-based apps — it supports a real logout, a customizable UI, and doesn't require re-sending the password on every request."
 
 **Code:**
 
@@ -154,7 +154,7 @@ http.formLogin(form -> form.loginPage("/login").permitAll());
 
 **Follow-up:**
 
-I'd mention that both of these are increasingly the "legacy" pattern for anything beyond a simple internal tool or a quick API-client integration — modern applications, especially anything with a separate frontend/mobile client or third-party integrations, lean toward OAuth2/OpenID Connect and bearer tokens instead, covered in depth later in this guide, specifically because token-based auth decouples the authentication mechanism from the resource server and supports delegated access (a third-party app acting on a user's behalf) in a way neither Basic Auth nor traditional session-based form login was designed for.
+Both of these are increasingly the "legacy" pattern beyond a simple internal tool or a quick API-client integration. Modern applications — especially anything with a separate frontend/mobile client or third-party integrations — lean toward OAuth2/OpenID Connect and bearer tokens instead, covered later in this guide. Token-based auth decouples the authentication mechanism from the resource server and supports delegated access (a third-party app acting on a user's behalf) in a way neither Basic Auth nor session-based form login was designed for.
 
 **Source:** [Spring Security Reference — Basic Authentication](https://docs.spring.io/spring-security/reference/servlet/authentication/passwords/basic.html), [Spring Security Reference — Form Login](https://docs.spring.io/spring-security/reference/servlet/authentication/passwords/form.html)
 
@@ -164,9 +164,9 @@ I'd mention that both of these are increasingly the "legacy" pattern for anythin
 
 **Answer:**
 
-"Storing a password in plaintext means anyone with database access — an attacker who breaches it, a rogue insider, a misconfigured backup — has every user's actual password immediately, and since people reuse passwords across services, that single breach compromises accounts on entirely unrelated systems too. Hashing transforms the password into a one-way-derived value: given the hash, you can't feasibly recover the original password, but you *can* verify a later login attempt by hashing the submitted password the same way and comparing.
+"If a password is stored in plaintext, anyone with database access — an attacker who breaches it, a rogue insider, a misconfigured backup — has every user's actual password immediately. And since people reuse passwords across services, one breach compromises accounts on completely unrelated systems too. Hashing turns the password into a one-way-derived value: you can't feasibly recover the original from the hash, but you can verify a later login attempt by hashing the submitted password the same way and comparing.
 
-`BCryptPasswordEncoder` is Spring Security's standard implementation of a **deliberately slow**, salted hashing algorithm (bcrypt) — 'slow' is the actual point, not a flaw: a fast hash (plain SHA-256, for instance) lets an attacker who steals the hash database try billions of password guesses per second on cheap hardware, while bcrypt's deliberate computational cost (tunable via its 'strength'/work-factor parameter) makes brute-forcing dramatically more expensive, without meaningfully slowing down the one legitimate hash-and-compare operation a real login performs. bcrypt also automatically generates and embeds a random salt per password, so two users with the identical password get completely different stored hashes, defeating precomputed rainbow-table attacks."
+`BCryptPasswordEncoder` is Spring Security's standard implementation of bcrypt, a deliberately slow, salted hashing algorithm. "Slow" is the actual point, not a flaw. A fast hash like plain SHA-256 lets an attacker who steals the hash database try billions of password guesses per second on cheap hardware. Bcrypt's deliberate computational cost — tunable via its work-factor parameter — makes brute-forcing dramatically more expensive, without meaningfully slowing down the one legitimate hash-and-compare a real login does. It also automatically generates and embeds a random salt per password, so two users with the identical password get completely different stored hashes, which defeats precomputed rainbow-table attacks."
 
 **Code:**
 
@@ -186,7 +186,7 @@ boolean matches = passwordEncoder.matches(submittedPassword, storedHash);
 
 **Follow-up:**
 
-I'd bring up why a fast general-purpose hash function (MD5, SHA-256 alone) is specifically the wrong tool for passwords, even though it's a perfectly good hash for other purposes (checksums, content-addressing) — those are deliberately optimized to be *fast*, which is exactly the property that makes brute-forcing cheap once an attacker has the hash database; bcrypt (and similar purpose-built password-hashing algorithms like Argon2 or PBKDF2) are deliberately slow and tunable specifically to counter that, which is the whole reason a dedicated password-hashing library exists as a distinct category from general-purpose hashing.
+A fast general-purpose hash function like MD5 or plain SHA-256 is the wrong tool for passwords, even though it's a perfectly good hash for other things like checksums or content-addressing. Those are deliberately optimized to be fast, which is exactly what makes brute-forcing cheap once an attacker has the hash database. Bcrypt, and similar purpose-built algorithms like Argon2 or PBKDF2, are deliberately slow and tunable to counter that — which is the whole reason password-hashing exists as its own category, separate from general-purpose hashing.
 
 **Source:** [`BCryptPasswordEncoder` Javadoc](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/crypto/bcrypt/BCryptPasswordEncoder.html), [Spring Security Reference — Password Storage](https://docs.spring.io/spring-security/reference/features/authentication/password-storage.html)
 
@@ -196,9 +196,9 @@ I'd bring up why a fast general-purpose hash function (MD5, SHA-256 alone) is sp
 
 **Answer:**
 
-"A **cookie** is just a small piece of data the server asks the browser to store (via a `Set-Cookie` response header) and automatically send back on every subsequent request to that domain (via a `Cookie` request header) — the browser handles the storage and resending mechanically; the cookie's *content* can be literally anything the server puts in it. A **session** is a server-side concept: a chunk of state the server keeps associated with a particular client, most commonly a `HttpSession` object holding whatever the application stored in it (logged-in user info, cart contents). The two are connected by convention, not by any inherent requirement: the standard pattern is that the server generates a random, unguessable session identifier, sends it to the browser *as a cookie* (`JSESSIONID` in a typical Java web app), and on each subsequent request, uses that cookie's value to look up the corresponding server-side session state.
+"A **cookie** is just a small piece of data the server asks the browser to store, via a `Set-Cookie` response header, and automatically send back on every later request to that domain, via a `Cookie` request header. The browser handles storage and resending mechanically — the cookie's content can be literally anything the server puts in it. A **session** is a server-side concept: a chunk of state the server keeps for a particular client, most commonly an `HttpSession` object holding whatever the application stored (logged-in user info, cart contents). The two are connected by convention, not by any inherent requirement. The standard pattern: the server generates a random, unguessable session identifier, sends it to the browser as a cookie (`JSESSIONID` in a typical Java web app), and on each later request uses that cookie's value to look up the corresponding server-side state.
 
-The cookie itself, by default, carries only the opaque session ID — not the actual session data — which is why losing or tampering with the cookie value just means the server can't find the corresponding session, not that any real user data was exposed in the cookie itself."
+By default the cookie itself carries only the opaque session ID, not the actual session data. So losing or tampering with the cookie value just means the server can't find the session — it doesn't mean any real user data was exposed in the cookie itself."
 
 **Code:**
 
@@ -214,7 +214,7 @@ Cookie: JSESSIONID=A1B2C3D4E5F6
 
 **Follow-up:**
 
-I'd flag that this "session ID in a cookie, actual data server-side" split has a real operational implication at scale: server-side sessions have to live *somewhere* accessible to whichever server instance handles the next request, which means either sticky sessions (routing a given user's requests consistently to the same server instance) or a shared session store (Redis being the common choice) — this is exactly the trade-off that motivates stateless, token-based authentication (covered later in this guide) for horizontally-scaled services, since a self-contained token needs no server-side session lookup at all.
+This "ID in a cookie, data server-side" split has a real operational cost at scale. Server-side sessions have to live somewhere accessible to whichever server instance handles the next request, which means either sticky sessions — routing a user's requests consistently to the same instance — or a shared session store, Redis being the common choice. That's exactly the trade-off that motivates stateless, token-based authentication for horizontally-scaled services, covered later in this guide: a self-contained token needs no server-side session lookup at all.
 
 **Source:** [MDN — HTTP Cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies), [`HttpSession` Javadoc](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/http/httpsession)
 
@@ -224,9 +224,9 @@ I'd flag that this "session ID in a cookie, actual data server-side" split has a
 
 **Answer:**
 
-"TLS (Transport Layer Security, the modern successor to SSL) encrypts the data traveling between client and server, and HTTPS is simply HTTP running over a TLS connection instead of a plain, unencrypted TCP connection. Without it, everything sent in a request — including an `Authorization` header, a session cookie, form-submitted login credentials — travels across the network as plaintext, readable by anyone positioned to intercept the traffic (a compromised network device, a malicious actor on the same public Wi-Fi, an ISP).
+"TLS (the modern successor to SSL) encrypts data traveling between client and server, and HTTPS is just HTTP running over a TLS connection instead of a plain, unencrypted one. Without it, everything sent in a request — an `Authorization` header, a session cookie, form-submitted credentials — travels as plaintext, readable by anyone positioned to intercept the traffic: a compromised network device, someone on the same public Wi-Fi, an ISP.
 
-This is exactly why every authentication mechanism covered in this guide — Basic Auth, form login, bearer tokens — depends on HTTPS as a hard prerequisite, not an optional hardening step: encoding (base64) or hashing credentials doesn't protect them in transit the way encryption does, and even a bearer token, which looks 'random,' is fully usable by anyone who intercepts it in plaintext transit, with no need to crack anything at all."
+That's why every authentication mechanism in this guide — Basic Auth, form login, bearer tokens — treats HTTPS as a hard requirement, not an optional hardening step. Encoding or hashing credentials doesn't protect them in transit the way encryption does. Even a bearer token, which looks random, is fully usable by anyone who intercepts it in plaintext — no cracking required."
 
 **Code:**
 
@@ -241,7 +241,7 @@ With TLS:    the entire request (headers, body, URL path) is encrypted before le
 
 **Follow-up:**
 
-I'd mention `Secure` and `HttpOnly` cookie flags as the practical, Spring-Security-adjacent detail worth knowing here: the `Secure` flag tells the browser to only ever send that cookie over an HTTPS connection, never plain HTTP, closing off a downgrade-style leak even if some part of the application accidentally serves an HTTP endpoint; `HttpOnly` (a separate, complementary flag) prevents JavaScript from reading the cookie at all, which is about XSS protection rather than transport security specifically — the two flags address different threats and are both worth setting on any sensitive cookie, covered again in the token-storage question later in this guide.
+Worth knowing here: the `Secure` and `HttpOnly` cookie flags. `Secure` tells the browser to only ever send that cookie over HTTPS, closing off a downgrade-style leak even if some part of the app accidentally serves an HTTP endpoint. `HttpOnly` is a separate, complementary flag that prevents JavaScript from reading the cookie at all — that's about XSS protection, not transport security. They address different threats, and both are worth setting on any sensitive cookie. We'll come back to this in the token-storage question later.
 
 **Source:** [MDN — Transport Layer Security](https://developer.mozilla.org/en-US/docs/Web/Security/Transport_Layer_Security)
 
@@ -251,9 +251,9 @@ I'd mention `Secure` and `HttpOnly` cookie flags as the practical, Spring-Securi
 
 **Answer:**
 
-"Role-Based Access Control (RBAC) grants permissions based on a user's assigned **role** (`ADMIN`, `USER`, `MANAGER`) rather than checking permissions for each individual user one by one — a role is a named bundle of permissions, and a user is granted access to whatever their assigned role(s) allow, which scales far better than per-user permission management as the user base and feature set grow. In Spring Security, roles are represented as a specific kind of `GrantedAuthority` — by convention, prefixed with `ROLE_` (`ROLE_ADMIN`) — and can be checked declaratively at the method level via `@PreAuthorize(\"hasRole('ADMIN')\")`, which evaluates *before* the method runs and throws `AccessDeniedException` if the currently-authenticated user doesn't have that role, preventing the method body from executing at all for an unauthorized caller.
+"Role-Based Access Control (RBAC) grants permissions based on a user's assigned **role** — `ADMIN`, `USER`, `MANAGER` — rather than checking permissions for each user one by one. A role is a named bundle of permissions, and a user gets access to whatever their role allows, which scales far better than per-user permission management as the user base and feature set grow. In Spring Security, roles are a specific kind of `GrantedAuthority`, prefixed by convention with `ROLE_` (`ROLE_ADMIN`), and you can check them declaratively at the method level via `@PreAuthorize(\"hasRole('ADMIN')\")`. That check runs before the method executes and throws `AccessDeniedException` if the user doesn't have the role — the method body never runs at all for an unauthorized caller.
 
-Method-level authorization like this requires `@EnableMethodSecurity` to be active, and the underlying mechanism is a Spring AOP proxy wrapping the bean — the exact same proxying mechanism `@Transactional` uses, which is why it has the exact same self-invocation limitation, covered in depth later in this guide."
+Method-level authorization like this needs `@EnableMethodSecurity` active, and it works via a Spring AOP proxy wrapping the bean — the same mechanism `@Transactional` uses, which is why it has the same self-invocation limitation. More on that later in this guide."
 
 **Code:**
 
@@ -271,7 +271,7 @@ class AdminService {
 
 **Follow-up:**
 
-I'd mention that RBAC is a good default but has a real scaling limitation worth naming: it works well when permissions genuinely cluster into a handful of coarse roles, but breaks down for fine-grained, resource-specific authorization (\"can this specific user edit *this specific* order, but not someone else's\") — that's a different problem, object-level/attribute-based authorization, covered directly in the BOLA-prevention question later in this guide, and RBAC alone is explicitly not sufficient for it.
+RBAC is a good default, but it has a real limitation: it works well when permissions cluster into a handful of coarse roles, but it breaks down for fine-grained, resource-specific authorization — "can this user edit this specific order, but not someone else's?" That's a different problem, object-level authorization, covered directly in the BOLA-prevention question later. RBAC alone isn't enough for it.
 
 **Source:** [Spring Security Reference — Authorization Architecture](https://docs.spring.io/spring-security/reference/servlet/authorization/architecture.html)
 
@@ -283,9 +283,9 @@ I'd mention that RBAC is a good default but has a real scaling limitation worth 
 
 **Answer:**
 
-"Both check whether the currently-authenticated user has a specific `GrantedAuthority`, but `hasRole('ADMIN')` is specifically a convenience shortcut that automatically prepends the `ROLE_` prefix — it checks for the authority `ROLE_ADMIN`, not literally `ADMIN`. `hasAuthority('ROLE_ADMIN')` checks for the exact authority string you pass, with no automatic prefixing at all — you have to spell out `ROLE_` yourself if that's the convention your authorities actually use.
+"Both check whether the current user has a specific `GrantedAuthority`, but `hasRole('ADMIN')` is a convenience shortcut that automatically prepends `ROLE_` — it actually checks for `ROLE_ADMIN`, not `ADMIN`. `hasAuthority('ROLE_ADMIN')` checks for the exact string you pass, with no prefixing at all, so you have to spell out `ROLE_` yourself.
 
-This means `hasRole('ADMIN')` and `hasAuthority('ROLE_ADMIN')` are functionally identical when your authorities follow the standard `ROLE_` naming convention, but `hasAuthority()` is the more general, correct tool when checking a **non-role-shaped permission** — a fine-grained authority like `orders:write` or `reports:export` that isn't meant to represent a broad role at all and shouldn't be forced through the `ROLE_`-prefix convention just to use `hasRole()`."
+That means `hasRole('ADMIN')` and `hasAuthority('ROLE_ADMIN')` are functionally identical when your authorities follow the standard `ROLE_` convention. But `hasAuthority()` is the right tool for a non-role-shaped permission — a fine-grained authority like `orders:write` or `reports:export` isn't really a role, and shouldn't be forced through the `ROLE_` prefix just to use `hasRole()`."
 
 **Code:**
 
@@ -304,7 +304,7 @@ void updateOrder() { /* ... */ }
 
 **Follow-up:**
 
-I'd flag the mistake this distinction is meant to prevent: calling `hasRole('orders:write')` on a fine-grained permission actually checks for the authority `ROLE_orders:write` — the automatic prefixing silently produces a check that will never match the actual `orders:write` authority a user was granted, a subtle, quiet bug (the check just always fails, or worse, always seems to pass in a misconfigured test) that's easy to miss without knowing `hasRole()`'s prefixing behavior explicitly.
+Here's the mistake this distinction guards against: calling `hasRole('orders:write')` actually checks for `ROLE_orders:write`. The automatic prefixing silently produces a check that will never match the real `orders:write` authority — a quiet bug where the check just always fails, and it's easy to miss unless you already know `hasRole()` prefixes things.
 
 **Source:** [Spring Security Reference — Authorization Expressions](https://docs.spring.io/spring-security/reference/servlet/authorization/method-security.html)
 
@@ -314,9 +314,9 @@ I'd flag the mistake this distinction is meant to prevent: calling `hasRole('ord
 
 **Answer:**
 
-"A JWT (JSON Web Token) is three base64url-encoded segments joined by dots: `header.payload.signature`. The **header** identifies the signing algorithm and token type (`{\"alg\":\"RS256\",\"typ\":\"JWT\"}`). The **payload** (also called claims) is a JSON object holding the actual data — who the token represents (`sub`), when it expires (`exp`), who issued it (`iss`), and any application-specific claims (roles, tenant ID) — covered in full depth later in this guide. The **signature** is computed over the header and payload using the issuer's private/secret key, and it's what a recipient verifies to confirm the token genuinely came from the claimed issuer and hasn't been tampered with since.
+"A JWT is three base64url-encoded segments joined by dots: `header.payload.signature`. The **header** identifies the signing algorithm and token type (`{\"alg\":\"RS256\",\"typ\":\"JWT\"}`). The **payload**, also called claims, is a JSON object holding the actual data: who the token represents (`sub`), when it expires (`exp`), who issued it (`iss`), and any application-specific claims like roles or a tenant ID — more on that later. The **signature** is computed over the header and payload using the issuer's private key, and it's what a recipient checks to confirm the token really came from the claimed issuer and hasn't been tampered with.
 
-The detail that trips people up constantly: base64url encoding is **not encryption** — anyone can decode a JWT's header and payload without any key at all (paste one into jwt.io and read it directly), so a JWT's contents are fully readable by anyone who has the token, even though its *authenticity* (that it wasn't forged or altered) is cryptographically protected by the signature. Never put a genuine secret (a raw password, a credit card number) directly in a JWT's claims — 'signed' means tamper-evident, not confidential."
+Here's the detail that trips people up constantly: base64url encoding is not encryption. Anyone can decode a JWT's header and payload with no key at all — paste one into jwt.io and read it directly. So a JWT's contents are fully readable by anyone who has the token, even though its authenticity is cryptographically protected by the signature. Never put an actual secret — a raw password, a credit card number — directly in a JWT's claims. Signed means tamper-evident, not confidential."
 
 **Code:**
 
@@ -336,7 +336,7 @@ echo "eyJhbGciOiJSUzI1NiJ9" | base64 -d
 
 **Follow-up:**
 
-I'd bring up the practical consequence directly: because the payload is fully readable without any key, a JWT should never be logged in full (application logs, error-tracking tools) without redaction, and should never be treated as a safe place to store anything a user shouldn't be able to read about their own token — this is exactly the setup for the resource-server-validation and claims-specific questions covered next in this guide, both of which assume this "signed, but not encrypted" structural understanding.
+The practical consequence: because the payload is fully readable without a key, a JWT should never be logged in full without redaction, and should never hold anything a user isn't meant to see about their own token. The resource-server-validation and claims questions coming up both build on this "signed but not encrypted" understanding.
 
 **Source:** [RFC 7519 — JSON Web Token (JWT)](https://datatracker.ietf.org/doc/html/rfc7519)
 
@@ -346,9 +346,9 @@ I'd bring up the practical consequence directly: because the payload is fully re
 
 **Answer:**
 
-"These are authorization rules applied to URL patterns inside `authorizeHttpRequests()`, evaluated in the order they're declared — the first matching rule for a given request wins, which is why ordering matters and a catch-all rule almost always goes last. `permitAll()` allows the request through with **no authentication check at all** — the right rule for genuinely public endpoints (a health check, a login page, static assets). `authenticated()` requires the request to come from a successfully authenticated principal, but doesn't check any specific role or authority — any logged-in user, regardless of role, passes. `denyAll()` rejects every request matching that pattern unconditionally, regardless of authentication state — useful for explicitly blocking a path (a deprecated internal endpoint, a path that should never be reachable directly) rather than leaving it to accidentally fall through to a more permissive default rule later in the chain.
+"These are authorization rules applied to URL patterns inside `authorizeHttpRequests()`, evaluated in the order they're declared — first match wins, which is why ordering matters and a catch-all rule almost always goes last. `permitAll()` lets the request through with no authentication check at all — the right rule for genuinely public endpoints like a health check, a login page, or static assets. `authenticated()` just requires a successfully authenticated principal, with no specific role or authority check — any logged-in user passes. `denyAll()` rejects every matching request unconditionally, regardless of authentication state — useful for explicitly blocking a path, like a deprecated internal endpoint, instead of leaving it to fall through to a more permissive default rule later.
 
-A typical configuration lists more specific rules first (`permitAll()` on `/public/**`, specific role checks on admin paths) and ends with a catch-all `anyRequest().authenticated()`, so anything not explicitly matched by an earlier, more specific rule still requires at least authentication by default — a secure-by-default posture, rather than accidentally leaving something unintentionally public."
+A typical configuration lists specific rules first — `permitAll()` on `/public/**`, role checks on admin paths — and ends with a catch-all `anyRequest().authenticated()`. That way, anything not explicitly matched still requires at least authentication by default. Secure by default, rather than accidentally leaving something public."
 
 **Code:**
 
@@ -364,7 +364,7 @@ http.authorizeHttpRequests(auth -> auth
 
 **Follow-up:**
 
-I'd flag the ordering mistake this question is really testing: putting `anyRequest().authenticated()` *before* a more specific `permitAll()` rule for a public path means the catch-all matches first and the intended-to-be-public endpoint incorrectly requires authentication — Spring Security doesn't "prefer the more specific rule" automatically the way some routing frameworks do; it's strictly first-match-wins in declaration order, so specific rules genuinely must be declared before more general ones.
+The mistake this question is really testing for: put `anyRequest().authenticated()` before a more specific `permitAll()` rule for a public path, and the catch-all matches first — the endpoint that was supposed to be public now incorrectly requires authentication. Spring Security doesn't automatically prefer the more specific rule the way some routing frameworks do. It's strictly first-match-wins in declaration order, so specific rules have to come before general ones.
 
 **Source:** [Spring Security Reference — Authorize HTTP Requests](https://docs.spring.io/spring-security/reference/servlet/authorization/authorize-http-requests.html)
 
@@ -374,9 +374,9 @@ I'd flag the ordering mistake this question is really testing: putting `anyReque
 
 **Answer:**
 
-"CSRF (Cross-Site Request Forgery) exploits the fact that a browser automatically attaches a site's cookies (including a session cookie) to *any* request sent to that site — including a request triggered by a completely different, malicious website the victim happens to have open in another tab. If a user is logged into `bank.com` (has a valid session cookie for it) and then visits `evil.com`, which contains a hidden form or script that submits a request to `bank.com/transfer-funds`, the browser dutifully attaches the victim's real `bank.com` session cookie to that request — from the bank's server's perspective, it looks like a completely legitimate, authenticated request from that user, because the cookie genuinely is theirs, even though the *user* never actually intended to make that request at all.
+"CSRF exploits the fact that a browser automatically attaches a site's cookies — including a session cookie — to any request sent to that site, even a request triggered by a completely different, malicious site the victim happens to have open in another tab. Say a user is logged into `bank.com` and then visits `evil.com`, which has a hidden form or script that submits a request to `bank.com/transfer-funds`. The browser dutifully attaches the victim's real `bank.com` session cookie to that request. From the bank's server's perspective it looks like a completely legitimate, authenticated request, because the cookie genuinely is theirs — even though the user never intended to make it.
 
-The core defense is a CSRF token: the server includes a random, unpredictable, per-session (or per-request) token in legitimate forms/pages it serves, and requires that exact token to be present and correct on any state-changing request — since `evil.com` has no way to read or predict that token (same-origin policy prevents it from reading the legitimate page's content), it can trigger a request with the victim's cookie attached, but can't supply the matching CSRF token, so the server rejects the forged request."
+The core defense is a CSRF token: the server includes a random, unpredictable token in the legitimate forms/pages it serves, and requires that exact token on any state-changing request. `evil.com` has no way to read or predict it, since the same-origin policy blocks it from reading the legitimate page's content. So it can trigger a request with the victim's cookie attached, but it can't supply the matching token, and the server rejects the forged request."
 
 **Code:**
 
@@ -392,7 +392,7 @@ The core defense is a CSRF token: the server includes a random, unpredictable, p
 
 **Follow-up:**
 
-I'd mention that CSRF is specifically a **cookie-based-session** problem at its root — it exploits the browser's automatic cookie-attachment behavior — which is exactly why a pure bearer-token API (where the client explicitly attaches the token in an `Authorization` header via its own JavaScript code, rather than the browser doing it automatically) is inherently far less exposed to CSRF: there's no automatic browser behavior for an attacker to piggyback on. This is the foundational context for the enable/disable decision and the CORS-vs-CSRF comparison covered next in this guide.
+CSRF is at its root a cookie-based-session problem — it exploits the browser's automatic cookie-attachment behavior. That's exactly why a pure bearer-token API, where the client explicitly attaches the token in an `Authorization` header via its own JavaScript, is far less exposed: there's no automatic browser behavior for an attacker to piggyback on. Keep that in mind for the enable/disable decision and the CORS-vs-CSRF comparison coming up next.
 
 **Source:** [OWASP — Cross-Site Request Forgery](https://owasp.org/www-community/attacks/csrf), [Spring Security Reference — CSRF](https://docs.spring.io/spring-security/reference/features/exploits/csrf.html)
 
@@ -402,9 +402,9 @@ I'd mention that CSRF is specifically a **cookie-based-session** problem at its 
 
 **Answer:**
 
-"`AuthenticationEntryPoint` is the component Spring Security invokes specifically when an **unauthenticated** request tries to access a resource that requires authentication — it's responsible for deciding how to respond in that situation, since the right answer genuinely differs by application type. For a traditional server-rendered web application, the default entry point typically issues an HTTP redirect to the login page (`302` to `/login`), since the natural thing for a browser to do next is show the user a form. For a REST API, redirecting to an HTML login page makes no sense to a JSON-consuming client at all — the appropriate entry point instead returns a `401 Unauthorized` status with a JSON error body, letting the API client (a mobile app, a frontend SPA, another service) handle that failure programmatically instead of following a redirect meant for a browser.
+"`AuthenticationEntryPoint` is what Spring Security invokes when an unauthenticated request tries to access a resource that requires authentication — it decides how to respond, since the right answer genuinely differs by application type. For a traditional server-rendered app, the default entry point typically redirects to the login page (`302` to `/login`), since the natural next step for a browser is to show a form. For a REST API, redirecting to an HTML login page makes no sense to a JSON client at all — the right entry point instead returns `401 Unauthorized` with a JSON error body, letting the client handle the failure programmatically instead of following a redirect meant for a browser.
 
-This is a distinct, separate concept from `AccessDeniedHandler`, which handles the different case of an **authenticated** user attempting an action they don't have permission for (`403 Forbidden`) — mixing the two up is a common source of returning the wrong status code (a `401` for someone who's actually logged in but lacks permission, or vice versa), which is exactly the diagnostic distinction the intermittent-401-vs-403 investigation question later in this guide walks through."
+This is a separate concept from `AccessDeniedHandler`, which handles the different case of an authenticated user attempting something they don't have permission for (`403 Forbidden`). Mixing the two up is a common way to end up returning the wrong status code — exactly the distinction the intermittent-401-vs-403 investigation question later in this guide walks through."
 
 **Code:**
 
@@ -429,7 +429,7 @@ SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
 **Follow-up:**
 
-I'd tie this directly back to the basic-authentication-vs-form-login question earlier in this guide: Spring Security's default `AuthenticationEntryPoint` behavior actually depends on which authentication mechanisms are configured — enabling `httpBasic()` alongside form login can produce a `WWW-Authenticate: Basic` challenge header instead of the expected redirect, which is a genuinely common source of "why is my API returning a browser login prompt instead of a clean 401 JSON response" confusion in a REST API that accidentally left `httpBasic()`/form-login defaults active instead of configuring an explicit, API-appropriate entry point.
+This ties back to the Basic-Auth-vs-form-login question: Spring Security's default entry point behavior actually depends on which authentication mechanisms are configured. Enabling `httpBasic()` alongside form login can produce a `WWW-Authenticate: Basic` challenge header instead of the redirect you expected — a common source of "why is my API returning a browser login prompt instead of a clean 401" in a REST API that left `httpBasic()`/form-login defaults active instead of configuring an explicit, API-appropriate entry point.
 
 **Source:** [`AuthenticationEntryPoint` Javadoc](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/web/AuthenticationEntryPoint.html)
 
@@ -441,9 +441,9 @@ I'd tie this directly back to the basic-authentication-vs-form-login question ea
 
 **Answer:**
 
-"Every request to a Spring Security-protected application passes through a chain of servlet filters *before* it ever reaches your controller, wired in via a single `DelegatingFilterProxy` registered with the servlet container, which itself delegates to Spring's `FilterChainProxy` — the actual entry point into Spring Security. `FilterChainProxy` picks the matching `SecurityFilterChain` for the request (question 16) and runs its ordered list of filters.
+"Every request to a Spring Security-protected app passes through a chain of servlet filters before it ever reaches your controller. It's wired in via a single `DelegatingFilterProxy` registered with the servlet container, which delegates to Spring's own `FilterChainProxy` — the actual entry point into Spring Security. `FilterChainProxy` picks the matching `SecurityFilterChain` for the request (question 16) and runs its ordered list of filters.
 
-The important filters, roughly in the order they run: `SecurityContextPersistenceFilter`/`SecurityContextHolderFilter` restores the `SecurityContext` from the session (or leaves it empty for stateless setups) at the start of the chain, and ensures it's cleared at the end. Then authentication-mechanism-specific filters run — `UsernamePasswordAuthenticationFilter` for form login, `BearerTokenAuthenticationFilter` for OAuth2 resource-server bearer tokens, `BasicAuthenticationFilter` for HTTP Basic — whichever mechanism is configured attempts to authenticate the request and, on success, populates the `SecurityContext` with an `Authentication` object. Later, `ExceptionTranslationFilter` catches `AuthenticationException`/`AccessDeniedException` thrown further down the chain and translates them into the right HTTP response (redirect to login, or a 401/403). Finally, `FilterSecurityInterceptor` (or `AuthorizationFilter` in newer Spring Security versions) does the actual authorization check — deciding, based on the now-populated `SecurityContext` and the configured access rules, whether this specific request is allowed to proceed to the actual controller at all."
+Here are the important ones, roughly in the order they run. `SecurityContextHolderFilter` restores the `SecurityContext` from the session at the start of the chain (or leaves it empty for stateless setups) and clears it at the end. Then authentication-mechanism-specific filters run: `UsernamePasswordAuthenticationFilter` for form login, `BearerTokenAuthenticationFilter` for OAuth2 bearer tokens, `BasicAuthenticationFilter` for HTTP Basic. Whichever mechanism is configured tries to authenticate the request and, on success, populates the `SecurityContext` with an `Authentication` object. Later, `ExceptionTranslationFilter` catches any `AuthenticationException`/`AccessDeniedException` thrown further down and translates it into the right response — a redirect, or a 401/403. Finally, `AuthorizationFilter` (formerly `FilterSecurityInterceptor`) does the actual authorization check, deciding based on the now-populated `SecurityContext` and the configured rules whether this request can proceed to the controller at all."
 
 **Code:**
 
@@ -471,7 +471,7 @@ public class SecurityConfig {
 
 **Follow-up:**
 
-I'd bring up `DelegatingFilterProxy` explicitly as the bridge between the plain servlet container (which knows nothing about Spring beans) and Spring's own `FilterChainProxy` (a Spring-managed bean) — this indirection is why Spring Security filters can be reconfigured, reordered, or replaced entirely via Spring configuration without touching `web.xml` or servlet container registration directly. I'd also mention that filter *order* is not incidental — adding a custom filter (say, a custom header-based auth mechanism) requires explicitly specifying where in the chain it runs relative to Spring's built-in filters (`addFilterBefore`/`addFilterAfter`), and getting this wrong is a common, hard-to-diagnose source of "my custom auth filter runs, but the request is still rejected" bugs, since authorization checks further down the chain don't know about context a misplaced filter set up too late.
+Worth calling out `DelegatingFilterProxy` explicitly — it's the bridge between the plain servlet container, which knows nothing about Spring beans, and Spring's own `FilterChainProxy`, a Spring-managed bean. That indirection is why Spring Security filters can be reconfigured, reordered, or replaced entirely through Spring configuration, without touching servlet-container registration directly. Filter order also isn't incidental: adding a custom filter — say, a header-based auth mechanism — requires saying explicitly where it runs relative to Spring's built-in filters, via `addFilterBefore`/`addFilterAfter`. Getting that wrong is a common, hard-to-diagnose source of "my custom filter runs, but the request still gets rejected" bugs, since a misplaced filter sets up context too late for the checks further down the chain to see it.
 
 **Source:** [Spring Security Reference — Architecture](https://docs.spring.io/spring-security/reference/servlet/architecture.html)
 
@@ -481,9 +481,9 @@ I'd bring up `DelegatingFilterProxy` explicitly as the bridge between the plain 
 
 **Answer:**
 
-"Authentication answers 'who are you' — verifying an identity claim, typically producing a principal (a user, a service account) that the system now trusts represents a specific, real entity, backed by some proof (a password, a valid signed token, a client certificate). Authorization answers a completely different question, asked *after* authentication has already succeeded: 'is this specific, now-known identity allowed to do this specific thing' — access a resource, call an endpoint, perform an action.
+"Authentication answers 'who are you' — verifying an identity claim, typically producing a principal (a user, a service account) the system now trusts, backed by some proof like a password, a valid signed token, or a client certificate. Authorization answers a completely different question, asked after authentication already succeeded: 'is this now-known identity allowed to do this specific thing' — access a resource, call an endpoint, perform an action.
 
-The reason this distinction matters practically, beyond definitions: they fail differently and should be *reported* differently. A failed authentication (bad credentials, expired/invalid token) should produce a `401 Unauthorized` — 'I don't know who you are, or I don't believe your claimed identity.' A failed authorization, where the identity is known and valid but simply isn't permitted to do this specific thing, should produce a `403 Forbidden` — 'I know exactly who you are, and the answer is still no.' Conflating these two in error handling is a very common real bug, and it also matters for security: leaking *which* one failed (401 vs 403) for a resource a user has no business even knowing exists can itself be an information disclosure — sometimes a deliberate design choice returns `404 Not Found` instead of `403` specifically to avoid confirming a resource exists to someone unauthorized to see it at all."
+Beyond definitions, this matters practically because the two fail differently and should be reported differently. A failed authentication — bad credentials, an expired token — should produce a `401 Unauthorized`: I don't know who you are, or I don't believe your claimed identity. A failed authorization, where the identity is known and valid but just isn't permitted to do this thing, should produce a `403 Forbidden`: I know exactly who you are, and the answer is still no. Conflating the two in error handling is a common real bug, and it matters for security too — leaking which one failed for a resource a user has no business knowing exists can itself be an information disclosure. Sometimes the deliberate choice is to return `404` instead of `403`, specifically to avoid confirming the resource exists at all to someone unauthorized to see it."
 
 **Code:**
 
@@ -509,7 +509,7 @@ class AccountController {
 
 **Follow-up:**
 
-I'd bring up the 403-vs-404 information-disclosure trade-off explicitly as a deliberate architectural decision that should be made per-resource-type, not left to whatever a framework defaults to: for a multi-tenant system, returning 403 for "this resource exists but isn't yours" versus 404 for "as far as you're concerned, this doesn't exist" has real security implications — a 403 confirms the resource's existence to an attacker probing IDs, a 404 doesn't. I'd also mention that this exact distinction — and getting the response code right for each failure mode — is one of the practical diagnostics behind question 41 (investigating intermittent 401 vs 403), since conflating the two in logs/monitoring makes root-causing much harder.
+The 403-vs-404 information-disclosure trade-off should be a deliberate, per-resource-type decision, not whatever a framework defaults to. In a multi-tenant system, 403 for "this exists but isn't yours" versus 404 for "as far as you're concerned, this doesn't exist" has real security implications — a 403 confirms the resource's existence to an attacker probing IDs, a 404 doesn't. Getting this right also matters for diagnostics: question 41's investigation of intermittent 401s vs 403s gets a lot harder if the two are conflated in logs and monitoring.
 
 **Source:** [Spring Security Reference — Authentication vs Authorization](https://docs.spring.io/spring-security/reference/features/authentication/index.html)
 
@@ -519,15 +519,15 @@ I'd bring up the 403-vs-404 information-disclosure trade-off explicitly as a del
 
 **Answer:**
 
-"These four types form the core object model Spring Security's authentication mechanism is built on.
+"These four types are the core object model Spring Security's authentication mechanism is built on.
 
-`SecurityContext` is the holder for the currently-authenticated principal's information for the duration of a single request (or thread, depending on strategy) — accessed via `SecurityContextHolder.getContext()`, which by default uses a `ThreadLocal` under the hood (tying back to the concurrency file's context-propagation concerns — this needs explicit handling across thread/executor boundaries).
+`SecurityContext` holds the currently-authenticated principal's information for the duration of a request or thread, depending on strategy. You access it via `SecurityContextHolder.getContext()`, which by default uses a `ThreadLocal` under the hood — that ties back to the concurrency file's context-propagation concerns, since it needs explicit handling across thread/executor boundaries.
 
-`Authentication` is the object living inside the `SecurityContext` — it represents both the principal (who) and their granted authorities (what they're allowed to do), and also, before authentication completes, can represent an unauthenticated *attempt* carrying just the raw credentials (e.g., a username/password pair submitted for verification), distinguished by its `isAuthenticated()` flag.
+`Authentication` is the object living inside the `SecurityContext`. It represents both the principal (who) and their granted authorities (what they can do), and before authentication completes it can also represent an unauthenticated attempt carrying just raw credentials — a username/password pair submitted for verification — distinguished by its `isAuthenticated()` flag.
 
-`GrantedAuthority` is a single permission/role granted to the authenticated principal — typically a role like `ROLE_ADMIN` or a fine-grained permission like `orders:write`, represented as a simple string-backed interface, and an `Authentication` carries a whole collection of these.
+`GrantedAuthority` is a single permission or role granted to the authenticated principal, typically a role like `ROLE_ADMIN` or a fine-grained permission like `orders:write`. It's a simple string-backed interface, and an `Authentication` carries a whole collection of them.
 
-`AuthenticationProvider` is the pluggable strategy that actually performs verification — given an unauthenticated `Authentication` (credentials to check), it either returns a fully populated, authenticated `Authentication` (identity confirmed, authorities attached) or throws an `AuthenticationException`. Spring Security supports multiple providers via `AuthenticationManager` (usually a `ProviderManager` that tries each configured provider in turn), which is how a single application can support multiple authentication mechanisms — a DAO-based username/password provider *and* an LDAP provider *and* a JWT-decoding provider — simultaneously."
+`AuthenticationProvider` is the pluggable strategy that actually does the verification. Given an unauthenticated `Authentication`, it either returns a fully populated, authenticated one — identity confirmed, authorities attached — or throws an `AuthenticationException`. Spring Security supports multiple providers via `AuthenticationManager`, usually a `ProviderManager` that tries each configured provider in turn. That's how one application can support several authentication mechanisms at once — a DAO-based username/password provider, an LDAP provider, and a JWT-decoding provider, all simultaneously."
 
 **Code:**
 
@@ -566,7 +566,7 @@ boolean isAdmin = auth.getAuthorities().stream()
 
 **Follow-up:**
 
-I'd flag the `ThreadLocal`-backed `SecurityContextHolder` as a direct callback to the concurrency file's context-propagation question — the authenticated principal does *not* automatically follow work handed off to another thread (an `@Async` method, a manually-submitted executor task), and forgetting to explicitly propagate it (via a `TaskDecorator`, or Spring Security's own `DelegatingSecurityContextExecutor`) is a very common cause of "authorization mysteriously fails only for async-processed requests" bugs. I'd also mention `SecurityContextHolderStrategy` options — `MODE_THREADLOCAL` (default, per-thread), `MODE_INHERITABLETHREADLOCAL` (propagates to child threads spawned via `new Thread()`, though not to pooled-executor tasks, which don't create new child threads), and `MODE_GLOBAL` (rare, mostly for specific standalone-application contexts) — as the actual configurable mechanism behind this behavior.
+The `ThreadLocal`-backed `SecurityContextHolder` is a direct callback to the concurrency file's context-propagation question. The authenticated principal doesn't automatically follow work handed off to another thread — an `@Async` method, a manually-submitted executor task — and forgetting to explicitly propagate it, via a `TaskDecorator` or Spring Security's own `DelegatingSecurityContextExecutor`, is a very common cause of "authorization mysteriously fails only for async-processed requests" bugs. The actual configurable mechanism behind this is `SecurityContextHolderStrategy`: `MODE_THREADLOCAL` (default, per-thread), `MODE_INHERITABLETHREADLOCAL` (propagates to child threads spawned via `new Thread()`, but not to pooled-executor tasks, which don't create new threads), and `MODE_GLOBAL` (rare, mostly for standalone-application contexts).
 
 **Source:** [Spring Security Reference — Authentication](https://docs.spring.io/spring-security/reference/servlet/authentication/index.html), [`SecurityContextHolder` Javadoc](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/core/context/SecurityContextHolder.html)
 
@@ -576,9 +576,9 @@ I'd flag the `ThreadLocal`-backed `SecurityContextHolder` as a direct callback t
 
 **Answer:**
 
-"When more than one `SecurityFilterChain` bean is registered, Spring Security evaluates them **in order** against each incoming request's `RequestMatcher`, and uses the **first one whose matcher matches** — it does not merge or combine multiple chains for a single request, exactly one chain applies. Order matters enormously here: chains are evaluated according to their `@Order` value (or registration order if unspecified, which is fragile and not something to rely on), so a broadly-matching chain declared with a lower order value than a more specific one will 'steal' requests that were meant to hit the more specific configuration, and the more specific chain's rules simply never run for those requests.
+"When more than one `SecurityFilterChain` bean is registered, Spring Security evaluates them in order against each request's `RequestMatcher` and uses the first one whose matcher matches. It doesn't merge chains — exactly one applies per request. Order matters a lot here: chains are evaluated by their `@Order` value, or registration order if unspecified, which is fragile and not something to rely on. A broadly-matching chain with a lower order value than a more specific one will "steal" requests meant for the specific configuration, and that chain's rules simply never run.
 
-This is the standard mechanism for applications that need genuinely different security behavior for different parts of the URL space — e.g., a public API secured with OAuth2 bearer tokens under `/api/**`, and a traditional session-based form-login flow for a separate admin UI under `/admin/**` — each gets its own `SecurityFilterChain`, matched by its own `securityMatcher`, with its own independent set of filters and rules."
+This is the standard way to give different parts of a URL space genuinely different security behavior — a public API secured with OAuth2 bearer tokens under `/api/**`, and a traditional session-based form-login flow for an admin UI under `/admin/**`. Each gets its own `SecurityFilterChain`, matched by its own `securityMatcher`, with an independent set of filters and rules."
 
 **Code:**
 
@@ -615,7 +615,7 @@ public class MultiChainSecurityConfig {
 
 **Follow-up:**
 
-I'd emphasize the "exactly one chain applies, no fallthrough or merging" behavior as the thing that most commonly surprises people migrating from a single-chain setup — if a broad `/**` matcher chain is accidentally given a lower `@Order` than a more specific one, every request gets swallowed by the broad chain and the specific chain's rules (which might include, say, stricter checks for a sensitive subpath) never run at all, silently. I'd also mention that this pattern is exactly how a single application serves both a stateless, bearer-token-authenticated API and a stateful, session-based UI simultaneously without either mechanism interfering with the other — a common real-world requirement for services with both a machine-facing API and a human-facing admin console.
+The "exactly one chain applies, no fallthrough" behavior is what most commonly surprises people coming from a single-chain setup. If a broad `/**` matcher chain accidentally gets a lower `@Order` than a more specific one, every request gets swallowed by the broad chain and the specific chain's rules — maybe stricter checks for a sensitive subpath — silently never run. This same pattern is exactly how one application can serve both a stateless bearer-token API and a stateful session-based UI at once without the two mechanisms interfering — a common real-world need for services with both a machine-facing API and a human-facing admin console.
 
 **Source:** [Spring Security Reference — Multiple SecurityFilterChain](https://docs.spring.io/spring-security/reference/servlet/architecture.html#servlet-securityfilterchain)
 
@@ -625,11 +625,11 @@ I'd emphasize the "exactly one chain applies, no fallthrough or merging" behavio
 
 **Answer:**
 
-"Request-level authorization is enforced in the filter chain itself (`authorizeHttpRequests`, matched against URL patterns and HTTP methods) — it runs *before* the request ever reaches a controller method, based purely on the request's path/method, with no visibility into the actual business objects the request will touch.
+"Request-level authorization is enforced in the filter chain itself, via `authorizeHttpRequests` matched against URL patterns and HTTP methods. It runs before the request ever reaches a controller method, based purely on path and method, with no visibility into the actual business objects involved.
 
-Method-level authorization (`@PreAuthorize`, `@PostAuthorize`, `@Secured`, `@RolesAllowed`) is enforced via AOP proxies (exactly the mechanism from the Spring Boot Internals file) around individual bean methods, and critically, it has access to the actual method arguments and — for `@PostAuthorize` — the return value, which lets it express authorization rules that genuinely depend on the specific data involved, not just the URL shape. A request-level rule can say 'any authenticated user may call `GET /orders/{id}`'; only a method-level rule can say 'this specific authenticated user may retrieve this specific order only if they own it,' since the ownership check requires actually loading and inspecting the order.
+Method-level authorization — `@PreAuthorize`, `@PostAuthorize`, `@Secured`, `@RolesAllowed` — is enforced via AOP proxies, the same mechanism from the Spring Boot Internals file, around individual bean methods. Critically, it has access to the actual method arguments and, for `@PostAuthorize`, the return value — which lets it express rules that depend on the specific data involved, not just the URL shape. A request-level rule can say "any authenticated user may call `GET /orders/{id}`." Only a method-level rule can say "this specific user may retrieve this order only if they own it," since checking ownership means actually loading and inspecting the order.
 
-In practice, I use both together: request-level rules for coarse, URL-shape-based gating (public vs authenticated-only paths, role-gated admin sections), and method-level rules for the fine-grained, data-dependent authorization that request-level matching structurally cannot express."
+In practice I use both together: request-level rules for coarse, URL-shape gating (public vs. authenticated-only paths, role-gated admin sections), and method-level rules for the fine-grained, data-dependent checks that request-level matching structurally can't express."
 
 **Code:**
 
@@ -656,7 +656,7 @@ class OrderService {
 
 **Follow-up:**
 
-I'd flag `@PostAuthorize` specifically as needing careful judgment: because it evaluates *after* the method body has already run, using it on a method with side effects (anything beyond a pure read) means the side effect already happened by the time the authorization check fails and throws — which is almost always the wrong behavior for a mutating operation. I'd say the practical rule is: `@PostAuthorize` is reasonable for read-only methods where checking the loaded object's ownership is the only way to express the rule, but any authorization check for a method with side effects should be expressed as a `@PreAuthorize` check against the arguments (or an explicit ownership-check query performed before the mutation), precisely to avoid ever executing an unauthorized side effect even momentarily. I'd also mention enabling method security requires `@EnableMethodSecurity` and, per the Spring Boot Internals file's self-invocation question, is subject to the exact same proxy-based self-invocation limitation as `@Transactional`/`@Cacheable`/`@Async`.
+`@PostAuthorize` needs careful judgment. Because it evaluates after the method body has already run, using it on anything with side effects means the side effect already happened by the time the check fails and throws — almost always the wrong behavior for a mutating operation. The practical rule: `@PostAuthorize` is fine for read-only methods where checking the loaded object's ownership is the only way to express the rule, but a method with side effects should use `@PreAuthorize` against the arguments instead, or an explicit ownership check before the mutation, so an unauthorized side effect never executes even momentarily. And enabling method security needs `@EnableMethodSecurity`, and is subject to the same proxy-based self-invocation limitation as `@Transactional`/`@Cacheable`/`@Async` from the Spring Boot Internals file.
 
 **Source:** [Spring Security Reference — Method Security](https://docs.spring.io/spring-security/reference/servlet/authorization/method-security.html)
 
@@ -666,7 +666,7 @@ I'd flag `@PostAuthorize` specifically as needing careful judgment: because it e
 
 **Answer:**
 
-"This is exactly the same proxy mechanism and exact same failure mode as `@Transactional`/`@Cacheable`/`@Async` self-invocation from the Spring Boot Internals file — `@PreAuthorize`/`@PostAuthorize`/`@Secured` are all implemented via the same AOP proxy interception, and a bean calling one of its own annotated methods via `this.method()` (or an implicit bare call, which is the same thing) bypasses the proxy entirely, meaning the security check never runs at all. The dangerous part specifically for *security* annotations, as opposed to caching or transactions, is that the failure mode isn't 'slightly wrong behavior' — it's a **silent authorization bypass**: a method meant to require `ROLE_ADMIN` executes with zero authorization enforcement whatsoever when reached via self-invocation, and nothing throws, logs, or otherwise signals that the check was skipped."
+"This is the exact same proxy mechanism and the exact same failure mode as `@Transactional`/`@Cacheable`/`@Async` self-invocation from the Spring Boot Internals file. `@PreAuthorize`/`@PostAuthorize`/`@Secured` are all implemented via the same AOP proxy interception, and a bean calling one of its own annotated methods via `this.method()` — or an implicit bare call, which is the same thing — bypasses the proxy entirely. The security check never runs. What makes this specifically dangerous for security annotations, versus caching or transactions, is the failure mode: it's not slightly-wrong behavior, it's a silent authorization bypass. A method meant to require `ROLE_ADMIN` runs with zero enforcement when reached via self-invocation, and nothing throws, logs, or signals that the check was skipped."
 
 **Code:**
 
@@ -709,7 +709,7 @@ class TreasuryOperations {
 
 **Follow-up:**
 
-I'd treat this as high enough severity to warrant an actual automated safeguard rather than relying on code review alone to catch it: a static-analysis rule (ArchUnit is a common choice) that flags any `@PreAuthorize`/`@Secured`/`@RolesAllowed`-annotated method called from within the same class is a genuinely valuable, cheap piece of platform tooling, precisely because the bug is silent and security-critical, unlike a `@Cacheable` self-invocation miss which is merely a performance regression. I'd also mention that AspectJ weaving (compile-time or load-time, rather than Spring's default runtime proxying) does correctly intercept self-invocation, since it rewrites bytecode directly rather than wrapping an external proxy object — a legitimate, if heavier, mitigation for a codebase where this pattern keeps recurring despite review and tooling.
+This is severe enough to warrant an actual automated safeguard, not just code review. A static-analysis rule — ArchUnit is a common choice — that flags any `@PreAuthorize`/`@Secured`/`@RolesAllowed` method called from within the same class is cheap, valuable platform tooling, precisely because the bug is silent and security-critical, unlike a `@Cacheable` self-invocation miss which is just a performance regression. AspectJ weaving, compile-time or load-time rather than Spring's default runtime proxying, does correctly intercept self-invocation since it rewrites bytecode directly instead of wrapping an external proxy — a legitimate, if heavier, fix for a codebase where this keeps recurring despite review and tooling.
 
 **Source:** [Spring Security Reference — Method Security, proxying limitations](https://docs.spring.io/spring-security/reference/servlet/authorization/method-security.html)
 
@@ -719,11 +719,11 @@ I'd treat this as high enough severity to warrant an actual automated safeguard 
 
 **Answer:**
 
-"CSRF (Cross-Site Request Forgery) protection defends against a specific attack shape: a malicious site tricks a victim's browser into submitting a request to your application, and because the browser automatically attaches the victim's existing session cookie to that request, your server sees what looks like a legitimate, authenticated request the victim never actually intended to make. CSRF tokens defeat this by requiring a secret value the attacker's page can't know or predict, alongside the cookie, for any state-changing request.
+"CSRF protection defends against a specific attack: a malicious site tricks a victim's browser into submitting a request to your application, and because the browser automatically attaches the victim's session cookie to it, your server sees what looks like a legitimate, authenticated request the victim never intended to make. CSRF tokens defeat this by requiring a secret value the attacker's page can't know or predict, alongside the cookie, on any state-changing request.
 
-The key insight for when to enable/disable it: CSRF is fundamentally a **cookie-based session** problem — the attack only works because the browser *automatically* attaches credentials (the session cookie) to a request regardless of which site initiated it. If your API instead authenticates via a bearer token that the client must **explicitly** attach to a header (not something the browser attaches automatically), a forged cross-site request from a malicious page simply has no way to include that header — the browser won't add it on the attacker's behalf the way it does with cookies — so the CSRF attack vector doesn't exist for that authentication mechanism at all, and disabling CSRF protection for such a stateless, bearer-token-authenticated API is standard, correct practice, not a security shortcut.
+The key insight for when to enable or disable it: CSRF is fundamentally a cookie-based session problem — the attack only works because the browser automatically attaches credentials regardless of which site initiated the request. If your API instead authenticates via a bearer token the client must explicitly attach to a header, a forged cross-site request has no way to include that header — the browser won't add it on the attacker's behalf the way it does with cookies. So the attack vector doesn't exist for that mechanism at all, and disabling CSRF protection for a stateless, bearer-token API is standard, correct practice, not a shortcut.
 
-Conversely, any endpoint that authenticates via a cookie — including a traditional session-based web app, but also, importantly, an API that (perhaps for browser-convenience reasons) stores its auth token in a cookie rather than requiring an explicit header — absolutely needs CSRF protection enabled, since it has the exact automatic-credential-attachment property CSRF exploits."
+Conversely, any endpoint that authenticates via a cookie — a traditional session-based web app, but also an API that stores its token in a cookie for browser convenience rather than requiring an explicit header — absolutely needs CSRF protection, since it has the exact automatic-credential-attachment property CSRF exploits."
 
 **Code:**
 
@@ -753,7 +753,7 @@ public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
 
 **Follow-up:**
 
-I'd flag the dangerous middle-ground configuration explicitly, since it's a real, recurring mistake: an API that stores its auth token in a cookie (often done for browser-convenience, avoiding manual header management on the frontend) but disables CSRF protection because "it's an API, not a traditional web app" — this combination has the exact vulnerable property (automatic credential attachment) *and* no CSRF defense, a genuinely exploitable configuration. The correct rule to state explicitly: the deciding factor for CSRF is never "is this an API vs a web app," it's specifically "does this endpoint's authentication mechanism get automatically attached to requests by the browser regardless of origin" — cookie-based auth always needs CSRF protection (or the `SameSite=Strict`/`Lax` cookie attribute as a complementary, browser-native defense), explicit-header-based auth generally doesn't need it.
+There's a dangerous middle-ground configuration worth naming, since it's a real, recurring mistake: an API that stores its auth token in a cookie for browser convenience, but disables CSRF protection because "it's an API, not a web app." That combination has the exact vulnerable property — automatic credential attachment — and no defense against it. A genuinely exploitable setup. The deciding factor for CSRF is never "is this an API vs. a web app," it's whether the authentication mechanism gets automatically attached to requests by the browser regardless of origin. Cookie-based auth always needs CSRF protection (or `SameSite=Strict`/`Lax` as a complementary, browser-native defense); explicit-header-based auth generally doesn't.
 
 **Source:** [Spring Security Reference — CSRF](https://docs.spring.io/spring-security/reference/features/exploits/csrf.html)
 
@@ -763,13 +763,13 @@ I'd flag the dangerous middle-ground configuration explicitly, since it's a real
 
 **Answer:**
 
-"These get confused constantly because they both involve 'a request from a different origin,' but they solve completely different problems and neither one's protection substitutes for the other.
+"These get confused constantly because they both involve a request from a different origin, but they solve completely different problems, and neither one's protection substitutes for the other.
 
-**CORS** (Cross-Origin Resource Sharing) is a *browser-enforced relaxation* mechanism — by default, browsers block a page on origin A from reading the response of a request it made to origin B (the same-origin policy), and CORS is the server-controlled mechanism (`Access-Control-Allow-Origin` and related headers) that explicitly permits specific other origins to make that cross-origin request *and read the response*. CORS exists to protect **your users' data on other sites** from being read by your site's JavaScript without permission — it's about controlling who can *read the response*.
+**CORS** is a browser-enforced relaxation mechanism. By default, browsers block a page on origin A from reading the response of a request it made to origin B — the same-origin policy. CORS is the server-controlled mechanism, `Access-Control-Allow-Origin` and related headers, that explicitly permits specific other origins to make that cross-origin request and read the response. It exists to protect your users' data on other sites from being read by your site's JavaScript without permission — it's about controlling who can read the response.
 
-**CSRF** exists to protect **your site** from a forged request being *submitted* using a victim's ambient credentials, regardless of whether the attacker ever gets to read the response — the attacker often doesn't even need to read the response for the attack to succeed (e.g., a forged 'transfer money' or 'change email' request causes damage purely by being submitted, whether or not the attacker ever sees the reply).
+**CSRF** exists to protect your site from a forged request being submitted using a victim's ambient credentials, regardless of whether the attacker ever reads the response. The attacker often doesn't even need to read it for the attack to work — a forged "transfer money" or "change email" request causes damage purely by being submitted.
 
-Configuring CORS permissively does nothing to prevent CSRF, because CORS's browser-enforced read-blocking has no bearing on whether a request can be *submitted* in the first place — a plain HTML form submission or an `img`/`script` tag triggering a GET request isn't subject to CORS preflight/blocking rules at all for many request shapes, and even for requests that are subject to CORS, the request often still reaches the server and executes its side effects before the browser blocks the *response* from being read by the attacker's page. This is exactly why they need separate, independent defenses."
+Configuring CORS permissively does nothing to prevent CSRF, because CORS's browser-enforced read-blocking has no bearing on whether a request can be submitted in the first place. A plain HTML form submission, or an `img`/`script` tag triggering a GET, isn't subject to CORS preflight rules for many request shapes at all. And even for requests that are subject to CORS, the request often still reaches the server and executes its side effects before the browser blocks the response from being read. That's exactly why the two need separate, independent defenses."
 
 **Code:**
 
@@ -804,7 +804,7 @@ public CorsConfigurationSource corsConfigurationSource() {
 
 **Follow-up:**
 
-I'd state the core mental model explicitly, since it's the thing that resolves the confusion permanently: CORS is about *response confidentiality* across origins (can this other origin's script read what came back), CSRF is about *request authenticity* (was this request genuinely intended by the user, or forged by another site exploiting their ambient credentials) — completely orthogonal concerns, and a system needs both defenses independently, configured for their own specific threat model, never treating one as covering for the other. I'd also mention that `SameSite=Strict`/`Lax` cookie attributes are a complementary, browser-native CSRF defense layer that's become standard practice alongside explicit CSRF tokens — but I'd be careful to note it's a defense-in-depth layer, not a full replacement, since older browsers and certain cross-site navigation patterns can still have gaps.
+The mental model that resolves this confusion for good: CORS is about response confidentiality across origins — can this other origin's script read what came back. CSRF is about request authenticity — was this request genuinely intended by the user, or forged by another site exploiting their ambient credentials. Completely orthogonal concerns, and a system needs both defenses independently, never treating one as covering for the other. `SameSite=Strict`/`Lax` cookie attributes have become a standard complementary, browser-native CSRF defense alongside explicit tokens, but it's a defense-in-depth layer, not a full replacement — older browsers and certain cross-site navigation patterns can still leave gaps.
 
 **Source:** [Spring Security Reference — CORS](https://docs.spring.io/spring-security/reference/servlet/integrations/cors.html), [OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
 
@@ -814,9 +814,9 @@ I'd state the core mental model explicitly, since it's the thing that resolves t
 
 **Answer:**
 
-"Session-based authentication issues an opaque session identifier (typically via a cookie) after login, and the server maintains the actual session state — who's logged in, what their authorities are — in server-side storage (in-memory, or a shared store like Redis for a multi-instance deployment). Every subsequent request presents just the session ID, and the server looks up the associated state. This is simple to reason about and easy to revoke instantly (delete the server-side session, and the ID is immediately worthless), but it requires either sticky sessions or a shared session store to work correctly across multiple server instances, and it doesn't naturally extend to service-to-service or mobile/native-client scenarios the way a self-contained token does.
+"Session-based authentication issues an opaque session identifier, typically via a cookie, after login, and the server maintains the actual state — who's logged in, what authorities they have — in server-side storage, whether in-memory or a shared store like Redis for a multi-instance deployment. Every later request presents just the session ID, and the server looks up the state. It's simple to reason about and easy to revoke instantly — delete the server-side session and the ID is immediately worthless — but it needs either sticky sessions or a shared session store to work across multiple server instances, and it doesn't naturally extend to service-to-service or mobile/native-client scenarios the way a self-contained token does.
 
-Bearer-token authentication (most commonly JWT in modern systems) has the client present a token — often self-contained, carrying the claims needed to establish identity and authorities directly in the token itself, cryptographically signed by an authorization server — in an `Authorization: Bearer <token>` header on every request. The server can validate the token's signature and read its claims **without any server-side session state or lookup at all**, which is exactly what makes it scale cleanly across many stateless server instances with zero shared session infrastructure, and what makes it a natural fit for service-to-service and cross-domain scenarios that cookies handle awkwardly. The trade-off, covered in depth in question 31, is that this same self-contained, no-lookup-required property makes *revocation* fundamentally harder — there's no server-side record to simply delete, since the whole point was avoiding server-side lookups."
+Bearer-token authentication, most commonly JWT these days, has the client present a token in an `Authorization: Bearer <token>` header on every request. The token is often self-contained, carrying the claims needed to establish identity and authorities directly, cryptographically signed by an authorization server. The server can validate the signature and read the claims with no server-side session state or lookup at all — which is exactly what lets it scale cleanly across stateless server instances with zero shared session infrastructure, and what makes it a natural fit for service-to-service and cross-domain scenarios that cookies handle awkwardly. The trade-off, covered in depth in question 31, is that this same no-lookup-required property makes revocation fundamentally harder — there's no server-side record to delete, since avoiding server-side lookups was the whole point."
 
 **Code:**
 
@@ -847,7 +847,7 @@ public SecurityFilterChain jwtFilterChain(HttpSecurity http) throws Exception {
 
 **Follow-up:**
 
-I'd frame the actual decision as being about the deployment topology and revocation requirements, not just "modern vs old-fashioned": a small number of server instances behind a load balancer with sticky sessions, or a shared Redis-backed session store (Spring Session makes this straightforward), makes session-based auth entirely viable and simpler to reason about at moderate scale, with the real advantage of trivially instant, precise revocation. Bearer tokens win decisively for genuinely distributed, multi-service, cross-domain, or mobile-client scenarios where a shared session store becomes an availability and latency liability, but that scalability comes at the direct cost of the harder revocation story — so the actual staff-level answer is naming this trade-off explicitly and picking based on the system's real topology and revocation needs, not defaulting to JWT because it's the more commonly discussed pattern.
+The actual decision comes down to deployment topology and revocation needs, not "modern vs. old-fashioned." A small number of instances behind a load balancer with sticky sessions, or a shared Redis-backed session store (Spring Session makes this straightforward), makes session-based auth entirely viable at moderate scale, with the real advantage of trivially instant, precise revocation. Bearer tokens win decisively for genuinely distributed, multi-service, cross-domain, or mobile-client scenarios where a shared session store becomes an availability and latency liability — but that scalability comes at the direct cost of a harder revocation story. The staff-level answer names this trade-off explicitly and picks based on the system's real topology and revocation needs, rather than defaulting to JWT because it's the more commonly discussed pattern.
 
 **Source:** [Spring Security Reference — Session Management](https://docs.spring.io/spring-security/reference/servlet/authentication/session-management.html), [Spring Security Reference — OAuth2 Resource Server](https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/index.html)
 
@@ -857,11 +857,11 @@ I'd frame the actual decision as being about the deployment topology and revocat
 
 **Answer:**
 
-"Authorization-code flow is the standard OAuth2 flow for anything with a redirect-capable user agent (a browser, a mobile app's system browser/webview) — it's designed specifically so the actual access token is never exposed to the user agent or transmitted through a redirect URL, only a short-lived, single-use authorization code is.
+"Authorization-code flow is the standard OAuth2 flow for anything with a redirect-capable user agent — a browser, or a mobile app's system browser/webview. It's designed so the actual access token is never exposed to the user agent or transmitted through a redirect URL; only a short-lived, single-use authorization code is.
 
-The sequence: the client redirects the user's browser to the authorization server's `/authorize` endpoint, including the client ID, requested scopes, a redirect URI, and — with PKCE — a `code_challenge` (a hash of a locally-generated, client-held secret called the `code_verifier`). The user authenticates with the authorization server (not the client — this is the point, the client never sees the user's actual credentials) and approves the requested scopes. The authorization server redirects back to the client's redirect URI with a short-lived authorization code. The client then makes a *direct, back-channel* (not through the browser) POST request to the authorization server's `/token` endpoint, presenting the authorization code **plus the original `code_verifier`** — the authorization server hashes the presented verifier and checks it matches the `code_challenge` from the first step, and only then exchanges the code for an actual access token (and typically a refresh token).
+Here's the sequence. The client redirects the user's browser to the authorization server's `/authorize` endpoint, including the client ID, requested scopes, a redirect URI, and, with PKCE, a `code_challenge` — a hash of a locally-generated, client-held secret called the `code_verifier`. The user authenticates with the authorization server, not the client — that's the whole point, the client never sees the user's actual credentials — and approves the requested scopes. The authorization server redirects back to the client with a short-lived authorization code. The client then makes a direct, back-channel POST (not through the browser) to the token endpoint, presenting the code plus the original `code_verifier`. The authorization server hashes the presented verifier, checks it matches the earlier `code_challenge`, and only then exchanges the code for an actual access token and typically a refresh token.
 
-PKCE (Proof Key for Code Exchange) exists specifically to close a vulnerability in public clients (mobile apps, single-page apps) that have no way to keep a client secret confidential — without PKCE, an attacker who intercepts the authorization code (a real risk on mobile platforms, via a malicious app registering the same custom URI scheme) could exchange it for a token themselves; with PKCE, they'd also need the `code_verifier`, which never left the legitimate client and was never transmitted anywhere until the final, direct back-channel token exchange."
+PKCE exists specifically to close a vulnerability in public clients — mobile apps, single-page apps — that have no way to keep a client secret confidential. Without PKCE, an attacker who intercepts the authorization code (a real risk on mobile, via a malicious app registering the same custom URI scheme) could exchange it for a token themselves. With PKCE they'd also need the `code_verifier`, which never left the legitimate client and was never transmitted anywhere until the final back-channel exchange."
 
 **Code:**
 
@@ -908,7 +908,7 @@ public SecurityFilterChain oauth2LoginFilterChain(HttpSecurity http) throws Exce
 
 **Follow-up:**
 
-I'd bring up that PKCE is now recommended for **all** clients, not just public ones without a client secret — the current OAuth 2.1 draft actually mandates it universally, since it's a strict security improvement with no real downside even for confidential clients, and defense-in-depth against authorization-code interception is worth having regardless of client type. I'd also mention the `state` parameter's separate, distinct purpose from `code_challenge`/`code_verifier` — `state` defends against CSRF on the redirect callback itself (ensuring the authorization response actually corresponds to a flow this browser session initiated), which is a different threat than the authorization-code-interception threat PKCE addresses — both are needed, and conflating them (or omitting `state` because "we already have PKCE") is a real, if subtle, security gap.
+PKCE is now recommended for all clients, not just public ones without a secret — the current OAuth 2.1 draft mandates it universally, since it's a strict security improvement with no real downside even for confidential clients. The `state` parameter serves a separate purpose from `code_challenge`/`code_verifier`: it defends against CSRF on the redirect callback itself, making sure the authorization response actually corresponds to a flow this browser session initiated. That's a different threat than the code-interception threat PKCE addresses. Both are needed, and omitting `state` because "we already have PKCE" is a real, if subtle, gap.
 
 **Source:** [RFC 7636, PKCE](https://datatracker.ietf.org/doc/html/rfc7636), [Spring Security Reference — OAuth2 Login](https://docs.spring.io/spring-security/reference/servlet/oauth2/login/index.html)
 

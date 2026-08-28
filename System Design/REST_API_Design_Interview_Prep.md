@@ -45,13 +45,13 @@ How to use this: each question has a **core answer** (100–180 words — roughl
 
 **Core answer:**
 
-"An RPC-style API exposes *actions* as the primary unit — endpoints named like verbs or procedures (`/getUser`, `/createOrderAndCharge`, `/cancelSubscription`) that map roughly one-to-one onto function calls, and the HTTP method used to reach them is often just an implementation detail (many RPC-style APIs use POST for everything). A resource-oriented (REST) API instead exposes *nouns* — resources, identified by URIs (`/users/{id}`, `/orders/{id}`) — and expresses actions through a small, standard set of HTTP methods applied to those nouns (`GET /orders/{id}` to read, `POST /orders` to create, `DELETE /orders/{id}` to remove).
+"An RPC-style API exposes *actions* as the main unit. Endpoints read like verbs or procedures — `/getUser`, `/createOrderAndCharge`, `/cancelSubscription` — mapping roughly one-to-one onto function calls, and the HTTP method is often incidental (a lot of RPC-style APIs use POST for everything). A resource-oriented (REST) API exposes *nouns* instead: resources identified by URIs (`/users/{id}`, `/orders/{id}`), with actions expressed through a small, standard set of HTTP methods applied to those nouns — `GET /orders/{id}` to read, `POST /orders` to create, `DELETE /orders/{id}` to remove.
 
-The practical benefit isn't stylistic purity — a resource-oriented design gets a lot of behavior 'for free' from HTTP's own semantics: caching (`GET` is cacheable by intermediaries by default, an RPC `POST /getUser` typically isn't), idempotency guarantees tied to specific methods (question 4), standard status codes, and tooling that already understands HTTP semantics without needing to understand your specific action vocabulary."
+The benefit isn't stylistic purity. A resource-oriented design gets a lot of behavior for free from HTTP's own semantics: caching (`GET` is cacheable by intermediaries by default; an RPC `POST /getUser` usually isn't), idempotency guarantees tied to specific methods (question 4), standard status codes, and tooling that already understands HTTP without needing to learn your specific action vocabulary."
 
 **Staff-level extension:**
 
-Not every operation maps cleanly onto CRUD-over-a-noun — question 17/18 covers how I'd handle genuinely action-oriented operations (like "approve this refund") within an otherwise resource-oriented design, rather than pretending everything is naturally a resource. I'd also be upfront that pure REST-by-the-book (HATEOAS, Roy Fielding's original dissertation-level constraints) is rarely what teams actually mean by "RESTful API" in practice — most production APIs are "pragmatic REST": resource-oriented URLs and standard HTTP semantics, without full hypermedia-driven discoverability. Resource orientation is the right default because it leverages HTTP's existing semantics and tooling, but a handful of genuinely action-oriented operations are fine to model explicitly as their own thing rather than forcing an awkward resource abstraction onto something that isn't naturally one — dogmatic REST-purism that produces worse APIs than a pragmatic hybrid is a real anti-pattern worth pushing back on in a design review.
+Not every operation maps cleanly onto CRUD-over-a-noun. Questions 17 and 18 cover how I'd handle genuinely action-oriented operations — "approve this refund," say — within an otherwise resource-oriented design, rather than pretending everything is naturally a resource. I'd also be upfront that pure REST-by-the-book (HATEOAS, Roy Fielding's original dissertation-level constraints) is rarely what teams actually mean by "RESTful API" in practice. Most production APIs are "pragmatic REST": resource-oriented URLs and standard HTTP semantics, without full hypermedia-driven discoverability. Resource orientation is the right default because it leverages HTTP's existing semantics and tooling — but a handful of genuinely action-oriented operations are fine to model explicitly as their own thing, rather than forcing an awkward resource abstraction onto something that isn't naturally one. Dogmatic REST-purism that produces worse APIs than a pragmatic hybrid is worth pushing back on in a design review.
 
 **Example:**
 
@@ -70,8 +70,8 @@ POST   /orders                          # creates a new Order resource
 
 **Follow-up questions:**
 
-- *"What kinds of operations don't map cleanly onto a resource?"* — A workflow trigger, a bulk operation, a computation with no natural resource identity — model these explicitly as their own thing (question 17) rather than forcing an awkward abstraction.
-- *"Does REST require HATEOAS to count as REST?"* — In the purist sense, yes — but that's rarely what teams mean in practice; "pragmatic REST" (resource-oriented URLs, standard HTTP semantics) is the real-world norm.
+- *"What kinds of operations don't map cleanly onto a resource?"* — A workflow trigger, a bulk operation, a computation with no natural resource identity. Model these explicitly as their own thing (question 17) rather than forcing an awkward abstraction.
+- *"Does REST require HATEOAS to count as REST?"* — In the purist sense, yes. But that's rarely what teams mean in practice — "pragmatic REST" (resource-oriented URLs, standard HTTP semantics) is the real-world norm.
 
 **Sources:** [Roy Fielding's dissertation — REST architectural style](https://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm), [RFC 9110 — HTTP Semantics](https://datatracker.ietf.org/doc/html/rfc9110)
 
@@ -81,13 +81,13 @@ POST   /orders                          # creates a new Order resource
 
 **Core answer:**
 
-"A few concrete conventions I'd apply consistently, since consistency across an API surface matters more than any single rule in isolation: plural nouns for collections (`/orders`, not `/order`), lowercase with hyphens rather than underscores or camelCase in the URL path (`/order-items`, not `/orderItems` or `/order_items`), and nesting to express genuine ownership/containment relationships, but only one level deep in practice — `/users/{userId}/orders` is fine, but `/users/{userId}/orders/{orderId}/items/{itemId}/reviews/{reviewId}` becomes unwieldy and usually signals the deeper resources deserve their own top-level, independently addressable collection (`/order-items/{itemId}`) rather than being buried behind a long parent chain.
+"A few conventions I'd apply consistently — consistency across an API surface matters more than any single rule on its own. Plural nouns for collections (`/orders`, not `/order`). Lowercase with hyphens rather than underscores or camelCase in the URL path (`/order-items`, not `/orderItems` or `/order_items`). And nesting to express genuine ownership or containment, but only one level deep in practice: `/users/{userId}/orders` is fine, but `/users/{userId}/orders/{orderId}/items/{itemId}/reviews/{reviewId}` gets unwieldy. That usually means the deeper resources deserve their own top-level, independently addressable collection (`/order-items/{itemId}`) instead of being buried behind a long parent chain.
 
-I'd also keep URIs representing *identity*, not query/filter logic — filtering, sorting, and pagination parameters belong in the query string (question 8), not encoded into the path (`/orders/status/shipped` implies `status` is a fixed part of the hierarchy rather than a filter dimension)."
+I'd also keep URIs about *identity*, not query or filter logic. Filtering, sorting, and pagination parameters belong in the query string (question 8), not the path — `/orders/status/shipped` implies status is a fixed part of the hierarchy rather than a filter dimension."
 
 **Staff-level extension:**
 
-The actual highest-leverage practice here isn't any individual naming rule — it's having a **written, enforced API style guide** shared across every team building services in the same organization, plus linting it automatically (via an OpenAPI-spec linter like Spectral, run in CI) rather than relying on manual review to catch inconsistency. The real cost of inconsistent naming isn't aesthetic — client developers integrating with many internal APIs have to context-switch conventions per service, and inconsistency compounds the cognitive load of working across a growing microservices landscape; a shared, automatically-enforced style guide is the actual staff-level fix, not "everyone please try to follow the same conventions."
+The highest-leverage practice here isn't any individual naming rule — it's a **written, enforced API style guide** shared across every team building services in the org, linted automatically (an OpenAPI-spec linter like Spectral, run in CI) rather than relying on manual review to catch inconsistency. The real cost of inconsistent naming isn't aesthetic. Client developers integrating with many internal APIs have to context-switch conventions per service, and that compounds the cognitive load of working across a growing microservices landscape. A shared, automatically-enforced style guide is the actual staff-level fix — not "everyone please try to follow the same conventions."
 
 **Example:**
 
@@ -108,8 +108,8 @@ GET  /users/{u}/orders/{o}/items/{i}/reviews/{r}   # too deep, hard to address i
 
 **Follow-up questions:**
 
-- *"Why hyphens over camelCase or underscores?"* — Hyphens are the more broadly recommended convention for URL readability and SEO-adjacent tooling — a stylistic choice, but one worth picking once and enforcing.
-- *"How do you actually enforce naming consistency across teams?"* — An OpenAPI-spec linter (Spectral) run in CI, not manual review — catches deviation automatically at the point it's introduced.
+- *"Why hyphens over camelCase or underscores?"* — Hyphens are the more broadly recommended convention for URL readability and SEO-adjacent tooling. It's a stylistic choice, but one worth picking once and enforcing.
+- *"How do you actually enforce naming consistency across teams?"* — An OpenAPI-spec linter (Spectral) run in CI, not manual review. That catches deviation automatically at the point it's introduced.
 
 **Sources:** [Microsoft REST API Guidelines](https://github.com/microsoft/api-guidelines), [Google API Design Guide](https://cloud.google.com/apis/design)
 
@@ -119,11 +119,11 @@ GET  /users/{u}/orders/{o}/items/{i}/reviews/{r}   # too deep, hard to address i
 
 **Core answer:**
 
-"`GET` retrieves a representation of a resource, must be safe (no side effects the client should be held responsible for) and cacheable by default. `POST` creates a new subordinate resource under a collection, or triggers a non-idempotent action — it's the 'catch-all' verb precisely because it doesn't carry the safety or idempotency guarantees the others do. `PUT` replaces a resource *entirely* at a known URI — the request body represents the complete desired state, and any field omitted is implicitly cleared/reset, not left untouched; this is what makes `PUT` naturally idempotent. `PATCH` applies a *partial* modification — only the fields present change, everything else is left as-is; because there are multiple competing formats for expressing a partial update (question 9), its idempotency depends entirely on the patch content itself (an 'increment by 1' patch is not idempotent; a 'set this field to X' patch is). `DELETE` removes a resource, and should be idempotent — deleting an already-deleted resource should be a no-op returning success, not an error."
+"`GET` retrieves a representation of a resource. It must be safe (no side effects the client should be held responsible for) and cacheable by default. `POST` creates a new subordinate resource under a collection, or triggers a non-idempotent action — it's the 'catch-all' verb precisely because it doesn't carry the safety or idempotency guarantees the others do. `PUT` replaces a resource *entirely* at a known URI: the request body represents the complete desired state, and any field left out is implicitly cleared, not left untouched. That's what makes `PUT` naturally idempotent. `PATCH` applies a *partial* modification — only the fields present change, everything else stays as-is. Because there are multiple competing formats for expressing a partial update (question 9), its idempotency depends entirely on the patch content itself: an 'increment by 1' patch isn't idempotent, a 'set this field to X' patch is. `DELETE` removes a resource and should be idempotent — deleting an already-deleted resource should be a no-op returning success, not an error."
 
 **Staff-level extension:**
 
-The common real-world mistake is using `PUT` for what's actually a partial update — a team implements `PUT /orders/123` but only updates the fields present in the request body, silently leaving other fields untouched when they're omitted. This violates `PUT`'s actual replace-semantics contract, and any HTTP-aware intermediary, cache, or client library that assumes correct `PUT` semantics can behave unexpectedly. The fix is simple and important: if an endpoint only ever updates a subset of fields, it should be `PATCH`, not a `PUT` that lies about its own semantics — getting this right isn't pedantry, it's what lets HTTP-level tooling and client libraries reason correctly about the API's actual behavior without reading custom documentation for every endpoint.
+The common real-world mistake is using `PUT` for what's actually a partial update: a team implements `PUT /orders/123` but only updates the fields present in the request body, silently leaving the rest untouched when they're omitted. This violates `PUT`'s actual replace-semantics contract, and any HTTP-aware intermediary, cache, or client library that assumes correct `PUT` behavior can misbehave against it. The fix is simple: if an endpoint only ever updates a subset of fields, it should be `PATCH`, not a `PUT` that lies about its own semantics. Getting this right isn't pedantry — it's what lets HTTP-level tooling and client libraries reason correctly about the API's actual behavior without reading custom documentation for every endpoint.
 
 **Example:**
 
@@ -148,7 +148,7 @@ DELETE /orders/123             # idempotent — calling this repeatedly should b
 
 **Follow-up questions:**
 
-- *"Is `PATCH` always idempotent?"* — No — depends entirely on the patch content; "increment by 1" isn't, "set to X" is.
+- *"Is `PATCH` always idempotent?"* — No, it depends entirely on the patch content. "Increment by 1" isn't; "set to X" is.
 - *"Why does it matter if a team implements `PUT` as a partial update?"* — Any HTTP-aware intermediary, cache, or client library assuming correct `PUT` semantics (full replacement) can misbehave against an endpoint that quietly does partial updates instead.
 
 **Sources:** [RFC 9110 §9 — HTTP Methods](https://datatracker.ietf.org/doc/html/rfc9110#section-9), [RFC 5789 — PATCH Method](https://datatracker.ietf.org/doc/html/rfc5789)
@@ -159,13 +159,13 @@ DELETE /orders/123             # idempotent — calling this repeatedly should b
 
 **Core answer:**
 
-"By the HTTP spec: `GET`, `HEAD`, `PUT`, `DELETE`, `OPTIONS`, and `TRACE` are all specified as idempotent — making the identical request multiple times has the same effect on server state as making it once. `POST` and `PATCH` are explicitly **not** guaranteed idempotent by the spec — though a specific `PATCH` payload *can happen* to be idempotent depending on what it expresses (question 3), the method itself carries no such guarantee.
+"By the HTTP spec, `GET`, `HEAD`, `PUT`, `DELETE`, `OPTIONS`, and `TRACE` are all idempotent — making the identical request multiple times has the same effect on server state as making it once. `POST` and `PATCH` are explicitly **not** guaranteed idempotent by the spec. A specific `PATCH` payload can happen to be idempotent depending on what it expresses (question 3), but the method itself carries no such guarantee.
 
-The distinction worth being precise about: idempotency is about the *effect on server state* being the same across repeated calls, a different (weaker) property than **safety** — `GET` is both safe (no intended side effect at all) and idempotent; `PUT`/`DELETE` are idempotent but not safe. This matters for retry logic: a client can safely retry any idempotent method after a timeout without risking a duplicated effect — but retrying a plain `POST` after a timeout is genuinely dangerous, since the original request might have already succeeded server-side, and a naive retry could create a duplicate resource, which is exactly the problem the next question addresses."
+Idempotency is about the *effect on server state* being the same across repeated calls — a different, weaker property than **safety**. `GET` is both safe (no intended side effect at all) and idempotent; `PUT`/`DELETE` are idempotent but not safe. This matters for retry logic: a client can safely retry any idempotent method after a timeout without risking a duplicated effect. But retrying a plain `POST` after a timeout is genuinely dangerous, since the original request might have already succeeded server-side — a naive retry could create a duplicate resource, which is exactly the problem the next question addresses."
 
 **Staff-level extension:**
 
-Idempotency being a *spec-level guarantee* doesn't mean every real implementation actually honors it — a `PUT` handler with a buggy side effect (e.g., incrementing a counter as a side channel of an otherwise-replace-style update) technically violates the idempotency contract the method name promises, and this is a real, if less common, source of retry-related bugs: infrastructure (load balancers, HTTP clients, service meshes) that automatically retries idempotent methods on failure is trusting the *implementation* to actually be idempotent, not just the method choice. Idempotency needs to be genuinely engineered into the handler's actual behavior (usually driven by the data in the request, applied via an upsert/set-to-exact-value operation, not an increment/append), not just assumed because the HTTP method is conventionally idempotent — and for `POST`, where the spec offers no help at all, idempotency has to be deliberately added via a client-supplied idempotency key (question 5).
+Idempotency being a spec-level guarantee doesn't mean every real implementation honors it. A `PUT` handler with a buggy side effect — incrementing a counter as a side channel of an otherwise-replace-style update, say — technically violates the idempotency contract the method name promises. This is a real, if less common, source of retry-related bugs: infrastructure like load balancers, HTTP clients, and service meshes that automatically retries idempotent methods on failure is trusting the *implementation* to actually be idempotent, not just the method choice. Idempotency has to be engineered into the handler's actual behavior — usually via an upsert or set-to-exact-value operation, not an increment or append — not just assumed because the HTTP method is conventionally idempotent. And for `POST`, where the spec offers no help at all, idempotency has to be added deliberately, via a client-supplied idempotency key (question 5).
 
 **Example:**
 
@@ -186,8 +186,8 @@ NOT guaranteed idempotent (retrying blindly risks a DUPLICATE effect):
 
 **Follow-up questions:**
 
-- *"Is idempotency guaranteed just by choosing an idempotent HTTP method?"* — No — the spec guarantees the contract, not the implementation; a buggy `PUT` handler with a side-channel effect can violate it silently.
-- *"What's the difference between idempotent and safe?"* — Safe means no intended side effect at all (`GET`); idempotent means repeating the effect doesn't compound it (`PUT`/`DELETE` are idempotent but not safe).
+- *"Is idempotency guaranteed just by choosing an idempotent HTTP method?"* — No. The spec guarantees the contract, not the implementation — a buggy `PUT` handler with a side-channel effect can violate it silently.
+- *"What's the difference between idempotent and safe?"* — Safe means no intended side effect at all (`GET`). Idempotent means repeating the effect doesn't compound it (`PUT`/`DELETE` are idempotent but not safe).
 
 **Sources:** [RFC 9110 §9.2 — Idempotent Methods](https://datatracker.ietf.org/doc/html/rfc9110#section-9.2.2)
 
@@ -197,11 +197,11 @@ NOT guaranteed idempotent (retrying blindly risks a DUPLICATE effect):
 
 **Core answer:**
 
-"Since payment creation is inherently a `POST` with no natural idempotent semantics from the HTTP method itself, safety under retry has to be added explicitly via an **idempotency key**: the client generates a unique key (typically a UUID) once, per logical payment attempt, and sends it as a header (`Idempotency-Key`) on the request. The server, before processing, checks whether it has already seen this exact key: if not, it processes the payment normally and stores the key alongside the *result* for some retention window; if the key has been seen before, the server returns the **stored result from the original request** without processing the payment again — even if the client retries because it never received the original response, the server recognizes 'this is a retry I already fully handled' and responds consistently without a second charge ever occurring."
+"Since payment creation is inherently a `POST` with no natural idempotent semantics, safety under retry has to be added explicitly via an **idempotency key**. The client generates a unique key — typically a UUID — once per logical payment attempt, and sends it as an `Idempotency-Key` header. Before processing, the server checks whether it has already seen this exact key. If not, it processes the payment normally and stores the key alongside the *result* for some retention window. If the key has been seen before, the server returns the **stored result from the original request** without processing the payment again — even if the client retries because it never received the original response, the server recognizes this as a retry it already fully handled, and responds consistently without a second charge."
 
 **Staff-level extension:**
 
-The implementation detail that actually matters for correctness: the idempotency-key check and the payment-processing-plus-key-storage need to happen atomically (typically via a unique constraint on the key in the same database transaction as the payment record creation, or a distributed lock around the check-then-process sequence) — a naive "check if key exists, if not process" implementation has exactly the same check-then-act race a concurrent map warns about, where two near-simultaneous retries with the same key could both pass the "not seen yet" check and both create a payment. The retention-window decision is a real design trade-off, not an afterthought: idempotency records need to be kept long enough to cover any realistic client retry window (commonly 24 hours), but keeping them forever is unnecessary storage growth — a scheduled cleanup job or TTL should expire them after that window.
+The detail that actually matters for correctness: the idempotency-key check and the payment-processing-plus-key-storage need to happen atomically — typically via a unique constraint on the key in the same database transaction as the payment record, or a distributed lock around the check-then-process sequence. A naive "check if key exists, if not process" implementation has the same check-then-act race a concurrent map warns about: two near-simultaneous retries with the same key could both pass the "not seen yet" check and both create a payment. The retention window is a real design trade-off, not an afterthought — idempotency records need to be kept long enough to cover any realistic client retry window (commonly 24 hours), but keeping them forever is unnecessary storage growth. A scheduled cleanup job or TTL should expire them after that window.
 
 **Example:**
 
@@ -244,8 +244,8 @@ ALTER TABLE idempotency_records ADD CONSTRAINT uq_idempotency_key UNIQUE (idempo
 
 **Follow-up questions:**
 
-- *"What if the same key arrives with a genuinely different payment amount?"* — Reject it as a client error (`422`, "idempotency key reused with different parameters") — never silently process the new amount or silently return the old result.
-- *"What makes the check-and-store step actually safe under concurrent retries?"* — A unique DB constraint on the key in the same transaction as the payment write — not a separate "check, then process" pair of steps.
+- *"What if the same key arrives with a genuinely different payment amount?"* — Reject it as a client error (`422`, "idempotency key reused with different parameters"). Never silently process the new amount or silently return the old result.
+- *"What makes the check-and-store step actually safe under concurrent retries?"* — A unique DB constraint on the key in the same transaction as the payment write, not a separate "check, then process" pair of steps.
 
 **Sources:** [Stripe API — Idempotent Requests](https://stripe.com/docs/api/idempotent_requests), [IETF Draft — The Idempotency-Key HTTP Header Field](https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/)
 
@@ -255,15 +255,15 @@ ALTER TABLE idempotency_records ADD CONSTRAINT uq_idempotency_key UNIQUE (idempo
 
 **Core answer:**
 
-"**Offset pagination** (`?page=3&size=20`) is the simplest to implement — the database skips N rows and returns the next M. Its problems compound at scale: the database still has to *scan* the skipped rows, so performance degrades as the offset grows; and if rows are inserted or deleted between requests, the client can see duplicate or skipped items, since 'offset 20' shifts to a different logical row.
+"**Offset pagination** (`?page=3&size=20`) is the simplest to implement — the database skips N rows and returns the next M. It has real problems at scale: the database still has to *scan* the skipped rows, so performance degrades as the offset grows, and if rows are inserted or deleted between requests, the client can see duplicate or skipped items, since 'offset 20' now points to a different logical row.
 
-**Cursor pagination** replaces the offset with an opaque token representing 'where I left off,' encoding the last-seen item's sort key — the next request says 'give me the next N items after this cursor.' This avoids the scan-cost problem (a direct indexed seek) and is far more resilient to concurrent inserts/deletes, since the cursor refers to a fixed logical position, not a shifting offset.
+**Cursor pagination** replaces the offset with an opaque token representing 'where I left off,' encoding the last-seen item's sort key. The next request says 'give me the next N items after this cursor.' It avoids the scan-cost problem — a direct indexed seek — and is far more resilient to concurrent inserts and deletes, since the cursor refers to a fixed logical position instead of a shifting offset.
 
-**Keyset pagination** is the concrete database technique that implements cursor pagination — an indexed seek condition in the `WHERE` clause rather than `OFFSET`. I'd use an opaque cursor for the API surface, backed by a keyset query underneath."
+**Keyset pagination** is the actual database technique behind cursor pagination — an indexed seek condition in the `WHERE` clause rather than `OFFSET`. I'd expose an opaque cursor at the API surface, backed by a keyset query underneath."
 
 **Staff-level extension:**
 
-The cursor should be genuinely opaque to the client (base64-encoded, or even encrypted/signed) rather than a plain, readable value — this lets the server change its internal pagination implementation (add a tiebreaker column, change the sort key entirely) without breaking the API contract, since clients only ever pass the cursor back verbatim. Offset pagination isn't strictly wrong to use everywhere — for a small, admin-facing UI with modest data volume and infrequent concurrent writes, its simplicity (jump directly to page 5, show a total page count) is a genuine UX advantage cursor pagination structurally can't offer. The actual decision is trading "arbitrary page jump + total count" against "scale and consistency under concurrent writes," not simply "cursor is always better."
+The cursor should be genuinely opaque to the client — base64-encoded, or even encrypted/signed — rather than a plain, readable value. That lets the server change its internal pagination implementation later (add a tiebreaker column, change the sort key entirely) without breaking the API contract, since clients only ever pass the cursor back verbatim. Offset pagination isn't wrong everywhere, though — for a small, admin-facing UI with modest data volume and infrequent concurrent writes, its simplicity (jump straight to page 5, show a total page count) is a real UX advantage cursor pagination can't offer. The actual trade-off is "arbitrary page jump plus total count" against "scale and consistency under concurrent writes," not "cursor is always better."
 
 **Example:**
 
@@ -292,7 +292,7 @@ LIMIT 20;
 
 **Follow-up questions:**
 
-- *"Can a cursor-based API jump to an arbitrary page?"* — No — that's structurally the trade-off; offset pagination keeps that ability at the cost of scan performance and consistency under concurrent writes.
+- *"Can a cursor-based API jump to an arbitrary page?"* — No, and that's the trade-off. Offset pagination keeps that ability at the cost of scan performance and consistency under concurrent writes.
 - *"Why not expose the raw sort key as the cursor?"* — Opacity lets the server change its internal pagination implementation later without breaking the API contract.
 
 **Sources:** [Use the Index, Luke — pagination done right](https://use-the-index-luke.com/no-offset), [Slack API — Pagination](https://api.slack.com/apis/pagination)
@@ -303,13 +303,13 @@ LIMIT 20;
 
 **Core answer:**
 
-"Stability requires two things working together. First, a **deterministic, total ordering** — the sort key(s) must uniquely determine row order, with no ties; a sort purely on `created_at`, where rows can share a timestamp, is a real bug source, since ties can return in a different relative order across requests, skipping or duplicating a row across pages. The fix: always include a unique column (the primary key) as an explicit final tiebreaker in the `ORDER BY`.
+"Stability needs two things working together. First, a **deterministic, total ordering** — the sort key must uniquely determine row order, with no ties. A sort purely on `created_at`, where rows can share a timestamp, is a real bug source: ties can come back in a different relative order across requests, skipping or duplicating a row across pages. The fix is to always include a unique column — the primary key — as an explicit final tiebreaker in the `ORDER BY`.
 
-Second, keyset/cursor pagination (question 6) handles *inserts and deletes elsewhere in the data* much better than offset pagination — since each request seeks from a fixed position, a new row inserted elsewhere doesn't shift what 'this cursor' means. What it does *not* solve is a previously-returned row being modified in a way that changes its sort position mid-pagination — that row could legitimately reappear later; usually an acceptable, documented trade-off rather than something fully solvable without snapshot isolation."
+Second, keyset/cursor pagination (question 6) handles inserts and deletes elsewhere in the data much better than offset pagination, since each request seeks from a fixed position — a new row inserted elsewhere doesn't shift what 'this cursor' means. What it doesn't solve is a previously-returned row being modified in a way that changes its sort position mid-pagination; that row could legitimately reappear later. Usually that's an acceptable, documented trade-off rather than something fully solvable without snapshot isolation."
 
 **Staff-level extension:**
 
-Snapshot-based pagination (a database transaction/snapshot held open for the pagination session, or a point-in-time export the client paginates over) is the only way to get *fully* consistent pagination against actively-changing data — genuinely useful for something like a data export or an audit trail where "the exact state as of the moment I started paginating" matters, but it comes with real cost (an open long-running transaction/snapshot has its own resource and locking implications) and isn't appropriate for a typical high-traffic, ever-changing API. For most APIs, deterministic ordering plus keyset-based cursor pagination is sufficient and the right trade-off; I'd only reach for snapshot-based pagination for genuinely export/audit-style use cases where perfect point-in-time consistency is an explicit, documented requirement.
+Snapshot-based pagination — a database transaction or snapshot held open for the pagination session, or a point-in-time export the client paginates over — is the only way to get fully consistent pagination against actively-changing data. It's genuinely useful for something like a data export or an audit trail, where "the exact state as of the moment I started paginating" matters, but it comes with real cost: an open long-running transaction has its own resource and locking implications, and it isn't appropriate for a typical high-traffic, ever-changing API. For most APIs, deterministic ordering plus keyset-based cursor pagination is the right trade-off. I'd only reach for snapshot-based pagination for export/audit-style use cases where perfect point-in-time consistency is an explicit, documented requirement.
 
 **Example:**
 
@@ -325,8 +325,8 @@ SELECT * FROM orders ORDER BY created_at DESC, id DESC LIMIT 20;
 
 **Follow-up questions:**
 
-- *"Can a row reappear on a later page during pagination?"* — Yes — if it's updated in a way that moves its sort position while the client is still paginating; a documented, generally-acceptable trade-off.
-- *"When would you actually pay for snapshot-based pagination?"* — Export/audit-style use cases where perfect point-in-time consistency is an explicit requirement — not a typical high-traffic API.
+- *"Can a row reappear on a later page during pagination?"* — Yes, if it's updated in a way that moves its sort position while the client is still paginating. That's a documented, generally acceptable trade-off.
+- *"When would you actually pay for snapshot-based pagination?"* — Export/audit-style use cases where perfect point-in-time consistency is an explicit requirement, not a typical high-traffic API.
 
 **Sources:** [Use the Index, Luke — pagination done right](https://use-the-index-luke.com/no-offset)
 
@@ -336,17 +336,17 @@ SELECT * FROM orders ORDER BY created_at DESC, id DESC LIMIT 20;
 
 **Core answer:**
 
-"All three belong in the query string, not the path (question 2), since they're modifying *how* a collection is queried/rendered, not identifying a different resource.
+"All three belong in the query string, not the path (question 2), since they're modifying *how* a collection is queried or rendered, not identifying a different resource.
 
-**Filtering**: a consistent, predictable convention — `?status=shipped&createdAfter=2026-01-01` for simple equality/range filters. For more complex needs, I'd pick one consistent syntax rather than inventing per-endpoint conventions — either a structured query-parameter convention (`?status=shipped,cancelled` for 'in' semantics, `?amount[gte]=100` for range operators) or, for genuinely complex query needs, a dedicated filter DSL, consistently applied across the whole API.
+**Filtering**: a consistent, predictable convention — `?status=shipped&createdAfter=2026-01-01` for simple equality and range filters. For more complex needs, I'd pick one consistent syntax rather than inventing per-endpoint conventions — either a structured query-parameter convention (`?status=shipped,cancelled` for 'in' semantics, `?amount[gte]=100` for range operators) or, for genuinely complex query needs, a dedicated filter DSL applied consistently across the whole API.
 
 **Sorting**: a single, consistent parameter (`?sort=createdAt,-amount` — comma-separated, leading `-` for descending) rather than separate `sortBy`/`sortDirection` parameters that only support one field.
 
-**Field selection** (sparse fieldsets): `?fields=id,status,total` to let a client request only the fields it needs, reducing payload size for high-volume/mobile clients — valuable for large resources with many optional/expensive fields, but I'd be selective about offering it, since it adds real server-side complexity for a benefit that's often better solved by a leaner default response or a separate 'summary' representation instead."
+**Field selection** (sparse fieldsets): `?fields=id,status,total` lets a client request only the fields it needs, reducing payload size for high-volume or mobile clients. It's valuable for large resources with many optional or expensive fields, but I'd be selective about offering it — it adds real server-side complexity for a benefit that's often better solved by a leaner default response or a separate 'summary' representation."
 
 **Staff-level extension:**
 
-Unconstrained, free-form filtering (allowing arbitrary fields and operators without validation) is a real performance and security risk, not just a design nicety — a filter parameter that maps directly onto an unindexed database column, or that allows arbitrarily complex boolean combinations, can let a client trigger accidentally (or deliberately) expensive queries that degrade the whole service; I'd explicitly validate allowed filter fields/operators against a known allowlist rather than passing client input straight through to a query builder unchecked. A query language/DSL (like OData's `$filter`, or GraphQL entirely) is worth considering explicitly when filtering needs grow complex enough that a bespoke query-parameter convention starts accumulating special cases — that's usually the signal the ad hoc approach has outgrown itself.
+Unconstrained, free-form filtering — allowing arbitrary fields and operators without validation — is a real performance and security risk, not just a design nicety. A filter parameter that maps directly onto an unindexed column, or that allows arbitrarily complex boolean combinations, can let a client trigger expensive queries that degrade the whole service, accidentally or deliberately. I'd validate allowed filter fields and operators against a known allowlist rather than passing client input straight through to a query builder unchecked. A query language or DSL — OData's `$filter`, or GraphQL entirely — is worth considering once filtering needs grow complex enough that a bespoke query-parameter convention starts accumulating special cases. That's usually the signal the ad hoc approach has outgrown itself.
 
 **Example:**
 
@@ -359,8 +359,8 @@ GET /orders?fields=id,status,total          # sparse fieldset — only these fie
 
 **Follow-up questions:**
 
-- *"What's the risk of unconstrained filtering?"* — A client can trigger expensive queries against unindexed columns or arbitrarily complex boolean combinations — validate allowed fields/operators against an allowlist.
-- *"When do you reach for a real query DSL instead of ad hoc query params?"* — Once filtering needs grow complex enough that the bespoke convention starts accumulating special cases — that's the signal it's outgrown itself.
+- *"What's the risk of unconstrained filtering?"* — A client can trigger expensive queries against unindexed columns or arbitrarily complex boolean combinations. Validate allowed fields and operators against an allowlist.
+- *"When do you reach for a real query DSL instead of ad hoc query params?"* — Once filtering needs grow complex enough that the bespoke convention starts accumulating special cases. That's the signal it's outgrown itself.
 
 **Sources:** [JSON:API Specification — Filtering, Sorting, Sparse Fieldsets](https://jsonapi.org/format/#fetching), [Google API Design Guide — Standard Fields](https://cloud.google.com/apis/design/design_patterns)
 
@@ -370,15 +370,15 @@ GET /orders?fields=id,status,total          # sparse fieldset — only these fie
 
 **Core answer:**
 
-"Both are standardized formats for expressing a partial update via `PATCH` (question 3), and represent genuinely different trade-offs, not just stylistic variants.
+"Both are standardized formats for expressing a partial update via `PATCH` (question 3), and they represent genuinely different trade-offs, not just stylistic variants.
 
-**JSON Merge Patch** (RFC 7396) is the simpler of the two: the patch body is a JSON object shaped like the target resource — a field present overwrites the corresponding field, and a field set to `null` means 'delete this field.' Intuitive and easy to construct, but has a real limitation: because `null` means 'delete,' there's no way to express 'set this field's value to `null`' as distinct from 'remove it,' and any array field replaces the *entire* array, not specific elements.
+**JSON Merge Patch** (RFC 7396) is the simpler of the two. The patch body is a JSON object shaped like the target resource — a field present overwrites the corresponding field, and a field set to `null` means 'delete this field.' It's intuitive and easy to construct, but has a real limitation: because `null` means 'delete,' there's no way to express 'set this field to `null`' as distinct from 'remove it,' and any array field replaces the *entire* array rather than specific elements.
 
-**JSON Patch** (RFC 6902) is more expressive and complex: the patch body is an *array of operations* (`add`, `remove`, `replace`, `move`, `copy`, `test`), each targeting a location via a JSON Pointer — this can express precise per-element array operations, distinguish 'set to null' from 'remove entirely,' and include a `test` precondition that aborts the patch if not met. The cost: harder for clients to hand-construct, more complex for the server to apply correctly."
+**JSON Patch** (RFC 6902) is more expressive and more complex. The patch body is an *array of operations* — `add`, `remove`, `replace`, `move`, `copy`, `test` — each targeting a location via a JSON Pointer. It can express precise per-element array operations, distinguish 'set to null' from 'remove entirely,' and include a `test` precondition that aborts the patch if not met. The cost is that it's harder for clients to hand-construct and more complex for the server to apply correctly."
 
 **Staff-level extension:**
 
-The practical recommendation: JSON Merge Patch is the right default for the overwhelming majority of real APIs, since most partial-update needs really are just 'change these top-level fields' and the null-means-delete ambiguity rarely matters in practice (most domains don't have a meaningful distinction between 'field is null' and 'field is absent'). I'd reach for full JSON Patch specifically when array-element-level operations or the `test`-based precondition mechanism are genuinely needed, or when working with a client ecosystem that already expects it. Neither format is a substitute for proper optimistic-concurrency control (question 10) — JSON Patch's `test` operation *can* be used for a lightweight version check, but I'd generally prefer the explicit `ETag`/`If-Match` mechanism as the primary tool, since it's visible at the HTTP layer rather than buried inside a patch body.
+The practical recommendation: JSON Merge Patch is the right default for most real APIs, since most partial-update needs really are just 'change these top-level fields,' and the null-means-delete ambiguity rarely matters in practice — most domains don't have a meaningful distinction between 'field is null' and 'field is absent.' I'd reach for full JSON Patch specifically when array-element-level operations or the `test`-based precondition mechanism are genuinely needed, or when working with a client ecosystem that already expects it. Neither format substitutes for proper optimistic-concurrency control (question 10). JSON Patch's `test` operation can be used for a lightweight version check, but I'd generally prefer the explicit `ETag`/`If-Match` mechanism as the primary tool, since it's visible at the HTTP layer rather than buried inside a patch body.
 
 **Example:**
 
@@ -406,8 +406,8 @@ The practical recommendation: JSON Merge Patch is the right default for the over
 
 **Follow-up questions:**
 
-- *"What's the actual default you'd reach for?"* — JSON Merge Patch, for the large majority of real APIs — the null-means-delete ambiguity rarely matters in practice.
-- *"Can JSON Patch's `test` operation replace ETag-based concurrency control?"* — It could for a lightweight check, but `ETag`/`If-Match` is preferable as the primary mechanism since it's visible and inspectable at the HTTP layer.
+- *"What's the actual default you'd reach for?"* — JSON Merge Patch, for most real APIs. The null-means-delete ambiguity rarely matters in practice.
+- *"Can JSON Patch's `test` operation replace ETag-based concurrency control?"* — It could for a lightweight check, but `ETag`/`If-Match` is preferable as the primary mechanism, since it's visible and inspectable at the HTTP layer.
 
 **Sources:** [RFC 7396 — JSON Merge Patch](https://datatracker.ietf.org/doc/html/rfc7396), [RFC 6902 — JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902)
 
@@ -419,13 +419,13 @@ The practical recommendation: JSON Merge Patch is the right default for the over
 
 "A lost update happens when two clients read the same resource, both make changes based on that now-stale read, and the second client's write silently overwrites the first client's changes without either client being told a conflict occurred — classic last-write-wins data loss.
 
-The standard HTTP-native mechanism is `ETag` combined with conditional requests: the server includes an `ETag` header (an opaque version identifier) on every `GET` response. When the client updates the resource, it includes that same value in an `If-Match` header on the write. The server compares `If-Match` against the resource's **current** `ETag` — if they don't match, someone else modified the resource in between, and the server rejects the write with `412 Precondition Failed` rather than silently applying it over the intervening change. This is optimistic concurrency control expressed at the HTTP layer, giving the client an explicit signal instead of silently losing data.
+The standard HTTP-native mechanism is `ETag` combined with conditional requests. The server includes an `ETag` header — an opaque version identifier — on every `GET` response. When the client updates the resource, it includes that same value in an `If-Match` header on the write. The server compares `If-Match` against the resource's current `ETag`; if they don't match, someone else modified the resource in between, and the server rejects the write with `412 Precondition Failed` instead of silently applying it over the intervening change. That's optimistic concurrency control at the HTTP layer, giving the client an explicit signal instead of silently losing data.
 
-An application-level `version` field achieves the identical semantic in the request/response body instead of HTTP headers."
+An application-level `version` field achieves the same thing in the request/response body instead of HTTP headers."
 
 **Staff-level extension:**
 
-This is precisely the same optimistic-locking mechanism JPA/Hibernate implements internally via `@Version` — the HTTP-level `ETag`/`If-Match` pattern and the database-level `@Version` column are the same conceptual pattern applied at two different layers, and in a well-designed system they're often directly wired together (the entity's `@Version` value *becomes* the `ETag`, so a database-level optimistic-lock failure surfaces cleanly as a `412` at the API layer). This pattern requires client cooperation to actually work — a client that ignores the `ETag`/`If-Match` contract and just sends unconditional `PUT`s defeats the whole mechanism, so for genuinely critical resources, I'd consider making `If-Match` a required header (rejecting writes that omit it with `428 Precondition Required`) rather than optional, to prevent well-meaning clients from silently bypassing the protection.
+This is the same optimistic-locking mechanism JPA/Hibernate implements via `@Version` — the HTTP-level `ETag`/`If-Match` pattern and the database-level `@Version` column are the same idea applied at two different layers, and in a well-designed system they're often wired together directly, with the entity's `@Version` value becoming the `ETag` so a database-level optimistic-lock failure surfaces cleanly as a `412` at the API layer. This pattern needs client cooperation to actually work: a client that ignores the `ETag`/`If-Match` contract and just sends unconditional `PUT`s defeats the whole mechanism. For genuinely critical resources, I'd consider making `If-Match` a required header — rejecting writes that omit it with `428 Precondition Required` — rather than optional, to stop well-meaning clients from silently bypassing the protection.
 
 **Example:**
 
@@ -467,8 +467,8 @@ ResponseEntity<Order> updateOrder(@PathVariable String id,
 
 **Follow-up questions:**
 
-- *"What happens if a client just ignores `If-Match` entirely?"* — It defeats the mechanism — for genuinely critical resources, make `If-Match` required and reject writes that omit it with `428 Precondition Required`.
-- *"How does this relate to JPA's `@Version`?"* — Same conceptual pattern at two layers — often wired together so the entity's `@Version` value becomes the `ETag`.
+- *"What happens if a client just ignores `If-Match` entirely?"* — It defeats the mechanism. For genuinely critical resources, make `If-Match` required and reject writes that omit it with `428 Precondition Required`.
+- *"How does this relate to JPA's `@Version`?"* — Same pattern at two layers, often wired together so the entity's `@Version` value becomes the `ETag`.
 
 **Sources:** [RFC 9110 §8.8 — ETag and Conditional Requests](https://datatracker.ietf.org/doc/html/rfc9110#section-8.8), [RFC 6585 — 428 Precondition Required](https://datatracker.ietf.org/doc/html/rfc6585)
 
@@ -478,13 +478,13 @@ ResponseEntity<Order> updateOrder(@PathVariable String id,
 
 **Core answer:**
 
-"`200 OK` — a successful request with a response body, the general-purpose success code for `GET`/`PUT`/`PATCH` and any non-creation `POST`. `201 Created` — a successful `POST` (or occasionally `PUT`) that created a new resource; should include a `Location` header. `202 Accepted` — validly received but processed asynchronously (question 17/18). `204 No Content` — success, but nothing to return (common for `DELETE`, or a write where the updated representation isn't echoed back).
+"`200 OK` is a successful request with a response body — the general-purpose success code for `GET`/`PUT`/`PATCH` and any non-creation `POST`. `201 Created` is a successful `POST` (or occasionally `PUT`) that created a new resource; it should include a `Location` header. `202 Accepted` means the request was validly received but is processed asynchronously (question 17/18). `204 No Content` is success with nothing to return — common for `DELETE`, or a write where the updated representation isn't echoed back.
 
-`400 Bad Request` — the request is structurally malformed (invalid JSON, a missing required field) — it couldn't even be validated against business rules. `409 Conflict` — well-formed, but conflicts with the resource's current state (e.g., cancelling an order that's already shipped). `422 Unprocessable Entity` — well-formed but fails business-rule validation (e.g., a discount code that doesn't exist) — separates 'your request wasn't syntactically valid' from 'it was, but doesn't satisfy the rules.' `429 Too Many Requests` — rate limit exceeded, with a `Retry-After` header."
+`400 Bad Request` means the request is structurally malformed — invalid JSON, a missing required field — and couldn't even be validated against business rules. `409 Conflict` means the request is well-formed but conflicts with the resource's current state, like cancelling an order that's already shipped. `422 Unprocessable Entity` means the request is well-formed but fails business-rule validation, like a discount code that doesn't exist — it separates 'your request wasn't syntactically valid' from 'it was, but doesn't satisfy the rules.' `429 Too Many Requests` means the rate limit was exceeded, with a `Retry-After` header."
 
 **Staff-level extension:**
 
-`400` vs `422` is genuinely one of the most commonly *inconsistently applied* distinctions across real-world APIs — plenty of production APIs use `400` for everything, which isn't strictly wrong but throws away a useful signal for clients trying to distinguish 'fix your request format' from 'your format is fine, but this business rule failed' programmatically. I'd advocate for picking a clear, documented convention up front (422 for anything a client would reasonably want to handle differently, 400 for genuinely malformed requests that indicate a client bug) and enforcing it consistently via a shared exception-handling layer (`@ControllerAdvice` in Spring, mapping specific exception types to specific status codes centrally) rather than leaving each endpoint to decide ad hoc.
+`400` vs. `422` is one of the most inconsistently applied distinctions across real-world APIs. Plenty of production APIs use `400` for everything, which isn't strictly wrong but throws away a useful signal for clients trying to distinguish 'fix your request format' from 'your format is fine, but this business rule failed.' I'd pick a clear, documented convention up front — 422 for anything a client would reasonably want to handle differently, 400 for genuinely malformed requests that indicate a client bug — and enforce it via a shared exception-handling layer (`@ControllerAdvice` in Spring, mapping exception types to status codes centrally) rather than leaving each endpoint to decide ad hoc.
 
 **Example:**
 
@@ -514,7 +514,7 @@ Retry-After: 30
 
 **Follow-up questions:**
 
-- *"Is using `400` for everything wrong?"* — Not strictly, but it throws away a useful signal clients could otherwise react to programmatically.
+- *"Is using `400` for everything wrong?"* — Not strictly, but it throws away a signal clients could otherwise react to programmatically.
 - *"How do you enforce a consistent status-code convention across an API?"* — A shared exception-handling layer (`@ControllerAdvice` in Spring) mapping exception types to status codes centrally, not per-endpoint judgment calls.
 
 **Sources:** [RFC 9110 §15 — Status Codes](https://datatracker.ietf.org/doc/html/rfc9110#section-15), [RFC 4918 §11.2 — 422 Unprocessable Entity](https://datatracker.ietf.org/doc/html/rfc4918#section-11.2)
@@ -525,13 +525,13 @@ Retry-After: 30
 
 **Core answer:**
 
-"I'd standardize on a single, consistent error response shape across the entire API — ideally following an established standard rather than inventing a bespoke one, since a standard format lets generic client-side error-handling tooling work across many APIs without custom parsing per service. **RFC 9457 (Problem Details for HTTP APIs)** is the current, well-adopted standard: a `type` (a URI identifying the specific error category, ideally dereferenceable to documentation), a `title` (a short, human-readable summary), a `status` (the HTTP status code, redundantly in the body), a `detail` (a human-readable explanation specific to *this* occurrence), and an `instance` (a URI identifying this occurrence, useful for correlating with server-side logs).
+"I'd standardize on a single, consistent error response shape across the entire API, ideally following an established standard rather than inventing a bespoke one — a standard format lets generic client-side error-handling tooling work across many APIs without custom parsing per service. **RFC 9457 (Problem Details for HTTP APIs)** is the current, well-adopted standard: a `type` (a URI identifying the error category, ideally dereferenceable to documentation), a `title` (a short, human-readable summary), a `status` (the HTTP status code, repeated in the body), a `detail` (a human-readable explanation specific to this occurrence), and an `instance` (a URI identifying this occurrence, useful for correlating with server-side logs).
 
-Beyond the RFC 9457 baseline, I'd include a `traceId`/`requestId` correlating the response to server-side logs/traces, and, for validation errors specifically, a structured list of field-level errors (question 13) rather than cramming everything into one prose `detail` string."
+Beyond the RFC 9457 baseline, I'd include a `traceId`/`requestId` correlating the response to server-side logs and traces, and, for validation errors specifically, a structured list of field-level errors (question 13) rather than cramming everything into one prose `detail` string."
 
 **Staff-level extension:**
 
-Adopting a real standard rather than a bespoke `{error: "..."}` shape has a genuinely underappreciated benefit: client libraries, API gateways, and observability tooling increasingly understand `application/problem+json` natively, and a `type` URI that dereferences to real documentation gives both humans and automated tooling a stable, linkable identity for a specific error category, rather than an error message string that might get reworded and silently break any client pattern-matching on it. Error responses are also a common, easy-to-miss security leak point — stack traces, internal exception messages, or SQL error text accidentally surfacing in a `detail` field in production is a real information-disclosure risk, so error-handling middleware needs an explicit, deliberate mapping from internal exceptions to safe, external-facing `detail` messages, never a blanket "just serialize the exception."
+Adopting a real standard rather than a bespoke `{error: "..."}` shape has an underappreciated benefit: client libraries, API gateways, and observability tooling increasingly understand `application/problem+json` natively, and a `type` URI that dereferences to real documentation gives both humans and tooling a stable, linkable identity for a specific error category — rather than an error message string that might get reworded and silently break any client pattern-matching on it. Error responses are also a common, easy-to-miss security leak point. Stack traces, internal exception messages, or SQL error text surfacing in a `detail` field in production is a real information-disclosure risk, so error-handling middleware needs a deliberate mapping from internal exceptions to safe, external-facing `detail` messages — never a blanket "just serialize the exception."
 
 **Example:**
 
@@ -557,7 +557,7 @@ Adopting a real standard rather than a bespoke `{error: "..."}` shape has a genu
 **Follow-up questions:**
 
 - *"What's the risk of a bespoke error format vs. a standard one?"* — Generic tooling (gateways, observability, client libraries) can't understand it natively, and a reworded message string can silently break clients pattern-matching on it.
-- *"What's a common security mistake in error responses?"* — Letting stack traces or internal exception/SQL text leak into a production `detail` field — needs an explicit, deliberate mapping to safe external messages.
+- *"What's a common security mistake in error responses?"* — Letting stack traces or internal exception/SQL text leak into a production `detail` field. It needs a deliberate mapping to safe external messages.
 
 **Sources:** [RFC 9457 — Problem Details for HTTP APIs](https://datatracker.ietf.org/doc/html/rfc9457)
 
@@ -567,13 +567,13 @@ Adopting a real standard rather than a bespoke `{error: "..."}` shape has a genu
 
 **Core answer:**
 
-"For a single overall request failure, I'd use the RFC 9457 shape from the previous question, but extend it with a structured, **per-field** list of validation errors — not one flattened `detail` string trying to describe multiple field problems in prose. Each entry should identify the specific field/path that failed (ideally via a JSON Pointer, matching the same addressing convention as JSON Patch, question 9), a machine-readable error code (so a client can react programmatically without string-matching human-readable text), and a human-readable message as a fallback/display default.
+"For a single overall request failure, I'd use the RFC 9457 shape from the previous question, but extend it with a structured, **per-field** list of validation errors — not one flattened `detail` string trying to describe multiple field problems in prose. Each entry should identify the specific field or path that failed (ideally via a JSON Pointer, matching the addressing convention JSON Patch uses, question 9), a machine-readable error code so a client can react programmatically without string-matching human-readable text, and a human-readable message as a fallback display default.
 
-This matters practically for the actual client-side experience: a client-side form needs to map 'the `email` field is invalid' to *that specific input box*, and a client-side i18n layer needs a stable error *code* to look up a localized message from, rather than parsing an English-language sentence that might change wording between API versions."
+This matters for the actual client-side experience: a form needs to map 'the `email` field is invalid' to that specific input box, and an i18n layer needs a stable error code to look up a localized message from, rather than parsing an English sentence that might change wording between API versions."
 
 **Staff-level extension:**
 
-Machine-readable error **codes** (not just field names) are the detail most APIs get wrong or skip entirely, and it's the thing that actually enables good client-side UX at scale — without a stable code, a frontend either has to fragile-string-match the message (breaks the moment the wording changes, even for a harmless copy-editing fix) or just show the raw server message untranslated, a poor experience for any genuinely multi-locale product. I'd advocate for defining and versioning the error-code vocabulary itself as a first-class part of the API contract, the same way status codes and response schemas are part of the contract — treating error codes as an afterthought is a common gap that shows up painfully once a client team tries to build good, localized error UX against the API.
+Machine-readable error **codes**, not just field names, are the detail most APIs get wrong or skip entirely, and they're what actually enables good client-side UX at scale. Without a stable code, a frontend either has to fragile-string-match the message — which breaks the moment the wording changes, even for a harmless copy edit — or just show the raw server message untranslated, a poor experience for any multi-locale product. I'd define and version the error-code vocabulary as a first-class part of the API contract, the same way status codes and response schemas are. Treating error codes as an afterthought is a common gap that shows up painfully once a client team tries to build good, localized error UX against the API.
 
 **Example:**
 
@@ -612,8 +612,8 @@ ResponseEntity<ProblemDetail> handleValidation(MethodArgumentNotValidException e
 
 **Follow-up questions:**
 
-- *"Why use a JSON Pointer for the field path instead of a plain field name?"* — Consistency with JSON Patch's addressing convention (question 9) — one path syntax across the API.
-- *"Should the error-code vocabulary be documented like the rest of the API contract?"* — Yes — versioned and documented per code, the same way status codes and response schemas are.
+- *"Why use a JSON Pointer for the field path instead of a plain field name?"* — Consistency with JSON Patch's addressing convention (question 9): one path syntax across the API.
+- *"Should the error-code vocabulary be documented like the rest of the API contract?"* — Yes, versioned and documented per code, the same way status codes and response schemas are.
 
 **Sources:** [RFC 9457 — Problem Details for HTTP APIs](https://datatracker.ietf.org/doc/html/rfc9457), [RFC 6901 — JSON Pointer](https://datatracker.ietf.org/doc/html/rfc6901)
 
@@ -623,15 +623,15 @@ ResponseEntity<ProblemDetail> handleValidation(MethodArgumentNotValidException e
 
 **Core answer:**
 
-"**URI versioning** (`/v1/orders`, `/v2/orders`) embeds the version directly in the path. It's the most visible and simplest for clients and API-gateway routing/caching to reason about, but it means a resource's identity/URI technically changes across versions, a real, if often-tolerated, violation of the REST principle that a URI identifies a resource independent of representation.
+"**URI versioning** (`/v1/orders`, `/v2/orders`) embeds the version directly in the path. It's the most visible and simplest option for clients and API-gateway routing and caching to reason about, but it means a resource's URI technically changes across versions — a real, if often-tolerated, violation of the REST principle that a URI identifies a resource independent of representation.
 
-**Header versioning** (a custom header like `Api-Version: 2`) keeps the URI stable — the same resource identity, with the version negotiated separately — more architecturally 'correct,' but less visible/discoverable and harder for some caching/gateway layers to route on cleanly, since caching keyed purely by URL now needs to also vary by header.
+**Header versioning** (a custom header like `Api-Version: 2`) keeps the URI stable, with the same resource identity and the version negotiated separately. It's more architecturally 'correct,' but less visible and harder for some caching or gateway layers to route on cleanly, since caching keyed purely by URL now needs to also vary by header.
 
-**Media-type versioning** (content negotiation via `Accept: application/vnd.example.v2+json`) folds the version into the standard HTTP content-negotiation mechanism — arguably the most 'correct' from a pure HTTP-semantics standpoint, but the least commonly understood pattern among typical API consumers, with generally weaker tooling support than the other two."
+**Media-type versioning** (content negotiation via `Accept: application/vnd.example.v2+json`) folds the version into the standard HTTP content-negotiation mechanism. It's arguably the most 'correct' option from a pure HTTP-semantics standpoint, but it's the least commonly understood pattern among typical API consumers, with generally weaker tooling support than the other two."
 
 **Staff-level extension:**
 
-The pragmatic recommendation: for most public/external-facing APIs, URI versioning wins in practice specifically because of its simplicity and visibility — it's what the overwhelming majority of widely-used public APIs actually do (Stripe, GitHub, and most major providers use version-in-the-path or a simple header, rarely pure media-type negotiation), and fighting that ecosystem convention has a real developer-experience cost for consumers who expect the common pattern. I'd reserve header/media-type versioning for internal APIs where the consuming teams are known and the stronger architectural correctness is worth the reduced visibility — and regardless of *mechanism* chosen, the harder, more important problem is the actual **versioning policy** (question 15/16): how long old versions are supported, how breaking changes get communicated.
+The pragmatic recommendation: for most public-facing APIs, URI versioning wins in practice because of its simplicity and visibility. It's what most widely-used public APIs actually do — Stripe, GitHub, and most major providers use version-in-the-path or a simple header, rarely pure media-type negotiation — and fighting that ecosystem convention has a real developer-experience cost for consumers who expect the common pattern. I'd reserve header or media-type versioning for internal APIs where the consuming teams are known and the stronger architectural correctness is worth the reduced visibility. Regardless of mechanism, the harder problem is the actual **versioning policy** (question 15/16): how long old versions stay supported, and how breaking changes get communicated.
 
 **Example:**
 

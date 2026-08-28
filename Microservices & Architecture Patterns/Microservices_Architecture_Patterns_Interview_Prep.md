@@ -47,11 +47,13 @@ How to use this: each question has a **Core answer** (100–180 words — roughl
 
 **Core answer:**
 
-"A monolith is the right default for a new system, not a stepping-stone to be embarrassed about — Martin Fowler's 'MonolithFirst' argument holds up well in practice: you rarely know your actual service boundaries correctly on day one, and a premature microservices split locks in boundary guesses before the domain is well understood, which is far more expensive to undo than refactoring module boundaries inside a single deployable. The case for splitting becomes real once specific, concrete pressures show up: independent scaling needs (one part of the system has a genuinely different load profile than the rest — a video-transcoding workload versus a lightweight CRUD API); independent deployability requirements driven by team structure (multiple teams need to ship on their own cadence without coordinating releases); or a genuine need for technology/language diversity for a specific workload. 'The codebase feels big' or 'microservices are the modern way to build things' are not on this list — those are reasons organizations regret a split, not reasons that justify one."
+"A monolith is the right default for a new system — not a stepping-stone to feel embarrassed about. Martin Fowler's 'MonolithFirst' argument still holds up: you rarely know your real service boundaries on day one, and splitting too early locks in boundary guesses before you understand the domain. That's much more expensive to undo than just refactoring module boundaries inside one deployable.
+
+The case for splitting gets real once specific pressures show up. Independent scaling needs — one part of the system has a genuinely different load profile than the rest, like a video-transcoding workload next to a lightweight CRUD API. Independent deployability driven by team structure — multiple teams need to ship on their own schedule without coordinating releases. Or a real need for technology or language diversity on a specific workload. 'The codebase feels big' or 'microservices are the modern way to build things' aren't on that list. Those are reasons teams regret a split, not reasons that justify one."
 
 **Staff-level extension:**
 
-Conway's Law, and its 'inverse' (sometimes called the Reverse Conway Maneuver), matters explicitly here — an organization's system architecture tends to mirror its communication structure whether or not that's deliberate, so this decision often isn't purely technical: if the actual goal is enabling independent team ownership, it can be more effective to first restructure teams around the desired service boundaries and let the architecture follow, rather than drawing service boundaries first and hoping team structure adapts to match. It's also worth flagging that "the monolith has gotten hard to work in" is frequently a *modularity* problem, not a *deployment-unit* problem — the fix for bad internal module boundaries is better internal module boundaries, not necessarily a network hop between them; splitting into microservices without first achieving good modularity just produces a distributed system with the same tangled coupling, now paying network/serialization/operational costs on top of the same unsolved boundary problem.
+Conway's Law matters here explicitly — an org's system architecture tends to mirror its communication structure whether or not that's deliberate, so this decision often isn't purely technical. If the real goal is independent team ownership, it can work better to restructure teams around the service boundaries you want first, and let the architecture follow — that's the Reverse Conway Maneuver. It's also worth flagging that "the monolith has gotten hard to work in" is often a modularity problem, not a deployment-unit problem. The fix for bad internal module boundaries is better internal module boundaries, not necessarily a network hop between them. Splitting into microservices without fixing modularity first just gives you a distributed system with the same tangled coupling — now with network and serialization costs on top of the same unsolved problem.
 
 **Example:**
 
@@ -81,8 +83,8 @@ Split justified ONLY once a concrete pressure appears:
 
 **Follow-up questions:**
 
-- *"What's the Reverse Conway Maneuver?"* — Deliberately restructuring teams around the service boundaries you actually want, and letting the system architecture follow that team structure, rather than drawing boundaries first and hoping teams adapt to match.
-- *"Is 'the monolith is hard to work in' ever not a reason to split into microservices?"* — Yes, when the real problem is poor internal module boundaries — the fix is better modularity inside the monolith, not a network hop; splitting without fixing modularity first just distributes the same coupling and adds operational cost on top.
+- *"What's the Reverse Conway Maneuver?"* — Restructuring teams around the service boundaries you actually want first, and letting the architecture follow, instead of drawing boundaries and hoping teams adapt to match.
+- *"Is 'the monolith is hard to work in' ever not a reason to split into microservices?"* — Yes, when the real problem is poor internal module boundaries. The fix is better modularity inside the monolith, not a network hop. Splitting without fixing that first just distributes the same coupling and adds operational cost on top.
 
 **Sources:** [Martin Fowler — MonolithFirst](https://martinfowler.com/bliki/MonolithFirst.html), [Sam Newman — Building Microservices](https://samnewman.io/books/building_microservices_2nd_edition/)
 
@@ -92,11 +94,13 @@ Split justified ONLY once a concrete pressure appears:
 
 **Core answer:**
 
-"A shared database between services — even if each service's code is nominally separate — reintroduces exactly the tight coupling microservices are meant to eliminate, just moved into the schema instead of the codebase. Any service can read (and often write) any table, so there's no real encapsulation of another service's internal data representation — a schema change in one service can silently break another that happened to query it directly, with no compile-time signal that a contract was violated. It also blocks independent scaling and technology choice at the storage layer, since everything competes for the same database. **Database-per-service** fixes this by giving each service exclusive ownership of its own data store — no other service ever queries it directly, only through that service's own API or published events — restoring real encapsulation and independent technology choice, at the direct cost of the cross-service query and transaction problems the rest of this guide exists to address."
+"A shared database between services reintroduces exactly the tight coupling microservices are meant to eliminate — it just moves into the schema instead of the codebase. Any service can read, and often write, any table, so there's no real encapsulation of another service's data. A schema change in one service can silently break another that happens to query it directly, with no compile-time signal anything went wrong. It also blocks independent scaling and technology choice at the storage layer, since everything competes for the same database.
+
+**Database-per-service** fixes this: each service exclusively owns its own data store, and no other service ever queries it directly — only through that service's API or published events. That restores real encapsulation and independent technology choice, at the direct cost of the cross-service query and transaction problems the rest of this guide addresses."
 
 **Staff-level extension:**
 
-Database-per-service is often the decision that most concretely reveals whether a proposed service boundary was actually correct — a boundary that turns out to need frequent, ad hoc cross-database joins or transactions to do anything useful is a strong signal the split happened along the wrong seam. Treat "can this service's data genuinely be private, with all external access going through its API" as a concrete, checkable test for a proposed boundary, not just an implementation detail to work out after the boundary is already decided.
+Database-per-service is often the decision that reveals whether a proposed service boundary was actually correct. A boundary that needs frequent, ad hoc cross-database joins or transactions just to do anything useful is a strong signal the split happened along the wrong seam. Treat "can this service's data genuinely be private, with all external access going through its API" as a concrete test for a proposed boundary — not just a detail to work out after the boundary's already decided.
 
 **Example:**
 
@@ -125,8 +129,8 @@ DATABASE-PER-SERVICE — real encapsulation, each schema genuinely private:
 
 **Follow-up questions:**
 
-- *"What's the direct cost of database-per-service?"* — Queries that used to be a simple cross-table join now have no single database to run it against, which is exactly the cross-service query problem this guide's decomposition and API-composition-versus-CQRS questions address.
-- *"How does this reveal a bad service boundary?"* — If a proposed split needs frequent cross-database joins or transactions just to do ordinary work, that's a concrete signal the boundary was drawn along the wrong seam, not a detail to patch around later.
+- *"What's the direct cost of database-per-service?"* — Queries that used to be a simple cross-table join now have no single database to run against — that's exactly the cross-service query problem this guide's decomposition and API-composition-versus-CQRS questions address.
+- *"How does this reveal a bad service boundary?"* — If a proposed split needs frequent cross-database joins or transactions just for ordinary work, that's a concrete signal the boundary was drawn along the wrong seam, not something to patch around later.
 
 **Sources:** [Chris Richardson — Database per Service](https://microservices.io/patterns/data/database-per-service.html)
 
@@ -136,11 +140,13 @@ DATABASE-PER-SERVICE — real encapsulation, each schema genuinely private:
 
 **Core answer:**
 
-"**Synchronous** communication (a REST call, a gRPC call) has the caller block, waiting for the callee's response, before proceeding — simple to reason about and gives an immediate result or error, but it directly couples the caller's availability to the callee's: if the callee is slow or down, the caller is affected immediately, and a chain of several synchronous calls stacks up latency additively and stacks up availability risk multiplicatively — if each of three services in a chain is 99.9% available, the chain's effective availability is meaningfully lower than any single service's. **Asynchronous** communication (publishing an event to Kafka, a message queue) decouples the producer's and consumer's availability entirely — the producer publishes and moves on regardless of whether any consumer is currently up; a consumer that's temporarily down simply catches up on its backlog once it recovers. This buys resilience and independent scaling at a real cost: no immediate result, and the system now has to reason about eventual consistency and message-ordering/delivery guarantees rather than a synchronous call's simpler, if more fragile, immediate-consistency model."
+"**Synchronous** communication — a REST or gRPC call — has the caller block and wait for the callee's response before proceeding. It's simple to reason about and gives an immediate result or error, but it directly couples the caller's availability to the callee's: if the callee is slow or down, the caller feels it right away. Chain several synchronous calls together and latency stacks up additively while availability risk stacks up multiplicatively — if each of three services in a chain is 99.9% available, the chain's effective availability ends up meaningfully lower than any single service's.
+
+**Asynchronous** communication — publishing to Kafka or a message queue — decouples producer and consumer availability entirely. The producer publishes and moves on, regardless of whether any consumer is currently up. A consumer that's temporarily down just catches up on its backlog once it recovers. That buys resilience and independent scaling, but at a real cost: no immediate result, and now the system has to reason about eventual consistency and message ordering instead of a synchronous call's simpler, if more fragile, immediate-consistency model."
 
 **Staff-level extension:**
 
-This isn't a system-wide, all-or-nothing choice — a mature architecture typically uses both, deliberately, per interaction: synchronous for interactions that are genuinely request/response in nature and where the caller needs an immediate answer to proceed, asynchronous for interactions that are fundamentally about "something happened, and other parts of the system should eventually react." A common architectural mistake is defaulting to synchronous calls even for interactions that are conceptually asynchronous, purely because synchronous code is easier to write initially — which is exactly how a system ends up with the fragile, availability-multiplying call chains this question describes as the failure mode to avoid.
+This isn't a system-wide, all-or-nothing choice. A mature architecture typically uses both, deliberately, per interaction — synchronous where the caller needs an immediate answer to proceed, asynchronous where the interaction is really "something happened, and other parts of the system should eventually react." A common mistake is defaulting to synchronous calls even for interactions that are conceptually asynchronous, purely because synchronous code is easier to write at first. That's exactly how a system ends up with the fragile, availability-multiplying call chains this question describes.
 
 **Example:**
 
@@ -166,8 +172,8 @@ ASYNCHRONOUS — producer and consumer availability DECOUPLED:
 
 **Follow-up questions:**
 
-- *"Why does a synchronous chain's availability multiply rather than add?"* — Every link in the chain has to succeed for the whole request to succeed, so the chain's effective availability is the product of each link's individual availability, not an average — three 99.9%-available services chained synchronously yield a meaningfully worse combined number.
-- *"Is it ever wrong to use asynchronous communication?"* — Yes — for an interaction where the caller genuinely needs an immediate answer to proceed (checking current inventory before showing an "add to cart" button), async adds latency and complexity with no corresponding benefit.
+- *"Why does a synchronous chain's availability multiply rather than add?"* — Every link has to succeed for the whole request to succeed, so the chain's effective availability is the product of each link's availability, not an average. Three 99.9%-available services chained synchronously give you a meaningfully worse combined number.
+- *"Is it ever wrong to use asynchronous communication?"* — Yes — when the caller genuinely needs an immediate answer to proceed, like checking current inventory before showing an "add to cart" button. Async just adds latency and complexity there with no real benefit.
 
 **Sources:** [Chris Richardson — Communication Style](https://microservices.io/patterns/), [Sam Newman — Building Microservices](https://samnewman.io/books/building_microservices_2nd_edition/)
 
@@ -177,11 +183,13 @@ ASYNCHRONOUS — producer and consumer availability DECOUPLED:
 
 **Core answer:**
 
-"An API Gateway is a single entry point sitting between external clients and the internal set of microservices, handling cross-cutting concerns centrally so individual services don't each need to reimplement them: request routing, authentication/token validation, rate limiting, request/response transformation, and often composing data from multiple services for endpoints that need it. It solves a real problem: without it, every client needs to know the network location of every service, and every cross-cutting concern has to be correctly reimplemented consistently across every service independently — both duplicated effort and a real correctness risk. It introduces a real cost of its own: it becomes a **central, shared dependency** every request passes through, meaning it's a single point of failure if not built with real redundancy, and it can become an organizational bottleneck if every service team has to coordinate changes through one gateway team."
+"An API Gateway is a single entry point sitting between external clients and the internal set of microservices. It handles cross-cutting concerns centrally so individual services don't each have to reimplement them: request routing, authentication and token validation, rate limiting, request/response transformation, and often composing data from multiple services for endpoints that need it. It solves a real problem — without it, every client needs to know the network location of every service, and every cross-cutting concern has to be reimplemented consistently across every service independently. That's both duplicated effort and a real correctness risk.
+
+It also introduces a real cost of its own: it becomes a **central, shared dependency** every request passes through. That makes it a single point of failure if it isn't built with real redundancy, and it can become an organizational bottleneck if every service team has to route changes through one gateway team."
 
 **Staff-level extension:**
 
-The API Gateway pattern is distinct from, and often confused with, an API Gateway *product* (Kong, Amazon API Gateway, Spring Cloud Gateway) — the pattern is the architectural role. Worth walking through the trade-off between a single, shared gateway serving everyone (simpler operationally, but a bigger shared-dependency/bottleneck risk) versus giving each distinct client type its own tailored gateway — the right choice depends on how different each client's actual needs are and how much organizational friction a single shared gateway is causing in practice, not a universal best answer.
+The API Gateway pattern is distinct from an API Gateway *product* like Kong, Amazon API Gateway, or Spring Cloud Gateway — the pattern is the architectural role, and people often confuse the two. It's worth walking through the trade-off between one shared gateway serving everyone (simpler operationally, but a bigger shared-dependency and bottleneck risk) versus giving each client type its own tailored gateway. The right choice depends on how different each client's actual needs are, and how much organizational friction a single shared gateway is causing in practice — there's no universal best answer.
 
 **Example:**
 
@@ -211,8 +219,8 @@ WITH a gateway — cross-cutting concerns centralized, ONE entry point:
 
 **Follow-up questions:**
 
-- *"What's the difference between the API Gateway pattern and a product like Kong or Spring Cloud Gateway?"* — The pattern is the architectural role (a single entry point centralizing cross-cutting concerns); the product is one specific implementation of that role — the pattern predates, and isn't tied to, any particular vendor.
-- *"When would per-client gateways (BFFs) beat one shared gateway?"* — When different client types have genuinely different needs a single shared API tends to serve either too generically or with bloated special-casing — covered directly in the Backend-for-Frontend question in this guide.
+- *"What's the difference between the API Gateway pattern and a product like Kong or Spring Cloud Gateway?"* — The pattern is the architectural role — a single entry point centralizing cross-cutting concerns. The product is one specific implementation of that role, and the pattern predates and isn't tied to any particular vendor.
+- *"When would per-client gateways (BFFs) beat one shared gateway?"* — When different client types have genuinely different needs that a single shared API tends to serve either too generically or with bloated special-casing — covered directly in the Backend-for-Frontend question in this guide.
 
 **Sources:** [Chris Richardson — API Gateway](https://microservices.io/patterns/apigateway.html)
 
@@ -222,11 +230,13 @@ WITH a gateway — cross-cutting concerns centralized, ONE entry point:
 
 **Core answer:**
 
-"Service discovery solves the problem of a caller needing to find a current, healthy network address for a service instance in an environment where instances are constantly being created, destroyed, scaled, and rescheduled — hardcoding IP addresses simply doesn't work. **Client-side discovery**: the calling service itself queries a service registry directly and does its own load balancing across the returned set of healthy instances — giving the client full control over load-balancing strategy, but requiring every client to implement registry lookup and load balancing consistently. **Server-side discovery**: the caller makes a request to a well-known, stable address (a load balancer, or in Kubernetes, a Service resource with a stable virtual IP), and that intermediary handles querying the registry and routing to a healthy instance — simpler for clients, at the cost of that routing intermediary being a required, shared piece of infrastructure. Modern Kubernetes-based deployments overwhelmingly use server-side discovery via Kubernetes' own built-in Service abstraction."
+"Service discovery solves a basic problem: a caller needs to find a current, healthy network address for a service instance, in an environment where instances are constantly being created, destroyed, scaled, and rescheduled. Hardcoding IP addresses just doesn't work.
+
+**Client-side discovery**: the calling service queries a service registry directly and does its own load balancing across the healthy instances it gets back. That gives the client full control over load-balancing strategy, but every client has to implement registry lookup and load balancing consistently. **Server-side discovery**: the caller makes a request to a well-known, stable address — a load balancer, or in Kubernetes, a Service resource with a stable virtual IP — and that intermediary handles querying the registry and routing to a healthy instance. It's simpler for clients, at the cost of that routing intermediary being a required, shared piece of infrastructure. Modern Kubernetes deployments overwhelmingly use server-side discovery through Kubernetes' own built-in Service abstraction."
 
 **Staff-level extension:**
 
-The practical reason server-side discovery dominates today isn't that client-side discovery is inherently worse — it's that Kubernetes made server-side discovery essentially free and built-in, removing the historical reason (needing a separately-operated registry like Eureka or Consul, and a client library in every language) that made client-side discovery attractive in the first place. Client-side discovery still has a real niche where finer-grained, client-controlled load-balancing logic genuinely matters — a service mesh's data plane, covered later in this guide, is actually a sophisticated form of this, just implemented at the sidecar layer rather than in application code directly.
+Server-side discovery doesn't dominate today because client-side discovery is worse — it's because Kubernetes made server-side discovery essentially free and built-in. That removed the old reason client-side discovery was attractive: needing a separately-operated registry like Eureka or Consul, plus a client library in every language. Client-side discovery still has a real niche where finer-grained, client-controlled load balancing actually matters — a service mesh's data plane, covered later in this guide, is really a sophisticated version of this, just implemented at the sidecar layer instead of in application code.
 
 **Example:**
 
@@ -250,7 +260,7 @@ Server-side discovery — a stable address handles it FOR the caller:
 **Follow-up questions:**
 
 - *"Why did client-side discovery (Eureka, Consul) fall out of favor?"* — Kubernetes made server-side discovery free and built into every Service resource, removing the reason to run and integrate a separate registry and client library per language.
-- *"Does client-side discovery still show up anywhere in modern systems?"* — Yes — a service mesh's sidecar proxy is effectively a sophisticated, transparent form of client-side discovery and load balancing, just moved out of application code and into the sidecar layer.
+- *"Does client-side discovery still show up anywhere in modern systems?"* — Yes — a service mesh's sidecar proxy is really a sophisticated, transparent form of client-side discovery and load balancing, just moved out of application code and into the sidecar layer.
 
 **Sources:** [Chris Richardson — Client-side Discovery](https://microservices.io/patterns/client-side-discovery.html), [Kubernetes Documentation — Service](https://kubernetes.io/docs/concepts/services-networking/service/)
 
@@ -260,11 +270,13 @@ Server-side discovery — a stable address handles it FOR the caller:
 
 **Core answer:**
 
-"CAP theorem states that a distributed system, in the presence of a **network partition** (P — nodes can't reliably communicate), must choose between **consistency** (C — every node sees the same, most-recent data) and **availability** (A — every request gets a response, even if it might not reflect the absolute latest write). Since partitions are a real, unavoidable possibility in any genuinely distributed system, the practical framing is really 'when a partition occurs, does this specific piece of the system choose C or A' — not a permanent, system-wide label, since different parts of the same system legitimately make different choices for different data. A payment/inventory-count system typically favors **consistency** — better to briefly reject a request than risk overselling or double-charging during a partition. A product-catalog or user-profile read typically favors **availability** — better to serve a possibly-slightly-stale description than fail the request entirely. The skill is making this choice explicitly, per data type, rather than picking one label for an entire system."
+"CAP theorem says a distributed system, during a **network partition** (P — nodes can't reliably communicate), has to choose between **consistency** (C — every node sees the same, most-recent data) and **availability** (A — every request gets a response, even if it might not reflect the latest write). Partitions are a real, unavoidable possibility in any genuinely distributed system, so the practical framing is 'when a partition happens, does this specific piece of the system choose C or A' — not one permanent, system-wide label, since different parts of the same system legitimately make different choices for different data.
+
+A payment or inventory-count system typically favors **consistency** — better to briefly reject a request than risk overselling or double-charging during a partition. A product-catalog or user-profile read typically favors **availability** — better to serve a possibly-stale description than fail the request outright. The skill is making that choice explicitly, per data type, instead of picking one label for a whole system."
 
 **Staff-level extension:**
 
-PACELC is the more complete, practically useful extension of CAP worth mentioning explicitly — it points out that CAP only describes behavior *during* a partition, but even in the normal, no-partition case, a system still has to choose between latency and consistency: do you wait for a stronger consistency guarantee across replicas, accepting higher latency, or return faster with a potentially slightly-stale read. This is the more common, everyday trade-off a system actually navigates, since network partitions are relatively rare compared to the routine latency-versus-consistency choice made on every single request in a replicated system.
+PACELC is worth mentioning as the more complete, practically useful extension of CAP. It points out that CAP only describes behavior *during* a partition, but even in the normal, no-partition case, a system still has to choose between latency and consistency: wait for a stronger consistency guarantee across replicas and accept higher latency, or return faster with a potentially stale read. This is actually the more common, everyday trade-off — network partitions are relatively rare compared to the latency-versus-consistency choice made on every single request in a replicated system.
 
 **Example:**
 
@@ -287,8 +299,8 @@ CAP theorem, applied per-data-type (NOT as one system-wide label):
 
 **Follow-up questions:**
 
-- *"Is 'we're a CP system' or 'we're an AP system' a meaningful label for a whole architecture?"* — Not usually — different data types within the same system commonly make different C-versus-A trade-offs during a partition, so a single system-wide label is almost always the wrong granularity.
-- *"What does PACELC add that CAP doesn't cover?"* — CAP only addresses the rare partition case; PACELC also names the routine, no-partition trade-off between latency and consistency that a replicated system faces on every request, not just during an outage.
+- *"Is 'we're a CP system' or 'we're an AP system' a meaningful label for a whole architecture?"* — Not usually. Different data types within the same system commonly make different C-versus-A trade-offs during a partition, so a single system-wide label is almost always the wrong granularity.
+- *"What does PACELC add that CAP doesn't cover?"* — CAP only addresses the rare partition case. PACELC also names the routine, no-partition trade-off between latency and consistency that a replicated system faces on every request, not just during an outage.
 
 **Sources:** [Eric Brewer — CAP Twelve Years Later](https://www.infoq.com/articles/cap-twelve-years-later-how-the-rules-have-changed/), [Daniel Abadi — PACELC](https://www.cs.umd.edu/~abadi/papers/abadi-pacelc.pdf)
 
@@ -300,11 +312,15 @@ CAP theorem, applied per-data-type (NOT as one system-wide label):
 
 **Core answer:**
 
-"These are two related but distinct lenses, and the strongest approach uses both, cross-checking one against the other rather than picking a single method mechanically. **Decompose by business capability** starts from 'what does the business actually *do*' — capabilities like Order Management, Inventory Management, Customer Support — largely independent of current org structure, and maps each capability onto a service. This tends to produce stable boundaries, since business capabilities change far less often than team structure or specific technical implementations. **Decompose by DDD subdomain** starts from the domain model itself — identifying **core** subdomains (the genuinely differentiating part of the business, deserving the best engineering effort), **supporting** subdomains (necessary, not differentiating), and **generic** subdomains (commodity, often better bought than built). This lens adds what capability-decomposition alone doesn't: it tells you *where to invest*. In practice, draw candidate boundaries from business capability, then validate them against DDD subdomain analysis — a capability spanning both a core and a generic subdomain internally is a signal it should split further, at that internal seam."
+"These are two related but distinct lenses, and the strongest approach uses both — cross-checking one against the other rather than picking a single method mechanically.
+
+**Decompose by business capability** starts from 'what does the business actually *do*' — capabilities like Order Management, Inventory Management, Customer Support — largely independent of current org structure, and maps each one onto a service. This tends to produce stable boundaries, since business capabilities change far less often than team structure or specific implementations. **Decompose by DDD subdomain** starts from the domain model itself: identifying **core** subdomains (the genuinely differentiating part of the business, deserving the best engineering effort), **supporting** subdomains (necessary but not differentiating), and **generic** subdomains (commodity, often better bought than built). This lens adds what capability decomposition alone doesn't — it tells you *where to invest*.
+
+In practice, draw candidate boundaries from business capability, then validate them against DDD subdomain analysis. A capability spanning both a core and a generic subdomain internally is a signal it should split further, at that seam."
 
 **Staff-level extension:**
 
-This decomposition exercise is exactly the kind of design artifact worth reviewing explicitly before committing to service boundaries, using the transactional-coupling and change-coupling tests covered in the Distributed Monolith question as the actual validation step: if a proposed capability/subdomain-derived boundary requires nearly every common operation to become a saga, or if git history shows the "two" proposed services almost always change together, that's evidence the analysis missed something, and the boundary should be redrawn before committing — not patched around afterward with more distributed-transaction machinery.
+This decomposition exercise is exactly the kind of design artifact worth reviewing before committing to service boundaries, using the transactional-coupling and change-coupling tests from the Distributed Monolith question as the actual validation step. If a proposed boundary needs nearly every common operation to become a saga, or git history shows the "two" proposed services almost always change together, that's evidence the analysis missed something. Redraw the boundary before committing — don't patch around it afterward with more distributed-transaction machinery.
 
 **Example:**
 
@@ -334,8 +350,8 @@ boundary is too coarse:
 
 **Follow-up questions:**
 
-- *"Why use both lenses instead of just one?"* — Business capability alone tells you *what* to split along, but not where the business actually needs investment; DDD subdomain analysis alone can miss stable, org-independent capability boundaries — combined, they catch what either misses alone.
-- *"What's the concrete sign a capability-level boundary is too coarse?"* — It contains both a core and a generic subdomain internally — that internal seam, where investment priority and pace of change genuinely differ, is where the real service boundary belongs.
+- *"Why use both lenses instead of just one?"* — Business capability alone tells you *what* to split along, but not where the business needs investment. DDD subdomain analysis alone can miss stable, org-independent capability boundaries. Combined, they catch what either misses alone.
+- *"What's the concrete sign a capability-level boundary is too coarse?"* — It contains both a core and a generic subdomain internally. That seam, where investment priority and pace of change genuinely differ, is where the real service boundary belongs.
 
 **Sources:** [Eric Evans — Domain-Driven Design](https://www.domainlanguage.com/ddd/), [Chris Richardson — Decompose by Business Capability](https://microservices.io/patterns/decomposition/decompose-by-business-capability.html), [Vaughn Vernon — Implementing Domain-Driven Design](https://vaughnvernon.com/)
 
@@ -345,11 +361,13 @@ boundary is too coarse:
 
 **Core answer:**
 
-"A bounded context is the boundary within which a specific domain model — its terminology, its rules, its meaning for a given concept — is internally consistent and unambiguous. The same word can, and often should, mean genuinely different things in different bounded contexts: a 'Customer' in the Billing context is fundamentally a billing account with payment methods and invoices; a 'Customer' in the Support context is a person with a history of tickets and preferences. Forcing one universal 'Customer' model to serve both contexts equally well produces a bloated, over-general model that serves neither cleanly — a very common, costly modeling mistake in systems that haven't recognized their bounded contexts explicitly. This matters for service boundaries because a bounded context is a strong candidate for a service boundary specifically *because* it's already a place where the domain model changes meaning — putting the boundary there means each service's internal model can stay simple and coherent, free to evolve without negotiating a shared model with a neighbor that has genuinely different needs."
+"A bounded context is the boundary within which a specific domain model — its terminology, its rules, its meaning for a given concept — stays internally consistent and unambiguous. The same word can, and often should, mean genuinely different things in different bounded contexts. A 'Customer' in the Billing context is a billing account with payment methods and invoices. A 'Customer' in the Support context is a person with a history of tickets and preferences. Forcing one universal 'Customer' model to serve both equally well produces a bloated, over-general model that serves neither cleanly — a common, costly modeling mistake in systems that haven't recognized their bounded contexts explicitly.
+
+This matters for service boundaries because a bounded context is a strong candidate for a service boundary precisely because it's already a place where the domain model changes meaning. Putting the boundary there lets each service's internal model stay simple and coherent, free to evolve without negotiating a shared model with a neighbor that has genuinely different needs."
 
 **Staff-level extension:**
 
-The **context map** is the tool that makes bounded contexts actionable at a system level, not just a modeling insight within one context — explicitly documenting the *relationship* between contexts (a Shared Kernel, a Customer/Supplier relationship, a Conformist relationship where one side just accepts the other's model as-is, or an Anti-Corruption Layer, covered next) is what turns "we've identified our bounded contexts" into an actual integration architecture. Skipping this step — identifying contexts but never designing how they relate and translate at their boundaries — is a common, incomplete application of DDD that leaves the actual integration questions unanswered.
+The **context map** is what makes bounded contexts actionable at a system level, not just a modeling insight within one context. Explicitly documenting the relationship between contexts — a Shared Kernel, a Customer/Supplier relationship, a Conformist relationship where one side just accepts the other's model as-is, or an Anti-Corruption Layer (covered next) — is what turns "we've identified our bounded contexts" into an actual integration architecture. Identifying contexts but never designing how they relate and translate at their boundaries is a common, incomplete application of DDD that leaves the real integration questions unanswered.
 
 **Example:**
 
@@ -373,8 +391,8 @@ this is NORMAL and CORRECT, not a modeling inconsistency to "fix":
 
 **Follow-up questions:**
 
-- *"What's a context map, and why does it matter beyond identifying contexts?"* — It's the explicit documentation of how bounded contexts relate to and translate for each other — without it, identifying contexts is only half the design work, leaving how they actually integrate unanswered.
-- *"What's the cost of forcing one universal model across two bounded contexts?"* — A bloated, over-general model that serves neither context cleanly, since it has to carry every field either context needs even though most are irrelevant noise to the other.
+- *"What's a context map, and why does it matter beyond identifying contexts?"* — It's the explicit documentation of how bounded contexts relate to and translate for each other. Without it, identifying contexts is only half the design work — how they actually integrate is still unanswered.
+- *"What's the cost of forcing one universal model across two bounded contexts?"* — A bloated, over-general model that serves neither context cleanly, since it has to carry every field either context needs, even though most of them are irrelevant noise to the other.
 
 **Sources:** [Eric Evans — Domain-Driven Design](https://www.domainlanguage.com/ddd/), [Martin Fowler — BoundedContext](https://martinfowler.com/bliki/BoundedContext.html)
 
@@ -384,11 +402,13 @@ this is NORMAL and CORRECT, not a modeling inconsistency to "fix":
 
 **Core answer:**
 
-"An anti-corruption layer (ACL) is a translation layer placed at the boundary between two bounded contexts, or between your system and an external/legacy system, specifically to prevent one side's domain model, terminology, or quirks from leaking into and 'corrupting' the other side's clean internal model. Instead of your service directly consuming a legacy system's awkward data shapes throughout its own codebase, the ACL absorbs that awkwardness in one place, translating it into your service's clean, well-designed internal model — so the ugliness is contained, not smeared across every part of your code that touches that dependency. Reach for one specifically when integrating with a legacy system whose model doesn't map cleanly onto your new service's domain — a common situation during a strangler-fig-style migration — or when integrating with a third-party system whose API shape is dictated by their own concerns, not yours, and adapting your domain model to match theirs directly would make your own code awkward and tightly coupled."
+"An anti-corruption layer (ACL) is a translation layer placed at the boundary between two bounded contexts, or between your system and an external or legacy system, specifically to keep one side's domain model, terminology, and quirks from leaking into and corrupting the other side's clean internal model. Instead of your service consuming a legacy system's awkward data shapes throughout its own codebase, the ACL absorbs that awkwardness in one place and translates it into your service's clean, well-designed internal model. The ugliness stays contained instead of smearing across every part of your code that touches that dependency.
+
+Reach for one when you're integrating with a legacy system whose model doesn't map cleanly onto your new service's domain — a common situation during a strangler-fig migration — or with a third-party system whose API shape is dictated by their concerns, not yours, where adapting your domain model to match theirs directly would make your own code awkward and tightly coupled."
 
 **Staff-level extension:**
 
-An ACL is a deliberate, ongoing maintenance cost, not a one-time adapter you write and forget — every change to the legacy or external system's behavior needs to be absorbed and re-translated at this boundary. Treat "who owns and maintains the ACL, and how do we find out when the upstream system's behavior changes underneath it" as a real operational question, not an afterthought — an untested, unmonitored ACL that silently starts mistranslating after an upstream change is a genuinely dangerous failure mode, since it corrupts data quietly rather than failing loudly. An ACL is also often the right, deliberate place to introduce contract tests, precisely because it's the one place in the codebase where the external system's actual behavior is meant to be fully characterized and pinned down.
+An ACL is a deliberate, ongoing maintenance cost, not a one-time adapter you write and forget — every change to the legacy or external system's behavior has to be absorbed and re-translated at this boundary. Treat "who owns and maintains the ACL, and how do we find out when the upstream system's behavior changes underneath it" as a real operational question, not an afterthought. An untested, unmonitored ACL that silently starts mistranslating after an upstream change is a genuinely dangerous failure mode, since it corrupts data quietly instead of failing loudly. An ACL is also often the right place to add contract tests, precisely because it's the one spot in the codebase where the external system's behavior is meant to be fully characterized and pinned down.
 
 **Example:**
 
@@ -430,8 +450,8 @@ class LegacyInventoryAntiCorruptionLayer {
 
 **Follow-up questions:**
 
-- *"Is an ACL a one-time cost or an ongoing one?"* — Ongoing — every change to the upstream legacy or external system's behavior has to be absorbed and re-translated at the ACL, so it needs real, monitored ownership, not a "write once and forget" mindset.
-- *"Why is an ACL a natural place to add contract tests?"* — It's the one place in the codebase where the external system's actual behavior is meant to be fully characterized — pinning that down with a contract test catches an upstream behavior change before it silently corrupts data through the ACL.
+- *"Is an ACL a one-time cost or an ongoing one?"* — Ongoing. Every change to the upstream legacy or external system's behavior has to be absorbed and re-translated at the ACL, so it needs real, monitored ownership, not a "write once and forget" mindset.
+- *"Why is an ACL a natural place to add contract tests?"* — It's the one place in the codebase where the external system's actual behavior is meant to be fully characterized. Pinning that down with a contract test catches an upstream change before it silently corrupts data through the ACL.
 
 **Sources:** [Eric Evans — Domain-Driven Design](https://www.domainlanguage.com/ddd/), [Martin Fowler — Anti-Corruption Layer](https://microservices.io/patterns/refactoring/anti-corruption-layer.html)
 
@@ -441,11 +461,13 @@ class LegacyInventoryAntiCorruptionLayer {
 
 **Core answer:**
 
-"Named after the strangler fig vine, which grows around a host tree and gradually replaces it entirely without the host ever being cut down all at once — the pattern migrates a monolith incrementally, by routing specific pieces of functionality to new services one at a time, while the monolith continues serving everything not yet migrated, until eventually there's nothing left in it and it can be decommissioned. This avoids the high-risk 'big bang rewrite' — building an entirely new system in parallel and cutting over all at once, which has a long track record of failure (Netscape's multi-year, ultimately-abandoned rewrite is the canonical cautionary tale) — in favor of continuous, incremental, individually-low-risk steps. Mechanically, this typically requires a **routing layer** (an API gateway or reverse proxy) sitting in front of both the monolith and the new services, directing each request to whichever one currently owns that functionality — as functionality migrates, routing rules change, but clients see one continuous, stable-looking system throughout."
+"Named after the strangler fig vine, which grows around a host tree and gradually replaces it entirely without the host ever being cut down all at once. The pattern migrates a monolith incrementally, routing specific pieces of functionality to new services one at a time, while the monolith keeps serving everything not yet migrated — until eventually there's nothing left in it to decommission. This avoids the high-risk 'big bang rewrite,' where you build an entirely new system in parallel and cut over all at once. That approach has a long track record of failure — Netscape's multi-year, ultimately-abandoned rewrite is the canonical cautionary tale — in favor of continuous, incremental, individually low-risk steps.
+
+Mechanically, this usually needs a **routing layer** (an API gateway or reverse proxy) sitting in front of both the monolith and the new services, directing each request to whichever one currently owns that functionality. As functionality migrates, routing rules change, but clients see one continuous, stable-looking system throughout."
 
 **Staff-level extension:**
 
-The actual hard part of a strangler-fig migration is rarely the routing-layer mechanics — it's the **data** migration happening underneath, specifically when functionality being extracted still needs data that remains, for a while, authoritatively owned by the monolith's database. This is exactly where an anti-corruption layer and often a temporary dual-write/data-sync strategy become necessary, and picking the *order* in which to extract functionality deliberately — starting with pieces that have the fewest, cleanest data dependencies on the rest of the monolith — is a meaningfully important sequencing decision that determines how painful the whole migration turns out to be.
+The hard part of a strangler-fig migration is rarely the routing-layer mechanics — it's the **data** migration underneath, specifically when functionality being extracted still needs data the monolith's database keeps authoritatively owning for a while. That's exactly where an anti-corruption layer, and often a temporary dual-write or data-sync strategy, becomes necessary. Picking the order in which to extract functionality matters too — starting with pieces that have the fewest, cleanest data dependencies on the rest of the monolith makes a real difference in how painful the whole migration turns out to be.
 
 **Example:**
 
@@ -475,8 +497,8 @@ Migration progression over time:
 
 **Follow-up questions:**
 
-- *"What's usually the hardest part of a strangler-fig migration?"* — The data underneath, not the routing — extracted functionality often still needs data the monolith's database authoritatively owns for a while, requiring an anti-corruption layer and often a temporary dual-write strategy.
-- *"Does the order of extraction matter?"* — Yes — starting with pieces that have the fewest, cleanest data dependencies on the rest of the monolith makes the whole migration meaningfully less painful than extracting whatever seems easiest to unplug first.
+- *"What's usually the hardest part of a strangler-fig migration?"* — The data underneath, not the routing. Extracted functionality often still needs data the monolith's database authoritatively owns for a while, which requires an anti-corruption layer and often a temporary dual-write strategy.
+- *"Does the order of extraction matter?"* — Yes — starting with pieces that have the fewest, cleanest data dependencies on the rest of the monolith makes the whole migration meaningfully less painful than just extracting whatever seems easiest to unplug first.
 
 **Sources:** [Martin Fowler — StranglerFigApplication](https://martinfowler.com/bliki/StranglerFigApplication.html), [Sam Newman — Building Microservices](https://samnewman.io/books/building_microservices_2nd_edition/)
 
@@ -486,11 +508,13 @@ Migration progression over time:
 
 **Core answer:**
 
-"A BFF is a dedicated backend service built specifically for **one** particular client type or team — a mobile app's BFF, a web app's BFF, a partner-integration's BFF — rather than one shared, general-purpose API gateway trying to serve every client's needs equally well. Each BFF is owned by (or built in close collaboration with) the team building that client, and it's shaped exactly around that client's actual needs — a mobile BFF might aggressively compose and flatten data to minimize round trips for a bandwidth-constrained client; a web BFF might expose richer, more granular data. This solves a real problem a single shared API runs into: different clients genuinely have different needs, and forcing one shared API to serve all of them tends to produce an API that's either overly generic or bloated with client-specific special cases. Giving each client its own BFF avoids both failure modes, at the cost of some genuine duplication across BFFs that has to be weighed against the benefit of each one being cleanly tailored."
+"A BFF is a dedicated backend service built for **one** particular client type or team — a mobile app's BFF, a web app's BFF, a partner integration's BFF — instead of one shared, general-purpose API gateway trying to serve every client equally well. Each BFF is owned by, or built in close collaboration with, the team building that client, and it's shaped around that client's actual needs. A mobile BFF might aggressively compose and flatten data to minimize round trips for a bandwidth-constrained client; a web BFF might expose richer, more granular data.
+
+This solves a real problem: different clients genuinely have different needs, and forcing one shared API to serve all of them tends to produce something either overly generic or bloated with client-specific special cases. Giving each client its own BFF avoids both, at the cost of some genuine duplication across BFFs — which has to be weighed against the benefit of each one being cleanly tailored."
 
 **Staff-level extension:**
 
-The actual decision to introduce per-client BFFs versus a single shared gateway should follow team-ownership logic — a BFF makes the most sense when a client's owning team wants, and is capable of, independently evolving their own composition/aggregation logic without waiting on a separate, shared-gateway-owning team. Introducing BFFs purely for architectural tidiness, without a team actually wanting or needing that independence, just multiplies the number of things to operate and keep in sync with backend service changes, for no real organizational benefit.
+The decision to introduce per-client BFFs versus a single shared gateway should follow team-ownership logic. A BFF makes the most sense when a client's owning team wants, and is capable of, independently evolving their own composition and aggregation logic without waiting on a separate gateway-owning team. Introducing BFFs purely for architectural tidiness, without a team actually needing that independence, just multiplies the number of things to operate and keep in sync with backend changes — for no real organizational benefit.
 
 **Example:**
 
@@ -520,7 +544,7 @@ the corresponding client:
 **Follow-up questions:**
 
 - *"What's the real cost of adopting a BFF per client type?"* — Genuine duplication — similar composition logic often gets reimplemented across BFFs, which has to be weighed against the benefit of each one being cleanly tailored to its client.
-- *"When is introducing a BFF the wrong call?"* — When no team actually needs independent evolution of their client's backend logic — adding BFFs purely for tidiness just adds more services to operate without a corresponding organizational benefit.
+- *"When is introducing a BFF the wrong call?"* — When no team actually needs independent evolution of their client's backend logic. Adding BFFs purely for tidiness just adds more services to operate, with no real organizational benefit.
 
 **Sources:** [Sam Newman — Backend for Frontend pattern](https://samnewman.io/patterns/architectural/bff/)
 

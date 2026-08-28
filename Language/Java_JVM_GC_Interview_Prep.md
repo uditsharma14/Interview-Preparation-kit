@@ -52,9 +52,9 @@ How to use this: each question has **the answer the way I'd actually say it out 
 
 **Answer:**
 
-"The **JVM** (Java Virtual Machine) is the runtime that actually executes Java bytecode — it's what makes 'write once, run anywhere' work, since the same compiled `.class` bytecode runs on any platform with a JVM implementation, without recompiling the source. The **JRE** (Java Runtime Environment) is the JVM plus the standard library classes needed to run a Java application — historically distributed as a separate, smaller download for end users who only needed to *run* Java programs, not build them. The **JDK** (Java Development Kit) is the full development kit: the JRE (or, since Java 11, an equivalent bundled runtime) plus the compiler (`javac`), debugger, and other build/development tools needed to actually *write* and compile Java code.
+"The **JVM** (Java Virtual Machine) is the runtime that actually executes Java bytecode. It's what makes 'write once, run anywhere' work — the same compiled `.class` bytecode runs on any platform with a JVM, no recompiling needed. The **JRE** (Java Runtime Environment) is the JVM plus the standard library classes needed to run a Java app. It used to be distributed separately, as a smaller download for people who only needed to run Java programs, not build them. The **JDK** (Java Development Kit) is the full package: the JRE (or an equivalent bundled runtime, since Java 11) plus the compiler (`javac`), debugger, and other tools you need to actually write and compile Java code.
 
-Since Java 11, Oracle stopped shipping a separate JRE distribution — you install a JDK, which includes everything needed to both build and run Java applications, and the JRE is no longer a distinct downloadable artifact."
+Since Java 11, Oracle stopped shipping a separate JRE. You just install a JDK, and it includes everything you need to build and run Java apps."
 
 **Code:**
 
@@ -70,7 +70,7 @@ JVM: class loading -> bytecode verification -> interpretation/JIT compilation ->
 
 **Follow-up:**
 
-I'd mention that "the JVM" is actually a specification (defined in the Java Virtual Machine Specification), not a single implementation — HotSpot (Oracle/OpenJDK's default) is the most common, but GraalVM, Eclipse OpenJ9, and others are all separate JVM implementations that satisfy the same spec, sometimes with meaningfully different performance characteristics (GraalVM's ahead-of-time native-image compilation, for instance, trades JIT warmup time for near-instant startup) — which matters when a "how does the JVM work" question in an interview should really be answered as "how does HotSpot work," since that's almost always the implicit implementation being discussed.
+I'd point out that "the JVM" is actually a specification, not one specific implementation. HotSpot (Oracle/OpenJDK's default) is the most common, but GraalVM, Eclipse OpenJ9, and others all implement the same spec, sometimes with real performance differences — GraalVM's ahead-of-time native-image compilation, for example, trades JIT warmup time for near-instant startup. So a "how does the JVM work" question in an interview is almost always really asking "how does HotSpot work," since that's the implementation everyone has in mind.
 
 **Source:** [The Java Virtual Machine Specification, SE 21](https://docs.oracle.com/javase/specs/jvms/se21/html/index.html)
 
@@ -80,9 +80,11 @@ I'd mention that "the JVM" is actually a specification (defined in the Java Virt
 
 **Answer:**
 
-"Each thread gets its own **stack** — a region storing method call frames, one pushed per method invocation, each holding that method's local variables and partial results. A stack frame is popped the instant its method returns, so stack memory has a strict, predictable lifetime tied exactly to the call it belongs to, and stack allocation/deallocation is essentially free (just moving a pointer). The **heap** is a single region shared across *all* threads in the JVM, where every object created with `new` actually lives — an object's lifetime isn't tied to any single method call, since a reference to it can be passed around, stored in a field, or returned, so the heap can only be reclaimed once nothing references the object anymore, which is exactly the job garbage collection does.
+"Each thread gets its own **stack** — a region holding method call frames, one pushed per method call, each with that method's local variables and partial results. A stack frame is popped the instant its method returns, so stack memory has a strict, predictable lifetime tied to the call it belongs to. Stack allocation and deallocation are basically free — just moving a pointer.
 
-Primitives declared as local variables live directly on the stack; object references are also stack-resident, but what they point *to* lives on the heap."
+The **heap**, on the other hand, is one region shared across every thread in the JVM, and it's where every object created with `new` actually lives. An object's lifetime isn't tied to any single method call — a reference to it can get passed around, stored in a field, or returned — so the heap can only reclaim it once nothing references it anymore. That's the job garbage collection does.
+
+Primitives declared as local variables live directly on the stack. Object references are stack-resident too, but what they point to lives on the heap."
 
 **Code:**
 
@@ -96,7 +98,7 @@ void method() {
 
 **Follow-up:**
 
-I'd bring up `StackOverflowError` versus `OutOfMemoryError` as the practical, diagnosable distinction that falls directly out of this split: uncontrolled recursion exhausts stack space specifically (each recursive call pushes another frame, and stack size is comparatively small and fixed per thread via `-Xss`) and throws `StackOverflowError`, while a genuine heap leak or an undersized `-Xmx` throws `OutOfMemoryError: Java heap space` — two very different root causes that nonetheless both present as "the application crashed with an error about memory," and correctly distinguishing them from the exception type alone is a basic but genuinely useful diagnostic skill.
+I'd bring up `StackOverflowError` versus `OutOfMemoryError` as the practical distinction that falls right out of this split. Uncontrolled recursion exhausts stack space specifically — each recursive call pushes another frame, and stack size is small and fixed per thread via `-Xss` — and throws `StackOverflowError`. A genuine heap leak or an undersized `-Xmx` throws `OutOfMemoryError: Java heap space` instead. Two very different root causes, but both show up as "the application crashed with a memory error" — being able to tell them apart just from the exception type is a small but genuinely useful diagnostic skill.
 
 **Source:** [JVMS §2.5.2 — Java Virtual Machine Stacks](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-2.html#jvms-2.5.2), [JVMS §2.5.3 — Heap](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-2.html#jvms-2.5.3)
 
@@ -106,9 +108,9 @@ I'd bring up `StackOverflowError` versus `OutOfMemoryError` as the practical, di
 
 **Answer:**
 
-"Garbage collection is the JVM automatically reclaiming heap memory occupied by objects that are no longer reachable from any live reference — the application never explicitly frees an object the way C/C++ code calls `free()`/`delete`; the GC figures out, on its own, which objects nothing can reach anymore and returns their memory. The core mechanism is **reachability**: starting from a fixed set of 'GC roots' (local variables on active thread stacks, static fields, JNI references), the collector traces every object reachable from those roots — anything not reached during that trace is garbage, by definition, regardless of whether the object still technically has data in it.
+"Garbage collection is the JVM automatically reclaiming heap memory used by objects that nothing can reach anymore. The application never explicitly frees an object the way C/C++ code calls `free()`/`delete` — the GC figures out on its own which objects are unreachable and returns their memory. The core mechanism is **reachability**: starting from a fixed set of 'GC roots' (local variables on active thread stacks, static fields, JNI references), the collector traces every object reachable from those roots. Anything it doesn't reach during that trace is garbage, by definition, whether or not the object still technically holds data.
 
-This exists specifically to eliminate an entire category of manual-memory-management bugs — use-after-free, double-free, and the sheer bookkeeping burden of matching every allocation with exactly one deallocation — at the cost of some CPU overhead and pause time for the collection work itself, a trade-off the vast majority of applications accept gladly."
+This exists to eliminate a whole category of manual-memory-management bugs — use-after-free, double-free, and the bookkeeping burden of matching every allocation with exactly one deallocation. It costs some CPU and pause time for the collection work itself, but that's a trade-off most applications are happy to make."
 
 **Code:**
 
@@ -123,7 +125,7 @@ b = null;                  // NOW unreachable — no GC root points to it anymor
 
 **Follow-up:**
 
-I'd flag the timing misconception directly, since it trips people up constantly: an object becoming unreachable makes it *eligible* for collection, not *immediately* collected — the JVM decides when to actually run a collection cycle based on its own heuristics (allocation rate, generation fullness), not the instant an object loses its last reference. This is exactly why relying on `finalize()` (deprecated) or any GC-timing-dependent cleanup logic for correctness is unsafe — 'this object has no references' and 'this object has definitely been collected' are two different moments, and code should never assume they're the same.
+I'd flag the timing misconception directly, since it trips people up constantly: becoming unreachable makes an object *eligible* for collection, not *immediately* collected. The JVM decides when to actually run a collection based on its own heuristics — allocation rate, generation fullness — not the instant an object loses its last reference. That's exactly why relying on `finalize()` (deprecated) or any GC-timing-dependent cleanup for correctness is unsafe: "this object has no references" and "this object has been collected" are two different moments, and code should never assume they're the same.
 
 **Source:** [Java SE Documentation — Introduction to Garbage Collection Tuning](https://docs.oracle.com/en/java/javase/21/gctuning/introduction-garbage-collection-tuning.html)
 
@@ -133,9 +135,9 @@ I'd flag the timing misconception directly, since it trips people up constantly:
 
 **Answer:**
 
-"A `ClassLoader` is responsible for finding a class's bytecode (typically a `.class` file, whether on disk or inside a JAR) and loading it into the JVM, turning it into a `Class` object the runtime can actually instantiate objects from. The JVM uses a small hierarchy of built-in loaders: the **bootstrap** class loader (loads the core `java.*`/`javax.*` classes from the JDK itself, implemented in native code, has no parent), the **platform** class loader (loads certain platform-specific modules), and the **application** (system) class loader (loads the classes on the application's own classpath — this is the one that loads your own code).
+"A `ClassLoader` finds a class's bytecode — typically a `.class` file, on disk or inside a JAR — and loads it into the JVM, turning it into a `Class` object the runtime can actually instantiate objects from. The JVM has a small hierarchy of built-in loaders: the **bootstrap** class loader (loads the core `java.*`/`javax.*` classes from the JDK itself, implemented in native code, has no parent), the **platform** class loader (loads certain platform-specific modules), and the **application** (system) class loader, which loads the classes on the application's own classpath — this is the one that loads your own code.
 
-Class loading follows a **delegation model**: when a class loader is asked to load a class, it first asks its parent loader to try, and only attempts to load the class itself if every ancestor fails — which is why a class defined in the JDK's own `java.lang` package always resolves to the JDK's version, never an application-supplied one with the same fully-qualified name, since the bootstrap loader (the ultimate parent) gets first crack at it."
+Class loading follows a **delegation model**: when a class loader is asked to load a class, it first asks its parent to try, and only attempts it itself if every ancestor fails. That's why a class in the JDK's own `java.lang` package always resolves to the JDK's version, never an application-supplied one with the same name — the bootstrap loader, the ultimate parent, gets first crack at it."
 
 **Code:**
 
@@ -151,7 +153,7 @@ public class Main {
 
 **Follow-up:**
 
-I'd bring up why this delegation model matters practically: it's the mechanism that prevents a maliciously (or accidentally) named class from shadowing a core JDK class — an application-supplied `java.lang.String` would never actually get loaded in place of the real one, since the bootstrap loader is asked first and already has its own `String` class loaded. I'd also mention that custom class loaders (used by application servers, plugin systems, and frameworks like OSGi) can break the strict parent-first delegation model deliberately, to support use cases like hot-reloading or isolating plugin classpaths from each other — which is a real, if advanced, source of `ClassCastException`s when the "same" class gets loaded by two different loaders and the JVM correctly treats them as two distinct types.
+Why this matters in practice: it's the mechanism that stops a maliciously (or accidentally) named class from shadowing a core JDK class. An application-supplied `java.lang.String` would never actually get loaded in place of the real one, since the bootstrap loader is asked first and already has its own `String` loaded. Custom class loaders — used by app servers, plugin systems, and frameworks like OSGi — can deliberately break that strict parent-first delegation to support things like hot-reloading or isolating plugin classpaths from each other. That's a real, if advanced, source of `ClassCastException`s: the "same" class gets loaded by two different loaders, and the JVM correctly treats them as two distinct types.
 
 **Source:** [`ClassLoader` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/ClassLoader.html)
 
@@ -161,9 +163,9 @@ I'd bring up why this delegation model matters practically: it's the mechanism t
 
 **Answer:**
 
-"The JVM doesn't run Java source code directly — `javac` compiles it to platform-independent bytecode first, and the JVM has two ways to execute that bytecode. **Interpretation** reads and executes bytecode instructions one at a time, translating each to machine operations on the fly — it starts running immediately with no compilation delay, but is slower per-instruction since there's no opportunity to optimize across instructions or reuse work between calls. **JIT (Just-In-Time) compilation** watches which methods actually get called frequently ('hot' methods) and compiles *those specific methods* directly to native machine code at runtime, which then runs at native speed on every subsequent call, skipping interpretation entirely.
+"The JVM doesn't run Java source code directly. `javac` compiles it to platform-independent bytecode first, and the JVM has two ways to execute that bytecode. **Interpretation** reads and executes bytecode instructions one at a time, translating each to machine operations on the fly. It starts running immediately with no compilation delay, but it's slower per-instruction, since there's no chance to optimize across instructions or reuse work between calls. **JIT (Just-In-Time) compilation** watches which methods get called frequently — 'hot' methods — and compiles those specific methods directly to native machine code at runtime, so every call after that runs at native speed, skipping the interpreter entirely.
 
-HotSpot (the default JVM) actually uses both together: it starts by interpreting everything (fast startup, no compilation cost paid upfront), and promotes methods to JIT-compiled native code once they cross a call-count threshold — this tiered approach balances fast startup against eventual peak throughput, rather than picking one strategy exclusively."
+HotSpot, the default JVM, actually uses both together. It starts by interpreting everything (fast startup, no upfront compilation cost) and promotes methods to JIT-compiled native code once they cross a call-count threshold. This tiered approach gets you fast startup and eventually peak throughput, instead of picking one strategy exclusively."
 
 **Code:**
 
@@ -179,7 +181,7 @@ void hotLoopBody(int x) { /* ... */ }
 
 **Follow-up:**
 
-I'd mention "warmup" as the direct practical consequence of this design: a JVM application's throughput genuinely improves over the first seconds-to-minutes of running, as the JIT identifies and compiles more of the hot code paths — this is why benchmarking Java code without a warmup phase (running the operation enough times first to let the JIT kick in before measuring) produces misleadingly slow numbers, and it's also the specific problem GraalVM's ahead-of-time native-image compilation is designed to eliminate for workloads (like serverless functions) where fast, consistent cold-start latency matters more than eventual peak throughput.
+I'd mention "warmup" as the direct practical consequence of this design: a JVM app's throughput genuinely improves over its first seconds-to-minutes of running, as the JIT identifies and compiles more hot code paths. That's why benchmarking Java code without a warmup phase — running the operation enough times to let the JIT kick in before measuring — gives misleadingly slow numbers. It's also the specific problem GraalVM's ahead-of-time native-image compilation solves, for workloads like serverless functions where fast, consistent cold-start latency matters more than eventual peak throughput.
 
 **Source:** [Oracle — The Java HotSpot Performance Engine Architecture](https://www.oracle.com/java/technologies/whitepaper.html)
 
@@ -189,9 +191,9 @@ I'd mention "warmup" as the direct practical consequence of this design: a JVM a
 
 **Answer:**
 
-"This is based on the **generational hypothesis**, an empirical observation that holds true for the overwhelming majority of real applications: most objects die young — a huge fraction of allocations (loop-local temporaries, per-request objects, intermediate calculation results) become garbage almost immediately after being created, while a much smaller fraction survive to become genuinely long-lived. Splitting the heap into a **young generation** (where all new objects are allocated) and an **old generation** (for objects that have survived multiple collections) lets the collector exploit that pattern directly: young-generation collections can be fast and frequent, since they only need to scan a small region and most of what they find is already garbage, while old-generation collections happen far less often, since that's where the genuinely long-lived data accumulates.
+"This comes from the **generational hypothesis** — an empirical observation that holds for most real applications: most objects die young. A huge fraction of allocations (loop-local temporaries, per-request objects, intermediate calculation results) become garbage almost immediately, while a much smaller fraction stick around and become genuinely long-lived. Splitting the heap into a **young generation** (where all new objects are allocated) and an **old generation** (for objects that survived multiple collections) lets the collector exploit that pattern directly. Young-generation collections can be fast and frequent, since they only scan a small region and most of what they find is already garbage. Old-generation collections happen far less often, since that's where the genuinely long-lived data ends up.
 
-An object that survives enough young-generation collections gets **promoted** to the old generation — the exact threshold is tunable, but the underlying idea (scan the region that's mostly garbage often and cheaply, scan the region that's mostly live rarely and expensively) is the entire reason this split exists."
+An object that survives enough young-generation collections gets **promoted** to the old generation — the exact threshold is tunable, but the underlying idea (scan the mostly-garbage region often and cheaply, scan the mostly-live region rarely and expensively) is the whole reason this split exists."
 
 **Code:**
 
@@ -210,7 +212,7 @@ Old Generation (larger, collected less often, more expensive per collection)
 
 **Follow-up:**
 
-I'd connect this directly to why a young-generation collection ("minor GC") is dramatically cheaper than a full-heap collection: it only has to trace live objects within the young generation itself (plus references *into* it from the old generation, tracked via a mechanism called a card table, so it doesn't need to scan the entire old generation just to find those), which is why an application with a healthy allocation pattern can run frequent, sub-millisecond minor GCs essentially invisibly, while an application generating a lot of long-lived garbage (a growing cache with poor eviction, a leak) eventually forces expensive old-generation collections far more often than the generational hypothesis assumes, which is usually the first visible symptom of a leak investigation.
+This directly explains why a young-generation collection ("minor GC") is so much cheaper than a full-heap collection — it only has to trace live objects within the young generation itself, plus references into it from the old generation, tracked via a structure called a card table so it never has to scan the entire old generation just to find those. That's why an app with a healthy allocation pattern can run frequent, sub-millisecond minor GCs essentially invisibly. An app generating a lot of long-lived garbage — a growing cache with poor eviction, a leak — eventually forces expensive old-generation collections far more often than the hypothesis assumes, and that's usually the first visible symptom in a leak investigation.
 
 **Source:** [Java SE Documentation — Garbage Collector Implementation](https://docs.oracle.com/en/java/javase/21/gctuning/garbage-collector-implementation1.html)
 
@@ -220,9 +222,9 @@ I'd connect this directly to why a young-generation collection ("minor GC") is d
 
 **Answer:**
 
-"`==` on object references compares **identity** — whether both variables point to the literal same object in memory — it has nothing to do with whether the two objects represent the same logical value. `.equals()` is a method, inherited from `Object`, that by default *also* just does an identity check (`Object`'s own implementation is `this == obj`), but is meant to be overridden by classes that have a meaningful notion of logical equality — `String`, the boxed primitive types, and any well-designed value class override it to compare actual content instead of identity.
+"`==` on object references compares **identity** — whether both variables point to the literal same object in memory. It has nothing to do with whether the two objects represent the same logical value. `.equals()` is a method inherited from `Object` that, by default, also just does an identity check (`Object`'s implementation is `this == obj`), but it's meant to be overridden by classes that have a meaningful notion of logical equality — `String`, the boxed primitive types, and any well-designed value class override it to compare actual content instead of identity.
 
-This is why comparing `String`s (or any class with meaningful value equality) with `==` is a classic, genuinely common bug: two `String` objects can hold identical characters but be different objects in memory (e.g., one built via `new String(...)`, forcing heap allocation, versus one from a literal, which may be interned), so `==` on them can return `false` even when the strings are, by any reasonable definition, 'equal.'"
+That's why comparing `String`s (or anything with meaningful value equality) with `==` is a classic, genuinely common bug: two `String` objects can hold identical characters but be different objects in memory — one built via `new String(...)`, forcing heap allocation, the other from a literal, which may be interned. So `==` on them can return `false` even when the strings are, by any reasonable definition, equal."
 
 **Code:**
 
@@ -238,7 +240,7 @@ System.out.println(a.equals(c));   // true — .equals() correctly compares CONT
 
 **Follow-up:**
 
-I'd mention string interning explicitly as the subtlety that makes this example look inconsistent at first glance: `a == b` returning `true` isn't because `==` somehow compares content for strings — it's because the JVM automatically interns string *literals*, so `a` and `b` happen to reference the exact same pooled object. This is precisely why relying on `==` for strings 'because it happened to work in a quick test' is dangerous: it can appear to work by coincidence (both values came from literals) and then fail the moment one of them is built dynamically (from user input, string concatenation, or deserialization) instead of being a compile-time literal.
+I'd mention string interning as the subtlety that makes this example look inconsistent at first glance. `a == b` returning `true` isn't because `==` somehow compares content for strings — it's because the JVM automatically interns string literals, so `a` and `b` happen to reference the exact same pooled object. That's exactly why relying on `==` for strings "because it worked in a quick test" is dangerous: it can appear to work by coincidence, since both values came from literals, and then fail the moment one of them is built dynamically instead — from user input, string concatenation, or deserialization.
 
 **Source:** [`Object#equals()` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)), [`String#intern()` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html#intern())
 
@@ -250,7 +252,7 @@ I'd mention string interning explicitly as the subtlety that makes this example 
 
 **Answer:**
 
-"HotSpot has shipped several collectors over its history, each representing a different point on the throughput-vs-pause-time trade-off curve. **Serial** is the simplest: single-threaded, stop-the-world for the entire collection, appropriate only for small heaps or single-CPU environments where collection pause time barely matters. **Parallel** (the old JDK 8 default) uses multiple threads to do stop-the-world collection work faster, optimizing for maximum application *throughput* at the cost of longer, though fewer, pauses — a reasonable choice for batch jobs where total runtime matters more than any individual pause. **CMS** (Concurrent Mark Sweep) was an earlier attempt at low-pause collection via concurrent marking, but it's been removed as of JDK 14, superseded entirely by G1. **G1** (Garbage-First, the default since JDK 9) balances throughput and pause time by dividing the heap into regions and prioritizing collecting the regions with the most garbage first. **ZGC** and **Shenandoah** are the modern low-latency collectors, doing nearly all their work concurrently with the application to keep pauses in the sub-millisecond range regardless of heap size."
+"HotSpot has shipped several collectors over the years, each sitting at a different point on the throughput-vs-pause-time trade-off. **Serial** is the simplest: single-threaded, stop-the-world for the entire collection, appropriate only for small heaps or single-CPU environments where pause time barely matters. **Parallel** (the old JDK 8 default) uses multiple threads to do stop-the-world work faster, optimizing for maximum application *throughput* at the cost of longer, if fewer, pauses — a reasonable choice for batch jobs where total runtime matters more than any one pause. **CMS** (Concurrent Mark Sweep) was an earlier attempt at low-pause collection via concurrent marking, but it's been removed as of JDK 14, replaced entirely by G1. **G1** (Garbage-First, the default since JDK 9) balances throughput and pause time by dividing the heap into regions and collecting the ones with the most garbage first. **ZGC** and **Shenandoah** are the modern low-latency collectors — they do nearly all their work concurrently with the application to keep pauses in the sub-millisecond range regardless of heap size."
 
 **Code:**
 
@@ -264,7 +266,7 @@ java -XX:+UseShenandoahGC -jar app.jar   # OpenJDK's alternative low-pause colle
 
 **Follow-up:**
 
-I'd frame the practical decision as a spectrum rather than a fixed set of options: Serial and Parallel optimize purely for throughput and accept real stop-the-world pauses as the cost; G1 is the reasonable general-purpose default that balances both concerns without requiring deep tuning; ZGC/Shenandoah trade some raw throughput and additional memory overhead specifically to make pause time nearly independent of heap size, which matters enormously once an application's heap grows into the tens-to-hundreds of gigabytes range, where even G1's pauses can become noticeable. The full selection criteria between G1, ZGC, and Shenandoah specifically — including memory overhead and JDK-version availability differences — is covered in depth later in this guide.
+I'd frame the practical decision as a spectrum rather than a fixed set of options. Serial and Parallel optimize purely for throughput and accept real stop-the-world pauses as the cost. G1 is the reasonable general-purpose default, balancing both concerns without needing deep tuning. ZGC and Shenandoah trade some raw throughput and extra memory overhead specifically to make pause time nearly independent of heap size, which matters a lot once a heap grows into the tens-to-hundreds-of-gigabytes range, where even G1's pauses start to show. The full selection criteria between G1, ZGC, and Shenandoah — memory overhead, JDK-version availability — is covered later in this guide.
 
 **Source:** [Java SE Documentation — Available Collectors](https://docs.oracle.com/en/java/javase/21/gctuning/available-collectors.html)
 
@@ -274,9 +276,9 @@ I'd frame the practical decision as a spectrum rather than a fixed set of option
 
 **Answer:**
 
-"A **minor GC** (young-generation collection) traces and reclaims only the young generation — it identifies live objects in Eden and the survivor spaces, copies survivors to the other survivor space (or promotes them to the old generation if they've survived enough cycles), and reclaims everything else. Because it only has to scan a small region, it's fast and, with a modern low-pause collector, usually invisible in production. A **major GC** collects the old generation (sometimes triggered alongside, or as a consequence of, a minor GC when promotion pressure is high); a **full GC** collects the *entire* heap — both generations — at once, and is by far the most expensive kind of collection, since it has to trace and potentially compact everything.
+"A **minor GC** (young-generation collection) traces and reclaims only the young generation. It finds live objects in Eden and the survivor spaces, copies survivors to the other survivor space (or promotes them to the old generation if they've survived enough cycles), and reclaims everything else. Since it only scans a small region, it's fast, and with a modern low-pause collector usually invisible in production. A **major GC** collects the old generation, sometimes triggered alongside or as a consequence of a minor GC when promotion pressure is high. A **full GC** collects the entire heap — both generations — at once, and it's by far the most expensive kind of collection, since it has to trace and potentially compact everything.
 
-In practice, a full GC firing regularly (rather than as a rare, deliberate event) is close to always a warning sign, not normal operation — it usually means the old generation is filling up faster than the collector can otherwise keep pace with, often due to an actual leak, an undersized heap for the application's genuine working set, or a promotion-heavy allocation pattern the tenuring settings aren't well-matched to."
+In practice, a full GC firing regularly, rather than as a rare, deliberate event, is almost always a warning sign, not normal operation. It usually means the old generation is filling up faster than the collector can keep pace with — an actual leak, an undersized heap for the app's real working set, or a promotion-heavy allocation pattern the tenuring settings aren't matched to."
 
 **Code:**
 
@@ -291,7 +293,7 @@ grep "Pause Full" gc.log
 
 **Follow-up:**
 
-I'd bring up the diagnostic pattern directly: a healthy application's GC log shows frequent, cheap minor GCs and rare (ideally near-zero) full GCs; seeing full GCs firing every few minutes, especially if each one takes seconds rather than milliseconds, is one of the clearest signals available that something's wrong with either the heap sizing or the application's allocation/retention pattern — this is exactly the kind of evidence the diagnosis and heap-dump questions later in this guide walk through investigating in depth.
+I'd bring up the diagnostic pattern directly: a healthy app's GC log shows frequent, cheap minor GCs and rare, ideally near-zero, full GCs. Full GCs firing every few minutes — especially if each one takes seconds rather than milliseconds — is one of the clearest signals that something's wrong with heap sizing or the app's allocation/retention pattern. That's exactly the kind of evidence the diagnosis and heap-dump questions later in this guide walk through.
 
 **Source:** [Java SE Documentation — Understanding the Different Generations](https://docs.oracle.com/en/java/javase/21/gctuning/factors-affecting-garbage-collection-performance1.html)
 
@@ -301,9 +303,9 @@ I'd bring up the diagnostic pattern directly: a healthy application's GC log sho
 
 **Answer:**
 
-"A memory leak in Java isn't the same phenomenon as a leak in a manually-managed language like C — the GC never fails to reclaim a genuinely unreachable object. A Java memory leak means an object is *still reachable* — some live reference chain, from a GC root, still points to it — even though the application logically no longer needs it. The GC does exactly what it's supposed to: it can't collect something still reachable, so the object (and everything it references) just accumulates on the heap indefinitely, eventually leading to degraded performance from GC working harder and harder, and ultimately `OutOfMemoryError`.
+"A memory leak in Java isn't the same thing as a leak in a manually-managed language like C — the GC never fails to reclaim a genuinely unreachable object. A Java memory leak means an object is *still reachable*: some live reference chain, from a GC root, still points to it, even though the application logically doesn't need it anymore. The GC does exactly what it's supposed to — it can't collect something still reachable — so the object, and everything it references, just accumulates on the heap indefinitely, degrading performance as GC works harder and harder, and eventually throwing `OutOfMemoryError`.
 
-The classic causes: an unbounded cache with no eviction policy, listener/callback registration without matching unregistration, a `static` collection that only ever grows, and `ThreadLocal` values never cleaned up in a pooled-thread environment where the thread outlives the logical task that set the value."
+The classic causes: an unbounded cache with no eviction policy, listener or callback registration without matching unregistration, a `static` collection that only ever grows, and `ThreadLocal` values that never get cleaned up in a pooled-thread environment, where the thread outlives the task that set the value."
 
 **Code:**
 
@@ -321,7 +323,7 @@ class LeakyCache {
 
 **Follow-up:**
 
-I'd sharpen the distinction with the exact phrase worth using in an interview: a Java "leak" is a *logical* leak (reachable-but-unneeded), never a *literal* leak (unreachable-and-uncollected) — the GC's correctness guarantee is about the second case, and it's never actually violated by what people colloquially call a Java memory leak. This framing also directly explains the fix: since the GC can't tell the difference between 'reachable and still needed' and 'reachable but logically dead,' the application has to make that distinction itself — explicit eviction policies, `WeakReference`s where GC-driven cleanup is actually the right semantic, and disciplined listener/`ThreadLocal` cleanup — which is exactly what the production-leak-diagnosis question later in this guide walks through investigating.
+A phrase worth using in an interview: a Java "leak" is a *logical* leak (reachable but unneeded), never a *literal* leak (unreachable and uncollected). The GC's correctness guarantee is about the second case, and what people colloquially call a Java memory leak never actually violates it. This also explains the fix directly: since the GC can't tell "reachable and still needed" apart from "reachable but logically dead," the application has to make that distinction itself — explicit eviction policies, `WeakReference`s where that's the right semantic, and disciplined listener/`ThreadLocal` cleanup. That's exactly what the production-leak-diagnosis question later in this guide walks through.
 
 **Source:** [Java SE Documentation — Introduction to Garbage Collection Tuning](https://docs.oracle.com/en/java/javase/21/gctuning/introduction-garbage-collection-tuning.html)
 
@@ -331,9 +333,9 @@ I'd sharpen the distinction with the exact phrase worth using in an interview: a
 
 **Answer:**
 
-"`-Xms<size>` sets the **initial** heap size the JVM requests at startup; `-Xmx<size>` sets the **maximum** heap size the JVM is allowed to grow to. Setting `-Xms` and `-Xmx` to the *same* value is a common production practice — it avoids the overhead of the heap dynamically resizing during the application's warmup period, at the cost of reserving that memory upfront even if it's not immediately needed. `-Xss<size>` sets the **stack size per thread** — this matters more than it might seem, since a high-thread-count application (thousands of platform threads, each reserving its own stack) can consume a surprisingly large amount of memory just in stack space, entirely separate from the heap. `-XX:MaxMetaspaceSize=<size>` bounds the **metaspace** — where class metadata lives — which is unbounded by default and, without this flag, can itself contribute to a container OOM-kill even while heap usage looks perfectly healthy.
+"`-Xms<size>` sets the **initial** heap size the JVM requests at startup. `-Xmx<size>` sets the **maximum** heap size it's allowed to grow to. Setting `-Xms` and `-Xmx` to the same value is a common production practice — it avoids the overhead of the heap resizing dynamically during warmup, at the cost of reserving that memory upfront even if it's not needed right away. `-Xss<size>` sets the **stack size per thread**, and it matters more than you'd think: a high-thread-count application, with thousands of platform threads each reserving their own stack, can consume a surprisingly large amount of memory just in stack space, entirely separate from the heap. `-XX:MaxMetaspaceSize=<size>` bounds the **metaspace**, where class metadata lives. It's unbounded by default, and without this flag it can contribute to a container OOM-kill even while heap usage looks perfectly healthy.
 
-None of these flags accept a bare number — they take a size suffix (`m` for megabytes, `g` for gigabytes), e.g. `-Xmx2g` for a 2-gigabyte maximum heap."
+None of these flags take a bare number — they need a size suffix (`m` for megabytes, `g` for gigabytes), e.g. `-Xmx2g` for a 2-gigabyte maximum heap."
 
 **Code:**
 
@@ -347,7 +349,7 @@ java -Xms1g -Xmx1g \                    # fixed heap size — no runtime resizin
 
 **Follow-up:**
 
-I'd flag the practical container-sizing implication directly: `-Xmx` bounds only the heap, and a container's memory limit is enforced against the *entire process*, so `-Xmx` has to leave real headroom for metaspace, thread stacks, the JIT code cache, and other native-memory regions — sizing `-Xmx` right up against the container's memory limit, with no margin for everything else, is one of the most common causes of a container OOM-kill despite heap usage looking fine, covered in depth later in this guide.
+I'd flag the practical container-sizing implication directly: `-Xmx` bounds only the heap, but a container's memory limit is enforced against the entire process. So `-Xmx` has to leave real headroom for metaspace, thread stacks, the JIT code cache, and other native-memory regions. Sizing `-Xmx` right up against the container's limit, with no margin for everything else, is one of the most common causes of a container OOM-kill despite heap usage looking fine — covered in depth later in this guide.
 
 **Source:** [`java` command-line options, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html)
 
@@ -357,9 +359,9 @@ I'd flag the practical container-sizing implication directly: `-Xmx` bounds only
 
 **Answer:**
 
-"Metaspace is where the JVM stores class metadata — the structural information about loaded classes: their methods, fields, and bytecode, as opposed to the *instances* of those classes, which live on the heap. Before Java 8, this same kind of data lived in a region called **PermGen** (Permanent Generation), which was part of the heap itself, had a fixed maximum size that had to be set explicitly (`-XX:MaxPermSize`), and was a frequent, genuinely painful source of `OutOfMemoryError: PermGen space` — especially in application servers that reloaded web applications repeatedly, since each reload could leave the previous deployment's classes stuck in PermGen if anything still referenced them, slowly filling it up over time.
+"Metaspace is where the JVM stores class metadata — the structural information about loaded classes: their methods, fields, and bytecode, as opposed to the *instances* of those classes, which live on the heap. Before Java 8, this data lived in a region called **PermGen** (Permanent Generation), which was part of the heap itself, had a fixed maximum size you had to set explicitly (`-XX:MaxPermSize`), and was a frequent, genuinely painful source of `OutOfMemoryError: PermGen space` — especially in app servers that reloaded web applications repeatedly, since each reload could leave the previous deployment's classes stuck in PermGen if anything still referenced them, slowly filling it up.
 
-Java 8 replaced PermGen with metaspace, which lives in **native memory** (outside the heap entirely) and, by default, grows dynamically without a fixed cap — which mostly eliminated the classic PermGen-exhaustion failure mode, but introduced a new risk: unbounded metaspace growth (from the same kind of classloader-leak pattern that used to fill PermGen) can now consume native memory without limit, which is exactly why `-XX:MaxMetaspaceSize` exists as an explicit safety bound."
+Java 8 replaced PermGen with metaspace, which lives in **native memory**, outside the heap entirely, and by default grows dynamically with no fixed cap. That mostly eliminated the classic PermGen-exhaustion failure mode, but it introduced a new risk: unbounded metaspace growth, from the same kind of classloader-leak pattern that used to fill PermGen, can now consume native memory without limit. That's exactly why `-XX:MaxMetaspaceSize` exists as an explicit safety bound."
 
 **Code:**
 

@@ -59,9 +59,9 @@ How to use this: each question has **the answer the way I'd actually say it out 
 
 **Answer:**
 
-"Spring is a framework built around **Inversion of Control (IoC)**, most visibly expressed through **Dependency Injection (DI)** — instead of a class constructing its own dependencies internally (`new SomeRepository()`), it declares what it needs (usually via constructor parameters), and the framework's container supplies those dependencies from the outside. This inverts the traditional flow of control: rather than your code being in charge of wiring everything together, the framework is.
+"Spring is a framework built around **Inversion of Control (IoC)**, most visibly expressed through **Dependency Injection (DI)**. Instead of a class constructing its own dependencies internally (`new SomeRepository()`), it just declares what it needs — usually via constructor parameters — and the framework's container supplies those dependencies from the outside. That flips the usual flow of control: your code isn't in charge of wiring everything together anymore, the framework is.
 
-The problem this solves is coupling. A class that constructs its own dependencies is hard-wired to one specific implementation, hard to test in isolation (you can't substitute a mock without changing the class itself), and hard to reconfigure (swapping a dependency means editing every class that constructs it). With DI, a class only depends on an interface/type — the container decides which concrete implementation to actually hand it, which can differ between production, test, and different environments without touching the class's own code at all."
+The problem this solves is coupling. A class that builds its own dependencies is locked into one specific implementation. It's hard to test in isolation, since you can't swap in a mock without changing the class itself, and hard to reconfigure, since swapping a dependency means editing every class that constructs it. With DI, a class only depends on an interface or type, and the container decides which concrete implementation to actually hand it. That can differ between production, test, and other environments without touching the class's own code at all."
 
 **Code:**
 
@@ -85,7 +85,7 @@ class OrderService {
 
 **Follow-up:**
 
-I'd mention that Spring's container managing object creation and wiring is what people mean by "the Spring container" or `ApplicationContext` — covered next — and that DI is genuinely just one specific technique for achieving the broader IoC principle; Spring also applies IoC elsewhere (e.g., handing control of transaction boundaries to declarative `@Transactional` rather than the code managing transactions itself), but dependency injection is the one that shows up in essentially every Spring class.
+Spring's container managing object creation and wiring is what people mean by "the Spring container" or `ApplicationContext` — covered next. DI is just one technique for achieving the broader IoC principle; Spring applies IoC elsewhere too, like handing control of transaction boundaries to declarative `@Transactional` instead of the code managing transactions itself. But dependency injection is the one that shows up in essentially every Spring class.
 
 **Source:** [Spring Framework Reference — IoC Container](https://docs.spring.io/spring-framework/reference/core/beans/introduction.html)
 
@@ -95,9 +95,9 @@ I'd mention that Spring's container managing object creation and wiring is what 
 
 **Answer:**
 
-"A **bean** is simply an object that Spring's container creates, configures, and manages the lifecycle of — as opposed to an object your own code creates directly with `new`. The **`ApplicationContext`** is that container: it holds the registry of bean definitions, is responsible for instantiating beans (typically eagerly, at startup, for singleton-scoped beans), wiring their dependencies together, and making them available for lookup or injection anywhere else in the application.
+"A **bean** is just an object that Spring's container creates, configures, and manages the lifecycle of, as opposed to an object your own code creates directly with `new`. The **`ApplicationContext`** is that container. It holds the registry of bean definitions, instantiates beans (typically eagerly, at startup, for singleton-scoped beans), wires their dependencies together, and makes them available for lookup or injection anywhere else in the application.
 
-Practically, almost any class annotated `@Component` (or one of its specializations — `@Service`, `@Repository`, `@Controller`) becomes a bean once it's discovered by component scanning, as does any object returned by a method annotated `@Bean` inside a `@Configuration` class. Once something is a bean, Spring — not your code — owns creating exactly one instance of it (by default) and injecting it wherever it's needed, rather than every class that needs it constructing its own copy."
+In practice, almost any class annotated `@Component` — or one of its specializations like `@Service`, `@Repository`, `@Controller` — becomes a bean once component scanning discovers it. So does any object returned by a method annotated `@Bean` inside a `@Configuration` class. Once something is a bean, Spring owns creating exactly one instance of it by default and injecting it wherever it's needed, instead of every class that needs it constructing its own copy."
 
 **Code:**
 
@@ -123,7 +123,7 @@ OrderService service = context.getBean(OrderService.class);
 
 **Follow-up:**
 
-I'd flag that "Spring creates exactly one instance by default" is specifically the **singleton scope**, the default for Spring beans — worth knowing that other scopes exist (covered in the Intermediate section) for the less common cases where a fresh instance per request or per use is actually the right behavior, rather than assuming every bean is automatically a shared singleton without knowing why.
+"Exactly one instance by default" is specifically the **singleton scope** — the default for Spring beans. Other scopes exist too (covered in the Intermediate section) for less common cases where a fresh instance per request or per use is actually the right behavior. Worth knowing why a bean is a singleton, not just assuming it.
 
 **Source:** [Spring Framework Reference — The IoC Container](https://docs.spring.io/spring-framework/reference/core/beans/basics.html)
 
@@ -133,9 +133,9 @@ I'd flag that "Spring creates exactly one instance by default" is specifically t
 
 **Answer:**
 
-"All four are `@Component`-family stereotype annotations — `@Service`, `@Repository`, and `@Controller` are each themselves annotated with `@Component`, which is why component scanning picks up all of them identically: any class annotated with any of the four becomes a Spring bean. Functionally, for basic bean registration, they're interchangeable — Spring doesn't treat a `@Service`-annotated class any differently from a `@Component`-annotated one in terms of *whether* it becomes a bean.
+"All four are `@Component`-family stereotype annotations. `@Service`, `@Repository`, and `@Controller` are each themselves annotated with `@Component`, which is why component scanning picks up all of them the same way: any class carrying any of the four becomes a Spring bean. For basic bean registration they're interchangeable — Spring doesn't treat a `@Service`-annotated class any differently from a `@Component`-annotated one when it comes to whether it becomes a bean.
 
-The differences are about **semantic clarity** and, for `@Repository` specifically, **real added behavior**: `@Service` conventionally marks business-logic/service-layer classes, `@Controller` marks web-layer request-handling classes, and `@Repository` marks data-access classes — and `@Repository` additionally enables Spring's automatic translation of persistence-technology-specific exceptions (a JDBC `SQLException`, a JPA `PersistenceException`) into Spring's own unified `DataAccessException` hierarchy, which is real, non-cosmetic behavior the other three don't provide."
+The differences are mostly about **semantic clarity**, plus one piece of real added behavior on `@Repository`. `@Service` conventionally marks business-logic/service-layer classes, `@Controller` marks web-layer request-handling classes, and `@Repository` marks data-access classes. `@Repository` also enables Spring's automatic translation of persistence-technology-specific exceptions — a JDBC `SQLException`, a JPA `PersistenceException` — into Spring's own unified `DataAccessException` hierarchy. That's real, non-cosmetic behavior the other three don't give you."
 
 **Code:**
 
@@ -155,7 +155,7 @@ class ScheduledJobRunner { /* ... */ }
 
 **Follow-up:**
 
-I'd bring up that this matters beyond just readability — using the semantically correct stereotype (rather than defaulting everything to plain `@Component`) is what lets tooling and AOP pointcuts target a whole architectural layer cleanly (e.g., an aspect that logs every call into a `@Repository`-annotated class), and it's a real, if small, signal to a future reader about a class's architectural role that plain `@Component` doesn't convey at all.
+This matters beyond readability. Using the correct stereotype instead of defaulting everything to plain `@Component` is what lets tooling and AOP pointcuts target a whole architectural layer cleanly — an aspect that logs every call into a `@Repository`-annotated class, for instance. It's also a small but real signal to a future reader about a class's role, which plain `@Component` doesn't give you at all.
 
 **Source:** [Spring Framework Reference — Stereotype Annotations](https://docs.spring.io/spring-framework/reference/core/beans/classpath-scanning.html#beans-stereotype-annotations)
 
@@ -165,9 +165,9 @@ I'd bring up that this matters beyond just readability — using the semanticall
 
 **Answer:**
 
-"All three are ways Spring can supply a bean's dependencies, but they're not equally recommended. **Field injection** (`@Autowired` directly on a field) is the most concise to write, but the class can never be constructed without Spring's involvement — required fields aren't enforced at compile time, and the class is essentially impossible to unit test without a Spring context or reflection-based mocking. **Setter injection** (`@Autowired` on a setter method) allows optional dependencies and reconfiguration after construction, but leaves a window where the object exists in a partially-initialized state (constructed, but before setters have run).
+"All three are ways Spring can supply a bean's dependencies, but they're not equally recommended. **Field injection** (`@Autowired` directly on a field) is the most concise to write, but the class can never be constructed without Spring's involvement. Required fields aren't enforced at compile time, and the class is basically impossible to unit test without a Spring context or reflection-based mocking. **Setter injection** (`@Autowired` on a setter method) allows optional dependencies and reconfiguration after construction, but leaves a window where the object exists in a partially-initialized state — constructed, but before setters have run.
 
-**Constructor injection** is the recommended default: dependencies are required parameters of the constructor, so the object can never exist in an invalid, half-wired state — it's fully constructed or it doesn't compile/run at all — and, critically, the class can be instantiated and unit-tested with plain `new SomeClass(mockDependency)`, no Spring container required at all. As of Spring 4.3+, `@Autowired` on the constructor is even optional when there's exactly one constructor."
+**Constructor injection** is the recommended default. Dependencies are required constructor parameters, so the object can never exist in an invalid, half-wired state — it's fully constructed or it doesn't compile or run at all. And the class can be instantiated and unit-tested with plain `new SomeClass(mockDependency)`, no Spring container required. As of Spring 4.3+, `@Autowired` on the constructor is even optional when there's exactly one constructor."
 
 **Code:**
 
@@ -195,7 +195,7 @@ var service = new OrderServiceConstructorInjection(mockGateway);
 
 **Follow-up:**
 
-I'd point out that constructor injection also makes **circular dependencies fail fast at startup** rather than silently working around them — two classes each requiring the other via constructor parameters simply cannot be constructed, so Spring throws immediately, surfacing a real design problem at the earliest, cheapest point to fix it, whereas field/setter injection can sometimes paper over the same circular coupling by injecting an incompletely-constructed bean, deferring the real problem instead of catching it — this connects directly to the circular-dependency question covered later in this guide.
+Constructor injection also makes **circular dependencies fail fast at startup** instead of silently working around them. Two classes each requiring the other via constructor parameters simply cannot be constructed, so Spring throws immediately — surfacing a real design problem at the earliest, cheapest point to fix it. Field or setter injection can sometimes paper over the same circular coupling by injecting an incompletely-constructed bean, which just defers the problem instead of catching it. This connects directly to the circular-dependency question covered later in this guide.
 
 **Source:** [Spring Framework Reference — Constructor-Based Dependency Injection](https://docs.spring.io/spring-framework/reference/core/beans/dependencies/factory-collaborators.html#beans-constructor-injection)
 
@@ -205,9 +205,9 @@ I'd point out that constructor injection also makes **circular dependencies fail
 
 **Answer:**
 
-"**Spring Framework** is the core — the IoC container, dependency injection, AOP, transaction management, MVC, and the rest of the underlying programming model. It's been around since the early 2000s and, on its own, requires substantial manual configuration: explicitly wiring beans via XML or `@Configuration` classes, manually configuring an embedded or external servlet container, manually managing dependency versions across the many Spring modules and third-party libraries an application actually needs.
+"**Spring Framework** is the core: the IoC container, dependency injection, AOP, transaction management, MVC, and the rest of the underlying programming model. It's been around since the early 2000s, and on its own it requires substantial manual configuration — wiring beans via XML or `@Configuration` classes by hand, configuring an embedded or external servlet container yourself, and managing dependency versions across the many Spring modules and third-party libraries an application needs.
 
-**Spring Boot** is built *on top of* Spring Framework, and its entire purpose is eliminating that configuration burden through **auto-configuration** (covered in depth later in this guide) — sensible, convention-based defaults that activate automatically based on what's on the classpath — an **embedded servlet container** (no separate application-server deployment required), and **starter dependencies** (`spring-boot-starter-web`, `spring-boot-starter-data-jpa`) that bundle compatible, version-aligned sets of libraries so you don't have to hand-pick and align dozens of individual dependency versions yourself. Spring Boot doesn't replace anything about how Spring Framework itself works underneath — it's convention and packaging around the same core container and programming model."
+**Spring Boot** is built *on top of* Spring Framework, and its whole purpose is eliminating that configuration burden. It does this through **auto-configuration** (covered later in this guide) — sensible, convention-based defaults that activate automatically based on what's on the classpath — an **embedded servlet container** so you don't need a separate application-server deployment, and **starter dependencies** like `spring-boot-starter-web` or `spring-boot-starter-data-jpa` that bundle compatible, version-aligned sets of libraries so you're not hand-picking and aligning dozens of dependency versions yourself. Spring Boot doesn't change anything about how Spring Framework works underneath — it's convention and packaging around the same core container and programming model."
 
 **Code:**
 
@@ -223,7 +223,7 @@ I'd point out that constructor injection also makes **circular dependencies fail
 
 **Follow-up:**
 
-I'd make the framing explicit since it's a common point of confusion: "Spring Boot" isn't a different, competing framework from "Spring" — it's Spring Framework plus opinionated defaults and packaging, and everything covered elsewhere in this guide about the bean lifecycle, proxies, and the `ApplicationContext` applies identically whether or not Boot is involved. What Boot specifically adds is the auto-configuration mechanism, the embedded-server model, and Actuator (production-readiness endpoints, covered later in this guide) — none of which exist in plain Spring Framework without deliberately adding them yourself.
+Worth being explicit here since it's a common point of confusion: "Spring Boot" isn't a different, competing framework from "Spring." It's Spring Framework plus opinionated defaults and packaging, and everything else in this guide about the bean lifecycle, proxies, and the `ApplicationContext` applies identically whether or not Boot is involved. What Boot adds specifically is the auto-configuration mechanism, the embedded-server model, and Actuator (production-readiness endpoints, covered later) — none of which exist in plain Spring Framework unless you add them yourself.
 
 **Source:** [Spring Boot Reference — Introducing Spring Boot](https://docs.spring.io/spring-boot/reference/index.html)
 
@@ -233,9 +233,9 @@ I'd make the framing explicit since it's a common point of confusion: "Spring Bo
 
 **Answer:**
 
-"`@SpringBootApplication` is a convenience meta-annotation — a single annotation that combines three separate ones, each doing distinct, real work. `@SpringBootConfiguration` (itself a specialized `@Configuration`) marks the class as a source of bean definitions, the same as any `@Configuration` class. `@EnableAutoConfiguration` is the one that actually triggers Spring Boot's auto-configuration mechanism — scanning `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` and conditionally activating configuration classes based on what's on the classpath, covered in depth later in this guide. `@ComponentScan` triggers component scanning starting from the annotated class's own package (and sub-packages) — which is exactly why the conventional advice is to put your `@SpringBootApplication`-annotated main class in your project's root package: scanning starts there and covers everything beneath it.
+"`@SpringBootApplication` is a convenience meta-annotation that combines three separate ones, each doing distinct, real work. `@SpringBootConfiguration` (itself a specialized `@Configuration`) marks the class as a source of bean definitions, just like any `@Configuration` class. `@EnableAutoConfiguration` is the one that actually triggers Spring Boot's auto-configuration mechanism — it scans `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` and conditionally activates configuration classes based on what's on the classpath, which we'll get into later. `@ComponentScan` triggers component scanning starting from the annotated class's own package and sub-packages, which is exactly why the conventional advice is to put your `@SpringBootApplication`-annotated main class in your project's root package — scanning starts there and covers everything beneath it.
 
-Nothing about `@SpringBootApplication` is magic beyond combining these three — you could apply all three annotations individually yourself and get identical behavior; it exists purely to avoid needing to remember and apply all three separately on every Spring Boot application's entry point class."
+Nothing about `@SpringBootApplication` is magic beyond combining these three. You could apply all three individually yourself and get identical behavior. It exists purely so you don't have to remember and apply all three separately on every entry point class."
 
 **Code:**
 
@@ -256,7 +256,7 @@ public class MyApplicationExplicit { /* ... */ }
 
 **Follow-up:**
 
-I'd bring up the practical consequence of `@ComponentScan`'s default "starts from this package" behavior: a class outside the main application class's package tree (or a sub-package of a different top-level package) simply won't be found by default component scanning, which is a genuinely common source of "why isn't my bean being created" confusion — the fix is either moving the main class to a true root package, or explicitly widening `@ComponentScan`'s `basePackages`, which ties directly into the component-scanning-problems question covered later in this guide.
+The practical consequence of `@ComponentScan`'s "starts from this package" default: a class outside the main application class's package tree simply won't be found by default component scanning. That's a genuinely common source of "why isn't my bean being created" confusion. The fix is either moving the main class to a true root package, or explicitly widening `@ComponentScan`'s `basePackages` — which ties directly into the component-scanning-problems question later in this guide.
 
 **Source:** [Spring Boot Reference — `@SpringBootApplication`](https://docs.spring.io/spring-boot/reference/using/using-the-springbootapplication-annotation.html)
 
@@ -266,9 +266,9 @@ I'd bring up the practical consequence of `@ComponentScan`'s default "starts fro
 
 **Answer:**
 
-"Both configure the same thing — externalized application settings Spring Boot reads at startup — just in different file formats. `application.properties` uses flat `key=value` pairs, one setting per line, with dotted keys expressing hierarchy (`server.port=8080`, `spring.datasource.url=...`). `application.yml` uses YAML's nested-indentation structure to express the same hierarchy visually (`server:` on one line, `port: 8080` indented beneath it), which becomes noticeably more readable once configuration gets deep or repetitive, and YAML natively supports lists and more complex nested structures more cleanly than properties' flat dotted-key syntax can.
+"Both configure the same thing — externalized application settings Spring Boot reads at startup — just in different file formats. `application.properties` uses flat `key=value` pairs, one setting per line, with dotted keys expressing hierarchy (`server.port=8080`, `spring.datasource.url=...`). `application.yml` uses YAML's nested indentation to express the same hierarchy visually — `server:` on one line, `port: 8080` indented beneath it. That gets noticeably more readable once configuration gets deep or repetitive, and YAML natively handles lists and nested structures more cleanly than properties' flat dotted-key syntax can.
 
-Functionally, Spring Boot treats them as equivalent — both get parsed into the same underlying `Environment` abstraction, and a project can even mix both (though doing so for the *same* keys is confusing and worth avoiding). The choice is almost entirely a readability/preference one, though YAML has a real sharp edge properties doesn't: YAML's indentation is syntactically significant, so a misaligned space silently changes the structure rather than throwing an obvious parse error."
+Functionally, Spring Boot treats them as equivalent — both parse into the same underlying `Environment` abstraction, and a project can even mix both, though doing that for the *same* keys is confusing and worth avoiding. The choice is mostly a readability preference, though YAML has one sharp edge properties doesn't: its indentation is syntactically significant, so a misaligned space silently changes the structure instead of throwing an obvious parse error."
 
 **Code:**
 
@@ -291,7 +291,7 @@ spring:
 
 **Follow-up:**
 
-I'd mention that YAML's cleaner support for **profile-specific sections within a single file** (`---` document separators with `spring.config.activate.on-profile:`) is a genuine practical advantage over maintaining separate `application-{profile}.properties` files per profile — for a project with several profiles and a lot of profile-specific overrides, this can meaningfully reduce file sprawl, which is often the deciding factor teams actually cite when choosing YAML over properties beyond simple readability preference.
+YAML's cleaner support for **profile-specific sections within a single file** — `---` document separators with `spring.config.activate.on-profile:` — is a genuine practical advantage over maintaining separate `application-{profile}.properties` files per profile. For a project with several profiles and a lot of profile-specific overrides, that can meaningfully cut down file sprawl, and it's often the actual deciding factor teams cite when choosing YAML, beyond simple readability preference.
 
 **Source:** [Spring Boot Reference — Externalized Configuration](https://docs.spring.io/spring-boot/reference/features/external-config.html)
 
@@ -303,9 +303,9 @@ I'd mention that YAML's cleaner support for **profile-specific sections within a
 
 **Answer:**
 
-"A bean's **scope** controls how many instances of it Spring creates and how their lifecycle relates to something else (the application, a request, a session). **Singleton** is the default: exactly one instance per `ApplicationContext`, created once (eagerly, at startup, unless explicitly marked lazy) and shared by every part of the application that injects it — this is why singleton-bean thread safety, covered later in this guide, is a real concern: the same instance is genuinely shared across concurrent requests. **Prototype** creates a brand-new instance every single time the bean is requested/injected — the right scope for genuinely stateful, non-shareable objects, though Spring does *not* manage a prototype bean's full lifecycle the way it does a singleton's (no automatic destruction callback, for instance).
+"A bean's **scope** controls how many instances Spring creates and how their lifecycle relates to something else — the application, a request, a session. **Singleton** is the default: exactly one instance per `ApplicationContext`, created once (eagerly, at startup, unless marked lazy) and shared by everything that injects it. That's why singleton-bean thread safety, covered later, is a real concern — the same instance is genuinely shared across concurrent requests. **Prototype** creates a brand-new instance every time the bean is requested or injected. It's the right scope for genuinely stateful, non-shareable objects, though Spring doesn't manage a prototype bean's full lifecycle the way it does a singleton's — no automatic destruction callback, for instance.
 
-**Request** and **session** scopes (web applications only) create one instance per HTTP request or per HTTP session respectively — useful for holding request-specific or session-specific state as if it were a regular injected bean, without the class itself having to manually track 'which request/session am I currently serving.'"
+**Request** and **session** scopes, web applications only, create one instance per HTTP request or per HTTP session. They're useful for holding request- or session-specific state as if it were a regular injected bean, without the class having to track 'which request or session am I serving right now' itself."
 
 **Code:**
 
@@ -324,7 +324,7 @@ class RequestContext { /* one instance per HTTP request */ }
 
 **Follow-up:**
 
-I'd flag the subtlety of injecting a narrower-scoped bean (prototype/request) into a singleton — a singleton is only ever constructed once, so a plain injected reference to a prototype bean would get frozen at whatever instance existed at singleton-construction time, defeating the whole point of "a new one each time." The fix is a **scoped proxy** (the `proxyMode` attribute above), which injects a proxy that resolves to the correct current instance on every actual method call, not just once at injection time — a real, non-obvious gotcha worth knowing before it causes a confusing bug.
+There's a real gotcha in injecting a narrower-scoped bean (prototype/request) into a singleton. A singleton is only ever constructed once, so a plain injected reference to a prototype bean would get frozen at whatever instance existed at singleton-construction time — defeating the whole point of "a new one each time." The fix is a **scoped proxy** (the `proxyMode` attribute above), which injects a proxy that resolves to the correct current instance on every method call, not just once at injection time.
 
 **Source:** [Spring Framework Reference — Bean Scopes](https://docs.spring.io/spring-framework/reference/core/beans/factory-scopes.html)
 
@@ -334,9 +334,9 @@ I'd flag the subtlety of injecting a narrower-scoped bean (prototype/request) in
 
 **Answer:**
 
-"Both register something as a Spring-managed bean, but at different points of control. `@Component` is a class-level annotation — component scanning finds the class itself and instantiates it directly, which means it only works for classes you own and can annotate. `@Bean` is a method-level annotation inside a `@Configuration` class — the method's return value becomes the bean, and Spring calls the method to obtain the instance, which means it works for **any** object, including ones from third-party libraries you can't add an annotation to at all (you can't put `@Component` on a class from a JAR you didn't write).
+"Both register something as a Spring-managed bean, just at different points of control. `@Component` is a class-level annotation — component scanning finds the class and instantiates it directly, which only works for classes you own and can annotate. `@Bean` is a method-level annotation inside a `@Configuration` class — the method's return value becomes the bean, and Spring calls the method to get the instance. That works for **any** object, including third-party classes you can't annotate at all (you can't put `@Component` on a class from a JAR you didn't write).
 
-`@Bean` also gives you a place to run genuine construction logic — build the object with specific constructor arguments, call setup methods on it, or conditionally return different implementations — that a plain `@Component` class, discovered and instantiated automatically by scanning, doesn't offer nearly as directly."
+`@Bean` also gives you a place to run real construction logic — build the object with specific constructor arguments, call setup methods on it, or conditionally return different implementations. A plain `@Component` class, discovered and instantiated automatically by scanning, doesn't offer that nearly as directly."
 
 **Code:**
 
@@ -359,7 +359,7 @@ class AppConfig {
 
 **Follow-up:**
 
-I'd bring up that `@Bean` methods are also the natural place to express **conditional or environment-specific wiring** — returning different implementations based on a profile, a property, or plain Java logic — in a way that's much more explicit and readable than trying to force the same conditional behavior into a `@Component`-annotated class's own constructor. This is exactly the mechanism auto-configuration classes themselves use internally, just gated by `@Conditional` annotations instead of hand-written `if` logic, which is covered directly in the auto-configuration questions later in this guide.
+`@Bean` methods are also the natural place to express **conditional or environment-specific wiring** — returning different implementations based on a profile, a property, or plain Java logic — much more explicitly and readably than trying to force that same conditional behavior into a `@Component`-annotated class's own constructor. This is exactly the mechanism auto-configuration classes use internally, just gated by `@Conditional` annotations instead of hand-written `if` logic, covered directly in the auto-configuration questions later in this guide.
 
 **Source:** [Spring Framework Reference — Using the `@Bean` Annotation](https://docs.spring.io/spring-framework/reference/core/beans/java/bean-annotation.html)
 
@@ -369,9 +369,9 @@ I'd bring up that `@Bean` methods are also the natural place to express **condit
 
 **Answer:**
 
-"A **profile** is a named, logical grouping of bean definitions and configuration that's only active when that profile is explicitly enabled — the mechanism for having genuinely different wiring or settings per environment (`dev`, `test`, `prod`) without maintaining separate codebases or resorting to runtime `if` checks scattered through application code. A bean annotated `@Profile("dev")` is only registered in the `ApplicationContext` at all if the `dev` profile is active; otherwise Spring skips it entirely, as if it didn't exist.
+"A **profile** is a named, logical grouping of bean definitions and configuration that's only active when explicitly enabled. It's the mechanism for having genuinely different wiring or settings per environment — `dev`, `test`, `prod` — without maintaining separate codebases or scattering runtime `if` checks through application code. A bean annotated `@Profile("dev")` only gets registered in the `ApplicationContext` if the `dev` profile is active; otherwise Spring skips it entirely, as if it didn't exist.
 
-Profiles are activated via the `spring.profiles.active` property (an environment variable, a JVM system property, a command-line argument, or in a properties/YAML file), and profile-specific configuration files (`application-dev.properties`, or a `---`-separated YAML document with `on-profile: dev`) are automatically layered on top of the base `application.properties`/`application.yml` when that profile is active — letting you override just the settings that genuinely differ per environment, while everything else falls back to the shared base configuration."
+Profiles are activated via the `spring.profiles.active` property — an environment variable, a JVM system property, a command-line argument, or a properties/YAML setting. Profile-specific configuration files (`application-dev.properties`, or a `---`-separated YAML document with `on-profile: dev`) get automatically layered on top of the base `application.properties`/`application.yml` when that profile is active, so you only override the settings that actually differ per environment, and everything else falls back to the shared base configuration."
 
 **Code:**
 
@@ -401,7 +401,7 @@ SPRING_PROFILES_ACTIVE=prod java -jar app.jar
 
 **Follow-up:**
 
-I'd mention that multiple profiles can be active simultaneously (`spring.profiles.active=prod,metrics`), which is genuinely useful for composing orthogonal concerns (an environment profile plus a feature-toggle-style profile) rather than needing one profile per every possible combination, and that this composability is exactly why profiles are a cleaner mechanism for environment-specific wiring than a single giant `if (environment.equals("prod"))` block scattered through `@Bean` methods.
+Multiple profiles can be active at once (`spring.profiles.active=prod,metrics`), which is genuinely useful for composing orthogonal concerns — an environment profile plus a feature-toggle-style profile — instead of needing one profile per every possible combination. That composability is exactly why profiles are a cleaner mechanism for environment-specific wiring than one giant `if (environment.equals("prod"))` block scattered through `@Bean` methods.
 
 **Source:** [Spring Framework Reference — Bean Definition Profiles](https://docs.spring.io/spring-framework/reference/core/beans/environment.html#beans-definition-profiles)
 
@@ -411,9 +411,9 @@ I'd mention that multiple profiles can be active simultaneously (`spring.profile
 
 **Answer:**
 
-"`@Controller` marks a class as a Spring MVC web controller, but by default, whatever a `@Controller` method returns is treated as a **view name** — Spring resolves it to a template (Thymeleaf, JSP) to render and return as HTML, which is the traditional server-side-rendering model. To return raw data (JSON, typically) from a `@Controller` method instead, each method needs an explicit `@ResponseBody` annotation, telling Spring 'write this return value directly to the response body, don't treat it as a view name.'
+"`@Controller` marks a class as a Spring MVC web controller, but by default, whatever a `@Controller` method returns gets treated as a **view name** — Spring resolves it to a template (Thymeleaf, JSP) to render and return as HTML, the traditional server-side-rendering model. To return raw data like JSON instead, each method needs an explicit `@ResponseBody` annotation telling Spring 'write this return value directly to the response body, don't treat it as a view name.'
 
-`@RestController` is a convenience meta-annotation that combines `@Controller` and `@ResponseBody` at the *class* level — every method in a `@RestController`-annotated class behaves as if it had `@ResponseBody` on it individually, which is exactly the right default for a REST API, where essentially every endpoint returns data (JSON/XML) rather than a rendered view. In a typical Spring Boot REST API project, `@RestController` is used almost everywhere, and plain `@Controller` is reserved specifically for the rare case of actually serving rendered HTML views."
+`@RestController` is a convenience meta-annotation combining `@Controller` and `@ResponseBody` at the class level — every method in a `@RestController`-annotated class behaves as if it had `@ResponseBody` individually. That's exactly the right default for a REST API, where essentially every endpoint returns data rather than a rendered view. In a typical Spring Boot REST API project, `@RestController` is used almost everywhere, and plain `@Controller` is reserved for the rare case of actually serving rendered HTML views."
 
 **Code:**
 
@@ -439,7 +439,7 @@ class ApiController {
 
 **Follow-up:**
 
-I'd mention this maps directly onto the two fundamentally different things a web application can be built as: a traditional server-rendered application (`@Controller`, returning view names, HTML rendered server-side) versus a REST API backing a separate frontend or mobile client (`@RestController`, returning serialized data) — and that mixing both styles within the same application is completely valid (an admin UI rendered server-side alongside a JSON API for a mobile app, say), as long as each controller class uses the annotation matching what it's actually meant to return.
+This maps onto two fundamentally different things a web application can be: a traditional server-rendered app (`@Controller`, returning view names, HTML rendered server-side) versus a REST API backing a separate frontend or mobile client (`@RestController`, returning serialized data). Mixing both styles in the same application is completely valid — an admin UI rendered server-side alongside a JSON API for a mobile app, say — as long as each controller class uses the annotation matching what it's actually meant to return.
 
 **Source:** [Spring Framework Reference — `@RestController`](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-requestmapping.html)
 
@@ -449,9 +449,9 @@ I'd mention this maps directly onto the two fundamentally different things a web
 
 **Answer:**
 
-"`@Value(\"${some.property}\")` injects a **single** externalized property value directly into a field or constructor parameter — quick and direct for a one-off value a class needs, and it supports a default via `@Value(\"${some.property:defaultValue}\")` if the property might be absent. `@ConfigurationProperties` takes a different, more structural approach: it binds an entire **group** of related properties (everything under a common prefix) onto the fields of a dedicated, typically immutable configuration class in one shot, rather than injecting each individual value one `@Value` at a time scattered across whatever classes happen to need them.
+"`@Value(\"${some.property}\")` injects a **single** externalized property value directly into a field or constructor parameter. It's quick and direct for a one-off value a class needs, and supports a default via `@Value(\"${some.property:defaultValue}\")` if the property might be absent. `@ConfigurationProperties` takes a different, more structural approach: it binds an entire **group** of related properties, everything under a common prefix, onto the fields of a dedicated, typically immutable configuration class in one shot, instead of injecting each value one `@Value` at a time scattered across whatever classes need them.
 
-For more than a small handful of related settings, `@ConfigurationProperties` is generally the better choice: it's type-safe (validated at binding time, not just at first use), supports nested structure and validation annotations (`@NotNull`, `@Min`) directly on the properties class, and keeps a whole logical group of configuration in one place instead of spread across every class that happens to need one piece of it — `@Value` is better reserved for a genuinely standalone, single value that doesn't belong to any larger configuration group."
+For more than a small handful of related settings, `@ConfigurationProperties` is generally the better choice. It's type-safe — validated at binding time, not just at first use — supports nested structure and validation annotations like `@NotNull`/`@Min` directly on the properties class, and keeps a whole logical group of configuration in one place instead of spread across every class that needs one piece of it. `@Value` is better reserved for a genuinely standalone value that doesn't belong to any larger configuration group."
 
 **Code:**
 
@@ -472,7 +472,7 @@ record EmailConfig(String fromAddress, int retryCount, Duration timeout) {}
 
 **Follow-up:**
 
-I'd bring up that `@ConfigurationProperties` classes are genuinely testable in isolation — since they're just plain objects (a `record` or a class with fields), you can construct one directly with test values in a unit test with zero Spring context involved, whereas testing `@Value`-injected fields properly generally requires actually starting a (at least partial) Spring context to exercise the property-resolution and injection machinery, which is a real, practical reason beyond type-safety to prefer `@ConfigurationProperties` once a configuration group grows past one or two values.
+`@ConfigurationProperties` classes are also genuinely testable in isolation. Since they're just plain objects — a `record` or a class with fields — you can construct one directly with test values in a unit test, zero Spring context involved. Testing `@Value`-injected fields properly generally requires starting at least a partial Spring context to exercise the property-resolution and injection machinery. That's a real, practical reason beyond type-safety to prefer `@ConfigurationProperties` once a configuration group grows past one or two values.
 
 **Source:** [Spring Boot Reference — Type-Safe Configuration Properties](https://docs.spring.io/spring-boot/reference/features/external-config.html#features.external-config.typesafe-configuration-properties)
 
@@ -484,9 +484,9 @@ I'd bring up that `@ConfigurationProperties` classes are genuinely testable in i
 
 **Answer:**
 
-"At a high level, `run()` does roughly seven things in sequence. First, it creates a `SpringApplication` instance and infers the application type (servlet, reactive, or none) from the classpath. Second, it fires the `ApplicationStartingEvent` and loads any configured `SpringApplicationRunListener`s. Third, it prepares the `Environment` — resolving property sources from `application.properties`/`.yml`, command-line args, environment variables, and profile-specific overrides, in a well-defined precedence order (question 21). Fourth, it creates the appropriate `ApplicationContext` implementation for the inferred application type. Fifth, it 'prepares' the context — registering the primary source (usually the `@SpringBootApplication`-annotated class) as a bean definition, and applying any `ApplicationContextInitializer`s. Sixth, it calls `context.refresh()` — this is the actual heavy lifting: component scanning, bean definition registration, `BeanFactoryPostProcessor` invocation, bean instantiation and dependency injection, `BeanPostProcessor` application, and finally initialization callbacks (all covered in question 15). Seventh, after refresh completes, it runs any `ApplicationRunner`/`CommandLineRunner` beans and fires `ApplicationReadyEvent` — the signal that the application is fully up.
+"At a high level, `run()` does roughly seven things in sequence. First, it creates a `SpringApplication` instance and infers the application type — servlet, reactive, or none — from the classpath. Second, it fires the `ApplicationStartingEvent` and loads any configured `SpringApplicationRunListener`s. Third, it prepares the `Environment`, resolving property sources from `application.properties`/`.yml`, command-line args, environment variables, and profile-specific overrides, in a well-defined precedence order (question 21). Fourth, it creates the appropriate `ApplicationContext` implementation for the inferred application type. Fifth, it 'prepares' the context — registering the primary source (usually the `@SpringBootApplication`-annotated class) as a bean definition, and applying any `ApplicationContextInitializer`s. Sixth, it calls `context.refresh()`. This is the actual heavy lifting: component scanning, bean definition registration, `BeanFactoryPostProcessor` invocation, bean instantiation and dependency injection, `BeanPostProcessor` application, and finally initialization callbacks, all covered in question 15. Seventh, once refresh completes, it runs any `ApplicationRunner`/`CommandLineRunner` beans and fires `ApplicationReadyEvent` — the signal that the application is fully up.
 
-The `context.refresh()` call in step six is genuinely the core of the whole thing — everything before it is setup, everything after it is 'the app is ready, do post-startup work.'"
+Step six's `context.refresh()` call is genuinely the core of the whole thing. Everything before it is setup; everything after it is 'the app is ready, do post-startup work.'"
 
 **Code:**
 
@@ -532,7 +532,13 @@ class LateStartupEventLogger {
 
 **Follow-up:**
 
-I'd bring up `ApplicationContextInitializer` and `SpringApplicationRunListener` as the two lesser-known extension points that platform/infra teams actually use to inject cross-cutting setup (registering property sources from a secrets manager, wiring up early-startup metrics) before the bulk of user bean definitions even load — these run earlier than almost any `@Configuration` class could, which matters for anything that needs to influence the `Environment` itself. I'd also flag the pre-context-vs-post-context split explicitly: `ApplicationStartingEvent`, `ApplicationEnvironmentPreparedEvent`, `ApplicationContextInitializedEvent`, and `ApplicationPreparedEvent` all fire before or during context setup — before the container has instantiated any of your beans — so they require `SpringApplication.addListeners(...)` or a `spring.factories`/`ApplicationListener` registration, not `@EventListener` on a `@Component`. Events from `ContextRefreshedEvent` onward (`ApplicationStartedEvent`, `ApplicationReadyEvent`) are safe to handle with an ordinary managed bean, because by that point the context has successfully refreshed and the bean exists to receive them. `ApplicationFailedEvent` is the exception to that pattern, not a member of the safe group: Spring Boot documents it simply as "sent if there is an exception on startup," with no guarantee about *which* stage failed — a failure during environment preparation or context initialization happens before your `@Component` beans are ever created, so a listener defined as an ordinary managed bean simply never gets registered in time to receive it. Reliable failure handling needs a listener registered directly with `SpringApplication.addListeners(...)` (or the `spring.factories`/`ApplicationListener` mechanism), the same as the pre-context events, not an `@EventListener` on a `@Component`. I'd also mention that `context.refresh()` internally follows the exact `AbstractApplicationContext.refresh()` template method from plain Spring — Boot doesn't replace the core container lifecycle, it wraps convention and auto-configuration around the same context refresh mechanism that's existed since Spring 1.0, which is worth knowing so this doesn't feel like two unrelated systems.
+Two lesser-known extension points worth knowing: `ApplicationContextInitializer` and `SpringApplicationRunListener`. Platform/infra teams use these to inject cross-cutting setup — registering property sources from a secrets manager, wiring up early-startup metrics — before the bulk of user bean definitions even load. They run earlier than almost any `@Configuration` class could, which matters for anything that needs to influence the `Environment` itself.
+
+The pre-context vs. post-context split is worth being precise about too. `ApplicationStartingEvent`, `ApplicationEnvironmentPreparedEvent`, `ApplicationContextInitializedEvent`, and `ApplicationPreparedEvent` all fire before or during context setup, before the container has instantiated any of your beans — so they need `SpringApplication.addListeners(...)` or a `spring.factories`/`ApplicationListener` registration, not `@EventListener` on a `@Component`. Events from `ContextRefreshedEvent` onward (`ApplicationStartedEvent`, `ApplicationReadyEvent`) are safe to handle with an ordinary managed bean, since by that point the context has successfully refreshed and the bean exists to receive them.
+
+`ApplicationFailedEvent` is the exception, not a member of that safe group. Spring Boot documents it simply as 'sent if there is an exception on startup,' with no guarantee about *which* stage failed — a failure during environment preparation or context initialization happens before your `@Component` beans are ever created, so a listener defined as an ordinary managed bean never gets registered in time to receive it. Reliable failure handling needs a listener registered directly with `SpringApplication.addListeners(...)` (or the `spring.factories`/`ApplicationListener` mechanism), same as the pre-context events.
+
+One more thing worth knowing: `context.refresh()` internally follows the exact `AbstractApplicationContext.refresh()` template method from plain Spring. Boot doesn't replace the core container lifecycle — it wraps convention and auto-configuration around the same context refresh mechanism that's existed since Spring 1.0. Good to know so this doesn't feel like two unrelated systems.
 
 **Source:** [`SpringApplication` Javadoc](https://docs.spring.io/spring-boot/api/java/org/springframework/boot/SpringApplication.html), [Spring Boot Reference — Application Events and Listeners](https://docs.spring.io/spring-boot/reference/features/spring-application.html#features.spring-application.application-events-and-listeners)
 
@@ -542,9 +548,9 @@ I'd bring up `ApplicationContextInitializer` and `SpringApplicationRunListener` 
 
 **Answer:**
 
-"`@ComponentScan` (implicitly included via `@SpringBootApplication`) tells Spring to scan a base package (by default, the package of the main application class and everything beneath it) for classes annotated with `@Component` or one of its meta-annotated stereotypes — `@Service`, `@Repository`, `@Controller`, `@Configuration`. Under the hood, this uses `ClassPathBeanDefinitionScanner`, which walks the classpath using `ClassPathScanningCandidateComponentProvider`, reading class metadata (via ASM bytecode reading, not full class loading, for efficiency) to find annotation matches without needing to actually load every class on the classpath into the JVM just to check its annotations.
+"`@ComponentScan`, implicitly included via `@SpringBootApplication`, tells Spring to scan a base package — by default, the main application class's own package and everything beneath it — for classes annotated with `@Component` or one of its meta-annotated stereotypes like `@Service`, `@Repository`, `@Controller`, `@Configuration`. Under the hood this uses `ClassPathBeanDefinitionScanner`, which walks the classpath via `ClassPathScanningCandidateComponentProvider`, reading class metadata through ASM bytecode reading rather than full class loading. That way it can find annotation matches without loading every class on the classpath into the JVM just to check its annotations.
 
-Once a candidate is found, its metadata gets turned into a `BeanDefinition` — not an actual bean instance yet, just a recipe describing the bean (its class, its scope, its dependencies, its lazy/primary/qualifier metadata) — and registered into the `BeanFactory`'s definition registry. Actual instantiation happens later, during the `refresh()` sequence's bean-creation phase (question 15) — component scanning's whole job is populating the registry of *definitions*, not creating objects."
+Once a candidate is found, its metadata gets turned into a `BeanDefinition` — not an actual bean instance yet, just a recipe describing the bean's class, scope, dependencies, and lazy/primary/qualifier metadata — and registered into the `BeanFactory`'s definition registry. Actual instantiation happens later, during the `refresh()` sequence's bean-creation phase (question 15). Component scanning's whole job is populating the registry of *definitions*, not creating objects."
 
 **Code:**
 

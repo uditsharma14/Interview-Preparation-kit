@@ -49,13 +49,13 @@ How to use this: each question has a **core answer** (100–180 words — roughl
 
 **Core answer:**
 
-"The Java Collections Framework is the standard library's unified set of interfaces and implementations for storing and manipulating groups of objects — before it existed, every library had its own incompatible ad hoc container types. The core interfaces form a hierarchy: `Collection` is the root, extended by `List` (ordered, allows duplicates, indexed access — `ArrayList`, `LinkedList`), `Set` (no duplicates, membership-focused — `HashSet`, `TreeSet`, `LinkedHashSet`), and `Queue`/`Deque` (ordered for processing, head/tail access — `ArrayDeque`, `PriorityQueue`). `Map` is a genuinely separate hierarchy — not a `Collection` at all, since it stores key-value pairs rather than single elements, though `keySet()`, `values()`, and `entrySet()` each return a `Collection` view over it.
+"The Java Collections Framework is the standard library's unified set of interfaces and implementations for storing and manipulating groups of objects. Before it existed, every library had its own incompatible container types. The core interfaces form a hierarchy: `Collection` is the root, extended by `List` (ordered, allows duplicates, indexed access — `ArrayList`, `LinkedList`), `Set` (no duplicates, membership-focused — `HashSet`, `TreeSet`, `LinkedHashSet`), and `Queue`/`Deque` (ordered for processing, head/tail access — `ArrayDeque`, `PriorityQueue`). `Map` is a separate hierarchy on its own — not a `Collection` at all, since it stores key-value pairs rather than single elements, though `keySet()`, `values()`, and `entrySet()` each return a `Collection` view over it.
 
-Every concrete class implements one of these interfaces, which is why code should almost always be written against the interface (`List<String> list = new ArrayList<>();`), not the concrete type — it keeps the implementation swappable without touching every call site."
+Every concrete class implements one of these interfaces. That's why code should almost always be written against the interface (`List<String> list = new ArrayList<>();`) rather than the concrete type — it keeps the implementation swappable without touching every call site."
 
 **Staff-level extension:**
 
-This interface-over-implementation discipline pays off the first time a performance problem forces a swap — discovering `ArrayList`'s O(n) middle-insertion cost is a bottleneck and switching from one `List` implementation to another (`ArrayList` to `LinkedList`, say) is a one-line change if the rest of the code only ever referenced `List`, and a much bigger refactor if it referenced `ArrayList` directly everywhere. Switching to `ArrayDeque` for queue-like access is a different case worth being precise about: `ArrayDeque` doesn't implement `List` at all — it implements `Deque`/`Queue` — so that swap is only a one-line change if the call sites were already typed as `Queue`/`Deque`; a `List`-typed call site using indexed access (`get(i)`, `set(i, v)`) has no equivalent on `ArrayDeque` and needs real code changes, not just a new `List` implementation. The same reasoning applies to testing: substituting a different in-memory implementation is trivial against an interface, awkward against a concrete class.
+This interface-over-implementation habit pays off the first time a performance problem forces a swap. Say `ArrayList`'s O(n) middle-insertion cost turns out to be a bottleneck: switching to a different `List` implementation is a one-line change if the rest of the code only ever referenced `List`, and a much bigger refactor if it referenced `ArrayList` directly everywhere. Switching to `ArrayDeque` for queue-like access is a bit different: `ArrayDeque` doesn't implement `List` at all, it implements `Deque`/`Queue`, so that swap is only a one-line change if the call sites were already typed as `Queue`/`Deque`. A `List`-typed call site using indexed access (`get(i)`, `set(i, v)`) has no equivalent on `ArrayDeque`, so it needs real code changes, not just a new `List` implementation. The same reasoning applies to testing — substituting a different in-memory implementation is easy against an interface, awkward against a concrete class.
 
 **Example:**
 
@@ -84,13 +84,13 @@ for (Map.Entry<String, Integer> entry : scores.entrySet()) {
 
 **Core answer:**
 
-"`List` is an ordered collection that allows duplicates and gives indexed access — you can ask for 'the element at position 3,' and the same value can appear multiple times. `Set` is the mathematical-set abstraction: no duplicates — adding an element already present is a no-op — though how 'already present' gets decided depends on the implementation: `HashSet`/`LinkedHashSet` decide it via `equals()`/`hashCode()`, while `TreeSet` instead decides it via natural ordering or a supplied `Comparator`, treating two elements as the same whenever `compareTo()` (or `compare()`) returns zero, independent of `equals()`. Most implementations don't guarantee any particular iteration order (`HashSet`), though `LinkedHashSet` preserves insertion order and `TreeSet` keeps everything sorted. `Map` associates unique keys with values — a lookup structure, not a sequence: you retrieve by key, not by position.
+"`List` is an ordered collection that allows duplicates and gives indexed access — you can ask for 'the element at position 3,' and the same value can appear multiple times. `Set` is the mathematical-set abstraction: no duplicates, adding an element already present is a no-op. How 'already present' gets decided depends on the implementation: `HashSet`/`LinkedHashSet` decide it via `equals()`/`hashCode()`, while `TreeSet` decides it via natural ordering or a supplied `Comparator` — two elements count as the same whenever `compareTo()` (or `compare()`) returns zero, independent of `equals()`. Most implementations don't guarantee any particular iteration order (`HashSet`), though `LinkedHashSet` preserves insertion order and `TreeSet` keeps everything sorted. `Map` associates unique keys with values — a lookup structure, not a sequence, so you retrieve by key, not by position.
 
-The practical decision is about the *access pattern* the code actually needs: reaching for a `List` when the real requirement is 'no duplicates, fast membership check' means writing manual duplicate-checking code a `Set` already gives for free; using parallel `List`s of keys and values when the requirement is 'look this up by identifier' means writing manual linear search a `HashMap` already solves in expected average O(1) — that's an average-case, hash-based guarantee specific to `HashMap`/`HashSet`, not something every `Map`/`Set` implementation gives; `TreeMap`, for instance, is O(log n) per operation, covered later in this guide."
+The practical decision comes down to the *access pattern* the code actually needs. Reaching for a `List` when the real requirement is 'no duplicates, fast membership check' means writing manual duplicate-checking code a `Set` already gives for free. Using parallel `List`s of keys and values when the requirement is 'look this up by identifier' means writing manual linear search a `HashMap` already solves in expected average O(1) — though that's specific to `HashMap`/`HashSet`, not a guarantee every `Map`/`Set` gives; `TreeMap`, for instance, is O(log n) per operation, covered later in this guide."
 
 **Staff-level extension:**
 
-The "wrong container for the access pattern" mistake shows up constantly in real code review: a `List<User>` searched linearly by `id` on every request is a `Map<Long, User>` nobody built, and it's an O(n) cost hiding in what looks like simple code. The fix is almost always mechanical once spotted — the deeper skill is recognizing the pattern (repeated linear scans keyed by some field) as a container-choice smell in the first place, not a performance problem to solve later.
+The "wrong container for the access pattern" mistake shows up constantly in real code review — a `List<User>` searched linearly by `id` on every request is a `Map<Long, User>` nobody built, and it's an O(n) cost hiding in what looks like simple code. The fix is almost always mechanical once spotted; the harder skill is recognizing the pattern in the first place — repeated linear scans keyed by some field are a container-choice smell, not a performance problem to solve later.
 
 **Example:**
 
@@ -114,13 +114,13 @@ tagCounts.merge("java", 1, Integer::sum);
 
 **Core answer:**
 
-"The contract, from `Object`'s Javadoc: if two objects are equal according to `equals()`, they **must** return the same `hashCode()`; the reverse isn't required — two unequal objects can share a hash code, which is a collision, not a bug. Every hash-based collection (`HashMap`, `HashSet`) relies on this contract structurally: it uses `hashCode()` to pick a bucket and `equals()` to confirm an exact match within that bucket.
+"The contract, from `Object`'s Javadoc: if two objects are equal according to `equals()`, they **must** return the same `hashCode()`. The reverse isn't required — two unequal objects can share a hash code, which is just a collision, not a bug. Every hash-based collection (`HashMap`, `HashSet`) relies on this contract: it uses `hashCode()` to pick a bucket and `equals()` to confirm an exact match within that bucket.
 
-If you override `equals()` but forget `hashCode()` (or vice versa), the default `Object` identity-based `hashCode()` is still in effect, which almost certainly disagrees with your custom `equals()` — two objects your code considers equal can land in different buckets, so a `HashSet` silently accepts both as 'distinct,' and `map.get(key)` fails to find an entry that a logically-equal key was used to insert, because the lookup hash doesn't match the bucket the entry actually lives in."
+If you override `equals()` but forget `hashCode()` (or vice versa), the default `Object` identity-based `hashCode()` stays in effect, and it almost certainly disagrees with your custom `equals()`. Two objects your code considers equal can land in different buckets, so a `HashSet` silently accepts both as 'distinct,' and `map.get(key)` fails to find an entry that a logically-equal key was used to insert — the lookup hash doesn't match the bucket the entry actually lives in."
 
 **Staff-level extension:**
 
-This is exactly why IDEs and `record` types generate `equals()` and `hashCode()` together, never one without the other — it's protecting against a contract violation that produces genuinely confusing bugs. The other half of the contract worth knowing: `hashCode()` must be *consistent* — calling it multiple times on the same object, with no mutation of the equals-relevant fields in between, must return the same value every time, exactly the property broken by the mutable-key `HashMap` bug covered later in this guide.
+This is why IDEs and `record` types generate `equals()` and `hashCode()` together, never one without the other — it protects against a contract violation that produces genuinely confusing bugs. The other half of the contract: `hashCode()` must be *consistent*. Calling it multiple times on the same object, with no mutation of the equals-relevant fields in between, must return the same value every time — exactly the property the mutable-key `HashMap` bug covered later in this guide breaks.
 
 **Example:**
 
@@ -155,11 +155,11 @@ System.out.println(points.contains(new Point(1, 2))); // false, without hashCode
 
 **Core answer:**
 
-"All three implement `Set` — no duplicates — but differ in how a duplicate is decided, ordering, and performance. `HashSet` is backed by a `HashMap` internally, decides duplicates via `hashCode()`/`equals()`, gives expected average O(1) add/remove/contains, and makes zero ordering guarantee — iteration order can look arbitrary and can change across JDK versions or resizes. `LinkedHashSet` extends `HashSet`, so it decides duplicates the same `hashCode()`/`equals()` way, but additionally threads every entry through a doubly-linked list (the same mechanism `LinkedHashMap` uses), so iteration order is predictable — insertion order — at a small memory and performance cost over plain `HashSet`. `TreeSet` is different in kind, not just performance: it's backed by a red-black tree (the same structure `TreeMap` uses), decides duplicates via natural ordering or a supplied `Comparator` — two elements are the same whenever `compareTo()`/`compare()` returns zero, regardless of what `equals()` would say — keeps elements sorted at all times, and pays O(log n) for add/remove/contains instead of `HashSet`'s average O(1), in exchange for that ordering and range operations (`headSet`, `tailSet`, `ceiling`, `floor`) the other two can't offer at all."
+"All three implement `Set` — no duplicates — but they differ in how a duplicate is decided, ordering, and performance. `HashSet` is backed by a `HashMap` internally, decides duplicates via `hashCode()`/`equals()`, gives expected average O(1) add/remove/contains, and makes no ordering guarantee at all — iteration order can look arbitrary and can change across JDK versions or resizes. `LinkedHashSet` extends `HashSet`, so it decides duplicates the same way, but it also threads every entry through a doubly-linked list (the same mechanism `LinkedHashMap` uses), so iteration order is predictable — insertion order — at a small memory and performance cost over plain `HashSet`. `TreeSet` is different in kind, not just performance: it's backed by a red-black tree (the same structure `TreeMap` uses), decides duplicates via natural ordering or a supplied `Comparator` — two elements are the same whenever `compareTo()`/`compare()` returns zero, regardless of what `equals()` would say — keeps elements sorted at all times, and pays O(log n) for add/remove/contains instead of `HashSet`'s average O(1). In exchange, it gets that ordering plus range operations (`headSet`, `tailSet`, `ceiling`, `floor`) the other two can't offer at all."
 
 **Staff-level extension:**
 
-The decision is almost entirely about what the *iteration order* actually needs to be, since correctness is identical across all three. Default to `HashSet` unless something specifically needs order — reaching for `LinkedHashSet` or `TreeSet` "just in case" pays a real, permanent cost for an ordering guarantee the code never uses. `TreeSet` requires elements to be mutually comparable, and if `compareTo()`/`equals()` are inconsistent, it silently drops what `equals()` would consider distinct elements — exactly the pitfall the `TreeMap` question later in this guide covers in depth.
+The decision is almost entirely about what the *iteration order* actually needs to be, since correctness is identical across all three. Default to `HashSet` unless something specifically needs order — reaching for `LinkedHashSet` or `TreeSet` "just in case" pays a real, permanent cost for an ordering guarantee the code never uses. `TreeSet` also requires elements to be mutually comparable, and if `compareTo()`/`equals()` are inconsistent, it silently drops what `equals()` would consider distinct elements — the same pitfall the `TreeMap` question later in this guide covers in depth.
 
 **Example:**
 
@@ -186,13 +186,13 @@ System.out.println(treeSet);       // sorted order: [apple, banana, cherry]
 
 **Core answer:**
 
-"`Iterator` is the standard interface for walking through a collection one element at a time without exposing its internal structure — `hasNext()` checks if there's another element, `next()` returns it and advances, and `remove()` removes the *last element returned by `next()`* from the underlying collection. It's the only safe way to remove elements from most collections while iterating: calling `list.remove(item)` directly inside a for-each loop over that same list throws `ConcurrentModificationException`, because the enhanced for-loop uses an `Iterator` internally, and structurally modifying the collection through any path other than that same iterator's own `remove()` invalidates it.
+"`Iterator` is the standard interface for walking through a collection one element at a time without exposing its internal structure — `hasNext()` checks if there's another element, `next()` returns it and advances, and `remove()` removes the *last element returned by `next()`* from the underlying collection. It's the only safe way to remove elements from most collections while iterating. Calling `list.remove(item)` directly inside a for-each loop over that same list throws `ConcurrentModificationException`, because the enhanced for-loop uses an `Iterator` internally, and modifying the collection through any path other than that same iterator's own `remove()` invalidates it.
 
-Going through `iterator.remove()` instead works because the iterator updates its own internal bookkeeping as part of the removal, so it never gets out of sync with the collection it's walking."
+Going through `iterator.remove()` works instead because the iterator updates its own internal bookkeeping as part of the removal, so it never gets out of sync with the collection it's walking."
 
 **Staff-level extension:**
 
-The alternative that avoids the whole issue: collect the items to remove into a separate list during iteration, then call `removeAll()` — or the collection's own `removeIf()`, added in Java 8, which does exactly this internally and is usually the cleanest option — after the loop finishes. That's useful when the removal decision needs information gathered across multiple elements, not just the current one, where a single-pass `iterator.remove()` isn't expressive enough.
+There's an alternative that avoids the whole issue: collect the items to remove into a separate list during iteration, then call `removeAll()` after the loop finishes — or use the collection's own `removeIf()`, added in Java 8, which does exactly this internally and is usually the cleanest option. That's useful when the removal decision needs information gathered across multiple elements, not just the current one, where a single-pass `iterator.remove()` isn't expressive enough.
 
 **Example:**
 
@@ -227,11 +227,11 @@ numbers.removeIf(n -> n % 2 == 0);
 
 **Core answer:**
 
-"Three main ways, in order of how commonly they're actually the right choice. `entrySet()` iteration is the standard, most efficient approach when you need both key and value — it returns a `Set<Map.Entry<K,V>>` view over the map, giving you both in a single pass with no repeated lookups. `keySet()` iteration, followed by `map.get(key)` inside the loop, is a common but strictly worse pattern when you need the value too — it does a second hash lookup per entry that `entrySet()` avoids entirely, since the entry set already carries the value alongside the key. `forEach((key, value) -> ...)`, added in Java 8, is the most concise for a simple per-entry action, and is functionally equivalent to iterating `entrySet()` under the hood."
+"There are three main ways, in order of how commonly they're actually the right choice. `entrySet()` iteration is the standard, most efficient approach when you need both key and value — it returns a `Set<Map.Entry<K,V>>` view over the map, giving you both in a single pass with no repeated lookups. `keySet()` iteration followed by `map.get(key)` inside the loop is a common but strictly worse pattern when you need the value too — it does a second hash lookup per entry that `entrySet()` avoids entirely, since the entry set already carries the value alongside the key. `forEach((key, value) -> ...)`, added in Java 8, is the most concise option for a simple per-entry action, and it's functionally equivalent to iterating `entrySet()` under the hood."
 
 **Staff-level extension:**
 
-The `keySet()` + `get()` anti-pattern is worth calling out explicitly because it's genuinely common in code that started as "just iterate the keys" and later grew a need for the value too, without anyone going back to switch to `entrySet()` — on a small map the extra lookups are invisible, but on a hot path over a large map, doubling the number of hash computations and bucket walks is a real, measurable, and completely avoidable cost.
+The `keySet()` + `get()` anti-pattern is worth calling out because it's genuinely common — code that started as "just iterate the keys" grows a need for the value too, and nobody goes back to switch to `entrySet()`. On a small map the extra lookups are invisible, but on a hot path over a large map, doubling the number of hash computations and bucket walks is a real, avoidable cost.
 
 **Example:**
 
@@ -265,13 +265,13 @@ scores.forEach((key, value) -> System.out.println(key + " -> " + value));
 
 **Core answer:**
 
-"`Comparable<T>` is implemented *by the class itself* — it defines a single 'natural ordering' via `compareTo()`, baked into the class, used by default whenever the class is sorted (`Collections.sort()`, `TreeSet`, `TreeMap`) without an explicit ordering supplied. `Comparator<T>` is a *separate* object that defines an ordering externally to the class, passed in wherever a specific order is needed — useful when a class has no single obvious natural order, when you don't own the class's source to add `Comparable` to it, or when you need multiple different orderings of the same type in different contexts.
+"`Comparable<T>` is implemented *by the class itself* — it defines a single 'natural ordering' via `compareTo()`, baked into the class and used by default whenever the class is sorted (`Collections.sort()`, `TreeSet`, `TreeMap`) without an explicit ordering supplied. `Comparator<T>` is a *separate* object that defines an ordering externally to the class, passed in wherever a specific order is needed. It's useful when a class has no single obvious natural order, when you don't own the class's source to add `Comparable` to it, or when you need multiple different orderings of the same type in different contexts.
 
 A class can implement `Comparable` for its one natural default order and still be sorted by an entirely different `Comparator` whenever a specific call site needs something else."
 
 **Staff-level extension:**
 
-`Comparator` composition (Java 8+) is the practical reason `Comparator` usually wins over hand-writing a multi-field `compareTo()` for anything beyond a single field: `Comparator.comparing(Employee::getSalary).thenComparing(Employee::getName)` reads as a direct description of the sort priority, whereas the equivalent hand-written `compareTo()` is a chain of manual `if (result != 0) return result;` checks that's easy to get subtly wrong — especially the tie-breaking order — and harder to review at a glance.
+`Comparator` composition (Java 8+) is the practical reason `Comparator` usually wins over hand-writing a multi-field `compareTo()` for anything beyond a single field. `Comparator.comparing(Employee::getSalary).thenComparing(Employee::getName)` reads as a direct description of the sort priority, whereas the equivalent hand-written `compareTo()` is a chain of manual `if (result != 0) return result;` checks that's easy to get subtly wrong — especially the tie-breaking order — and harder to review at a glance.
 
 **Example:**
 
@@ -307,13 +307,13 @@ employees.sort(Comparator.comparingDouble((Employee e) -> e.salary).reversed()
 
 **Core answer:**
 
-"`ArrayList` is backed by a resizable array: O(1) indexed access — `get(i)` jumps straight to the memory offset — but inserting or removing from the middle is O(n), since every following element has to shift. `LinkedList` is a doubly-linked list of individually allocated nodes: inserting or removing is O(1) *once you're already at the right node* via an iterator, but `get(i)` is O(n) — there's no direct indexing, so it has to walk from the head or tail, whichever is closer.
+"`ArrayList` is backed by a resizable array: O(1) indexed access, since `get(i)` jumps straight to the memory offset, but inserting or removing from the middle is O(n) because every following element has to shift. `LinkedList` is a doubly-linked list of individually allocated nodes: inserting or removing is O(1) *once you're already at the right node* via an iterator, but `get(i)` is O(n) — there's no direct indexing, so it has to walk from the head or tail, whichever is closer.
 
-The naive takeaway — 'LinkedList for lots of insertions, ArrayList for lots of lookups' — is directionally right but incomplete: in practice, getting to the right position in a `LinkedList` in the first place is usually the dominant cost, and `ArrayList`'s contiguous memory layout gives it much better CPU cache behavior than `LinkedList`'s scattered nodes, which the fuller comparison later in this guide covers in real depth."
+The naive takeaway — 'LinkedList for lots of insertions, ArrayList for lots of lookups' — is directionally right but incomplete. In practice, getting to the right position in a `LinkedList` is usually the dominant cost, and `ArrayList`'s contiguous memory layout gives it much better CPU cache behavior than `LinkedList`'s scattered nodes. The fuller comparison later in this guide covers this in more depth."
 
 **Staff-level extension:**
 
-This is deliberately the basic version — the Staff-level comparison later in this guide covers `ArrayDeque` and `CopyOnWriteArrayList` alongside these two, and specifically explains *why* `LinkedList`'s theoretical O(1) insertion advantage rarely wins in practice on modern hardware: cache-miss cost dominates for anything but very large N, a detail worth knowing at Staff level but not essential to get this basic comparison right first.
+This is deliberately the basic version. The Staff-level comparison later in this guide covers `ArrayDeque` and `CopyOnWriteArrayList` alongside these two, and explains why `LinkedList`'s theoretical O(1) insertion advantage rarely wins in practice on modern hardware: cache-miss cost dominates for anything but very large N. Good to know at Staff level, but not essential to get this basic comparison right first.
 
 **Example:**
 
@@ -340,13 +340,13 @@ List<Integer> linkedList = new LinkedList<>();
 
 **Core answer:**
 
-"`Iterator` is the general-purpose interface every `Collection` supports: forward-only traversal, with `hasNext()`/`next()`/`remove()`. `ListIterator` is a `List`-specific extension of `Iterator` that adds real capabilities plain `Iterator` doesn't have: it can traverse **backward** as well as forward (`hasPrevious()`/`previous()`), it exposes the current index (`nextIndex()`/`previousIndex()`), and — critically — it can **modify** the list during iteration, not just remove from it: `set()` replaces the last element returned by `next()`/`previous()` in place, and `add()` inserts a new element at the iterator's current position.
+"`Iterator` is the general-purpose interface every `Collection` supports: forward-only traversal, with `hasNext()`/`next()`/`remove()`. `ListIterator` is a `List`-specific extension of `Iterator` that adds real capabilities plain `Iterator` doesn't have. It can traverse **backward** as well as forward (`hasPrevious()`/`previous()`), it exposes the current index (`nextIndex()`/`previousIndex()`), and — the important part — it can **modify** the list during iteration, not just remove from it: `set()` replaces the last element returned by `next()`/`previous()` in place, and `add()` inserts a new element at the iterator's current position.
 
-Plain `Iterator` only supports `remove()`; if the loop needs to replace or insert elements while walking the list, `ListIterator` is the only safe way to do it without triggering `ConcurrentModificationException`."
+Plain `Iterator` only supports `remove()`. If the loop needs to replace or insert elements while walking the list, `ListIterator` is the only safe way to do it without triggering `ConcurrentModificationException`."
 
 **Staff-level extension:**
 
-The practical trigger for reaching for `ListIterator` over plain `Iterator` is almost always "I need to modify the list, not just remove from it, while I'm walking it" — replacing every element matching a condition, or inserting a new element relative to the current position. Outside a `List`-specific need like that, plain `Iterator` (or the `Collection` default methods like `removeIf()`) is simpler and should stay the default.
+The practical trigger for reaching for `ListIterator` over plain `Iterator` is almost always "I need to modify the list, not just remove from it, while I'm walking it" — replacing every element matching a condition, or inserting a new element relative to the current position. Outside that kind of `List`-specific need, plain `Iterator` (or the `Collection` default methods like `removeIf()`) is simpler and should stay the default.
 
 **Example:**
 
@@ -379,11 +379,11 @@ System.out.println(names); // [alice, BOB, dave, carol]
 
 "`Queue` models FIFO (first-in-first-out) access: elements go in at the tail (`offer()`/`add()`) and come out at the head (`poll()`/`remove()`) — the right shape for task queues, breadth-first traversal, or any producer/consumer scenario where processing order should match arrival order. `Deque` ('double-ended queue') generalizes this: it supports insertion and removal at **both** ends (`addFirst()`/`addLast()`, `pollFirst()`/`pollLast()`), so it can act as a `Queue` (FIFO), a stack (LIFO, via `push()`/`pop()`, which operate on the head), or both at once.
 
-`ArrayDeque` is the standard general-purpose implementation of both interfaces — the Javadoc itself notes it's likely faster than `LinkedList` when used as a queue and faster than the legacy `Stack` class when used as a stack, since it's backed by a resizable circular array rather than individually-allocated nodes."
+`ArrayDeque` is the standard general-purpose implementation of both interfaces. The Javadoc itself notes it's likely faster than `LinkedList` when used as a queue and faster than the legacy `Stack` class when used as a stack, since it's backed by a resizable circular array rather than individually-allocated nodes."
 
 **Staff-level extension:**
 
-In modern code, `ArrayDeque` has largely replaced both the old `java.util.Stack` (a synchronized, `Vector`-based class from Java 1.0, functionally obsolete) and `LinkedList` for pure queue/stack use — there's rarely a reason to reach for either of those two anymore. The one thing worth knowing explicitly: `ArrayDeque` doesn't accept `null` elements, unlike `LinkedList`, which does — a real migration gotcha if existing code relied on `null` as a sentinel value in a queue or stack.
+In modern code, `ArrayDeque` has largely replaced both the old `java.util.Stack` (a synchronized, `Vector`-based class from Java 1.0, functionally obsolete) and `LinkedList` for pure queue/stack use — there's rarely a reason to reach for either anymore. One thing worth knowing: `ArrayDeque` doesn't accept `null` elements, unlike `LinkedList`, which does. That's a real migration gotcha if existing code relied on `null` as a sentinel value in a queue or stack.
 
 **Example:**
 
@@ -414,13 +414,13 @@ int top = stack.pop(); // 2 — removed from the head, LIFO order
 
 **Core answer:**
 
-"All three implement `Map`, and correctness — key-value lookup — is identical across them; the decision is entirely about what ordering guarantee, if any, is actually needed, since each guarantee costs something. `HashMap` makes no ordering promise at all and gives O(1) average get/put — the right default unless a specific reason says otherwise. `LinkedHashMap` adds predictable iteration order (insertion order by default, or access order with a constructor flag) at a modest extra memory cost, and is the right choice specifically when *predictable iteration* matters — logging output that should read in insertion order, or an LRU cache built on its access-order mode, covered in depth later in this guide.
+"All three implement `Map`, and correctness — key-value lookup — is identical across them. The decision is entirely about what ordering guarantee, if any, is actually needed, since each guarantee costs something. `HashMap` makes no ordering promise at all and gives O(1) average get/put — the right default unless a specific reason says otherwise. `LinkedHashMap` adds predictable iteration order (insertion order by default, or access order with a constructor flag) at a modest extra memory cost, and it's the right choice specifically when *predictable iteration* matters — logging output that should read in insertion order, or an LRU cache built on its access-order mode, covered in depth later in this guide.
 
-`TreeMap` keeps keys sorted at all times, backed by a red-black tree, at O(log n) instead of O(1) per operation, and is the right choice when the code needs *sorted* iteration or range queries (`firstKey()`, `ceilingKey()`, `subMap()`) that neither of the other two can offer at all."
+`TreeMap` keeps keys sorted at all times, backed by a red-black tree, at O(log n) instead of O(1) per operation. It's the right choice when the code needs *sorted* iteration or range queries (`firstKey()`, `ceilingKey()`, `subMap()`) that neither of the other two can offer at all."
 
 **Staff-level extension:**
 
-The mistake worth avoiding is reaching for `LinkedHashMap` or `TreeMap` defensively "in case ordering matters later" — that pays a real, permanent cost (memory or O(log n)) for a guarantee the code may never use. The right sequencing is: default to `HashMap`, and only step up to `LinkedHashMap` or `TreeMap` once a concrete requirement (a UI needing insertion order, a report needing sorted output) actually demands it.
+The mistake worth avoiding is reaching for `LinkedHashMap` or `TreeMap` defensively "in case ordering matters later" — that pays a real, permanent cost (memory or O(log n)) for a guarantee the code may never use. Default to `HashMap`, and only step up to `LinkedHashMap` or `TreeMap` once a concrete requirement (a UI needing insertion order, a report needing sorted output) actually demands it.
 
 **Example:**
 
@@ -450,13 +450,13 @@ System.out.println(treeMap.keySet());       // [apple, banana, cherry] — sorte
 
 **Core answer:**
 
-"`Collection` (singular) is the root *interface* of the framework — `List`, `Set`, and `Queue` all extend it, and it defines the common operations every collection supports (`add()`, `remove()`, `size()`, `iterator()`, and so on). `Collections` (plural) is an entirely different thing: a **utility class**, full of `static` methods that operate *on* collections rather than being one — `Collections.sort()`, `Collections.reverse()`, `Collections.max()`/`min()`, `Collections.synchronizedList()` (wraps a collection with synchronized access), and `Collections.unmodifiableList()` (wraps a collection in a read-only view, covered in depth later in this guide, including its sharp edges).
+"`Collection` (singular) is the root *interface* of the framework — `List`, `Set`, and `Queue` all extend it, and it defines the common operations every collection supports (`add()`, `remove()`, `size()`, `iterator()`, and so on). `Collections` (plural) is an entirely different thing: a **utility class** full of `static` methods that operate *on* collections rather than being one — `Collections.sort()`, `Collections.reverse()`, `Collections.max()`/`min()`, `Collections.synchronizedList()` (wraps a collection with synchronized access), and `Collections.unmodifiableList()` (wraps a collection in a read-only view, covered in depth later in this guide, including its sharp edges).
 
-The naming is a genuinely common source of confusion for exactly this reason — one is an interface you implement or extend, the other is a helper class you call static methods on, and they're related only in that `Collections`'s methods take `Collection`s as arguments."
+The naming is a genuinely common source of confusion — one is an interface you implement or extend, the other is a helper class you call static methods on. They're related only in that `Collections`'s methods take `Collection`s as arguments."
 
 **Staff-level extension:**
 
-`Collections` is effectively the same design pattern as `Arrays` (static helper methods operating on array instances) or `Objects` (static helper methods operating on any object) — a common Java standard-library idiom of pairing a core type or interface with a `static`-method utility class of the same name, pluralized or not, that provides operations which don't naturally belong as instance methods on the type itself.
+`Collections` is effectively the same design pattern as `Arrays` (static helper methods operating on array instances) or `Objects` (static helper methods operating on any object) — a common Java standard-library idiom of pairing a core type or interface with a `static`-method utility class of the same name, providing operations that don't naturally belong as instance methods on the type itself.
 
 **Example:**
 
@@ -495,7 +495,7 @@ Treeification is the Java 8 addition: if a single bucket's chain grows past 8 en
 
 **Staff-level extension:**
 
-The 0.75 load factor and doubling-capacity strategy is itself a space/time trade-off: a higher load factor packs entries denser (less wasted array space) at the cost of longer collision chains before treeification kicks in; a lower load factor spreads entries thinner for faster average lookups at the cost of more allocated-but-empty bucket slots. Pre-sizing a `HashMap`'s initial capacity when the eventual size is roughly known avoids paying for several incremental doubles-and-rehashes during warmup — a real, measurable cost on hot startup paths that create many entries. Treeification itself is a safety net for pathological collision cases (a bad or adversarial `hashCode()`), not the everyday path — most buckets never get anywhere close to 8 entries.
+The 0.75 load factor and doubling-capacity strategy is itself a space/time trade-off. A higher load factor packs entries denser (less wasted array space) at the cost of longer collision chains before treeification kicks in; a lower load factor spreads entries thinner for faster average lookups at the cost of more allocated-but-empty bucket slots. Pre-sizing a `HashMap`'s initial capacity when the eventual size is roughly known avoids paying for several incremental doubles-and-rehashes during warmup — a real, measurable cost on hot startup paths that create many entries. Treeification itself is a safety net for pathological collision cases (a bad or adversarial `hashCode()`), not the everyday path — most buckets never get anywhere close to 8 entries.
 
 **Example:**
 
@@ -538,11 +538,13 @@ for (int i = 0; i < 20; i++) {
 
 **Core answer:**
 
-"The map decides which bucket a key belongs in at insertion time, based on `hashCode()` at that exact moment. If you mutate the key afterward in a way that changes its hash code, the map has no way of knowing — the entry is still sitting in its *original* bucket, but a fresh `get()` or `remove()` call now computes a *different* hash from the mutated key and looks in the wrong bucket entirely, so the lookup fails. That doesn't make the entry unreachable in general, though: iterating the map (`keySet()`, `entrySet()`, `forEach()`) walks every bucket regardless of hash, so the entry turns up there with no trouble. What's genuinely broken is *hash-based single-key lookup and removal* while the mutation is in effect — not the entry's reachability through the API as a whole. It's still a nasty, silent bug class, because nothing throws and `size()` looks completely normal."
+"The map decides which bucket a key belongs in at insertion time, based on `hashCode()` at that exact moment. If you mutate the key afterward in a way that changes its hash code, the map has no way of knowing — the entry is still sitting in its *original* bucket, but a fresh `get()` or `remove()` call now computes a *different* hash from the mutated key and looks in the wrong bucket entirely, so the lookup fails. That doesn't make the entry unreachable in general, though: iterating the map (`keySet()`, `entrySet()`, `forEach()`) walks every bucket regardless of hash, so the entry turns up there with no trouble. What's genuinely broken is *hash-based single-key lookup and removal* while the mutation is in effect, not the entry's reachability through the API as a whole. It's still a nasty, silent bug — nothing throws, and `size()` looks completely normal."
 
 **Staff-level extension:**
 
-If the key's hash-relevant state is later restored to what it was at insertion time, `get()`/`remove()` start working again too, since the recomputed hash now matches the bucket the entry actually lives in once more. That has a practical consequence for anyone trying to fix this after the fact: a naive fix that calls `map.remove(key)` after noticing a lookup failure will itself silently no-op (it's using the same broken hash-based lookup), while a fix that iterates to find and remove the stale entry will actually work. I'd talk about this as a design principle, not just a gotcha: value objects used as map/set keys should be immutable by construction. Java 16+ `record` types are a good fit *if you're careful* — but records are only **shallowly** immutable: the component references can't be reassigned, but if a component's own type is mutable (a `List`, a `Date`, another mutable class), the record's `hashCode()` still changes when that referenced object is mutated in place, reproducing exactly this bug. Records work well as map keys when all record components are themselves immutable (other records, boxed primitives, `String`, `List.of(...)`), or when a mutable input is defensively copied in the compact constructor before being stored. This is especially dangerous in caching layers, where keys are often composite objects (e.g., a request-parameters object) that some other part of the codebase might mutate in place without realizing it's also a live cache key elsewhere.
+If the key's hash-relevant state is later restored to what it was at insertion time, `get()`/`remove()` start working again too, since the recomputed hash now matches the bucket the entry actually lives in. That has a practical consequence for anyone trying to fix this after the fact: a naive fix that calls `map.remove(key)` after noticing a lookup failure will itself silently no-op — it's using the same broken hash-based lookup — while a fix that iterates to find and remove the stale entry will actually work.
+
+I'd frame this as a design principle, not just a gotcha: value objects used as map/set keys should be immutable by construction. Java 16+ `record` types are a good fit *if you're careful*, but records are only **shallowly** immutable — the component references can't be reassigned, but if a component's own type is mutable (a `List`, a `Date`, another mutable class), the record's `hashCode()` still changes when that referenced object is mutated in place, reproducing this exact bug. Records work well as map keys when every component is itself immutable (other records, boxed primitives, `String`, `List.of(...)`), or when a mutable input is defensively copied in the compact constructor before being stored. This is especially dangerous in caching layers, where keys are often composite objects — a request-parameters object, say — that some other part of the codebase might mutate in place without realizing it's also a live cache key elsewhere.
 
 **Example:**
 
@@ -601,7 +603,9 @@ System.out.println(map.get(key)); // "original value" — get() works again, bec
 
 **Staff-level extension:**
 
-Thread safety here is per-operation, not per-invariant. `get`/`put`/`remove` are atomic, and so are the documented compound methods (`putIfAbsent`, `computeIfAbsent`, `merge`, `replace`, etc.) — each one is guaranteed atomic on its own. But an invariant that spans *multiple* keys, or spans the map plus some other resource (e.g., "this map and that counter must always agree"), is not automatically protected just because the underlying map is a `ConcurrentHashMap` — that kind of compound, cross-key invariant still needs its own coordination (a lock, a single-key redesign, or an atomic compound method that captures the whole invariant in one call). One sharp edge worth knowing: unlike `HashMap`, `ConcurrentHashMap` **does not allow `null` keys or values**, deliberately — in a concurrent map, `map.get(key) == null` is ambiguous ("not present" vs. "present with a null value"), and the usual `containsKey()` disambiguation isn't safe here since another thread could remove the entry between the two calls. Disallowing `null` outright closes off the ambiguity.
+Thread safety here is per-operation, not per-invariant. `get`/`put`/`remove` are atomic, and so are the documented compound methods (`putIfAbsent`, `computeIfAbsent`, `merge`, `replace`, etc.) — each one is guaranteed atomic on its own. But an invariant spanning *multiple* keys, or the map plus some other resource ("this map and that counter must always agree"), isn't automatically protected just because the underlying map is a `ConcurrentHashMap`. That kind of compound, cross-key invariant still needs its own coordination — a lock, a single-key redesign, or an atomic compound method that captures the whole invariant in one call.
+
+One sharp edge: unlike `HashMap`, `ConcurrentHashMap` **does not allow `null` keys or values**, deliberately. In a concurrent map, `map.get(key) == null` is ambiguous — "not present" vs. "present with a null value" — and the usual `containsKey()` disambiguation isn't safe here, since another thread could remove the entry between the two calls. Disallowing `null` outright closes off the ambiguity.
 
 **Example:**
 
@@ -645,7 +649,7 @@ for (String key : chm.keySet()) {  // safe to iterate while other threads mutate
 
 **Staff-level extension:**
 
-`merge()` is the sibling method worth knowing for accumulate-style updates, like a concurrent counter or histogram: `counts.merge("event-type-a", 1, Integer::sum)` atomically initializes-or-increments in one call. The general rule that separates "knows the API" from "has actually been burned by this": any lambda passed to `compute`, `computeIfAbsent`, `computeIfPresent`, or `merge` should be fast, side-effect-free, and must never try to modify the same map — it's running under a per-bin lock, and violating that can produce genuinely confusing deadlocks in production that are painful to reproduce.
+`merge()` is the sibling method worth knowing for accumulate-style updates, like a concurrent counter or histogram: `counts.merge("event-type-a", 1, Integer::sum)` atomically initializes-or-increments in one call. The rule that separates "knows the API" from "has actually been burned by this": any lambda passed to `compute`, `computeIfAbsent`, `computeIfPresent`, or `merge` should be fast, side-effect-free, and must never try to modify the same map. It's running under a per-bin lock, and violating that can produce confusing deadlocks in production that are painful to reproduce.
 
 **Example:**
 
@@ -681,11 +685,11 @@ map.computeIfAbsent("a", k -> {
 
 **Core answer:**
 
-"This is a genuinely interesting tension because the two requirements pull in opposite directions — high write concurrency wants writes to be cheap and unblocked by anything, and snapshot reads want a frozen, consistent point-in-time view, which usually means *something* gets copied or locked. My starting answer is double-buffering: writers hit a live `ConcurrentHashMap` directly with no snapshot overhead per write, and a separate, periodically-published `AtomicReference<Map<K,V>>` gives readers a lock-free, always internally-consistent point-in-time view. The trade-off I'd name explicitly: this gives readers a slightly-stale-but-internally-consistent view, not the absolute latest state — and that's usually the right trade, because true 'latest state + zero write cost + zero read cost' isn't achievable simultaneously without giving something up."
+"This is a genuinely interesting tension, because the two requirements pull in opposite directions. High write concurrency wants writes to be cheap and unblocked by anything; snapshot reads want a frozen, consistent point-in-time view, which usually means *something* gets copied or locked. My starting answer is double-buffering: writers hit a live `ConcurrentHashMap` directly with no snapshot overhead per write, and a separate, periodically-published `AtomicReference<Map<K,V>>` gives readers a lock-free, always internally-consistent point-in-time view. The trade-off worth naming explicitly: readers get a slightly-stale-but-internally-consistent view, not the absolute latest state. That's usually the right trade, because true 'latest state plus zero write cost plus zero read cost' isn't achievable at once without giving something up."
 
 **Staff-level extension:**
 
-I wouldn't reach for one silver-bullet answer without weighing alternatives, since a staff interviewer usually wants to see that rather than the first idea landed on:
+I wouldn't reach for one silver-bullet answer without weighing alternatives — a staff interviewer usually wants to see that, not just the first idea landed on:
 
 - **Naive copy-on-write** — technically gives snapshots, but every single write pays the O(n) copy cost, which falls apart under high write volume. Wrong tool for *this* specific requirement, even though it's the "obvious" thread-safe-list answer people reach for.
 - **Persistent (immutable) data structures with structural sharing** — like Clojure's persistent maps, or libraries like Vavr in Java. Each "update" produces a new immutable version that shares most of its internal tree structure with the previous version instead of copying everything, so snapshots are genuinely cheap and every version is frozen forever by construction. More complex internals, generally slower single-threaded raw throughput than a plain `HashMap`, but a legitimately elegant middle ground.
@@ -741,7 +745,7 @@ public class SnapshotableStore<K, V> {
 
 **Staff-level extension:**
 
-This question is often a trap for candidates who memorized "LinkedList is good for insertions" without understanding *why that's usually wrong in practice* on modern hardware: Big-O analysis ignores cache behavior, and cache misses dominate real-world performance far more than people expect for anything but very large N. Worth naming explicitly since it's the deeper point behind the whole comparison, not just an `ArrayDeque` trivia fact.
+This question is often a trap for candidates who memorized "LinkedList is good for insertions" without understanding why that's usually wrong in practice on modern hardware. Big-O analysis ignores cache behavior, and cache misses dominate real-world performance far more than people expect for anything but very large N. That's the deeper point behind the whole comparison, not just an `ArrayDeque` trivia fact.
 
 **Example:**
 
@@ -777,7 +781,7 @@ Disastrous fit: frequent writes, or a large list. Every `add()`, `remove()`, or 
 
 **Staff-level extension:**
 
-This pattern shows up in real frameworks constantly — listener/callback registries in various parts of the JDK and common libraries use exactly this shape, because "register rarely, fire often" is an extremely common access pattern. The iterator-snapshot subtlety is worth flagging deliberately: the iterator is frozen from the moment it was created, so it will *never* see items added during that specific iteration — usually exactly what you want (stable, predictable iteration) but a real surprise for anyone who assumes an iterator reflects "live" state.
+This pattern shows up in real frameworks constantly — listener/callback registries in various parts of the JDK and common libraries use exactly this shape, because "register rarely, fire often" is an extremely common access pattern. One subtlety worth flagging: the iterator is frozen from the moment it was created, so it will *never* see items added during that specific iteration. That's usually exactly what you want — stable, predictable iteration — but it's a real surprise for anyone who assumes an iterator reflects "live" state.
 
 **Example:**
 
@@ -813,13 +817,13 @@ for (int i = 0; i < 1_000_000; i++) {
 
 **Core answer:**
 
-"Fail-fast iterators — `ArrayList`, `HashMap`, most of the classic collections — track a hidden modification counter and check it on every step. If the collection was structurally changed by anyone since the iterator was created, the next `next()` call throws `ConcurrentModificationException`. Important nuance: this is explicitly documented as a *best-effort* detection mechanism, not a hard guarantee — you're not supposed to rely on it for actual thread-safety, only treat it as a debugging aid that catches *some* bugs.
+"Fail-fast iterators — `ArrayList`, `HashMap`, most of the classic collections — track a hidden modification counter and check it on every step. If the collection was structurally changed by anyone since the iterator was created, the next `next()` call throws `ConcurrentModificationException`. But this is explicitly documented as a *best-effort* detection mechanism, not a hard guarantee — you're not supposed to rely on it for actual thread-safety, just treat it as a debugging aid that catches some bugs.
 
 Weakly consistent iterators — `ConcurrentHashMap`, `CopyOnWriteArrayList`, `ConcurrentLinkedQueue` — are built to tolerate concurrent modification instead of blowing up. They never throw `ConcurrentModificationException`. They guarantee to reflect the state at some point at or after iterator creation, but make no promise about whether later concurrent modifications will or won't show up mid-iteration. That relaxed guarantee is exactly what lets them avoid locking during iteration."
 
 **Staff-level extension:**
 
-"Best-effort" is doing real work in that sentence — the `modCount` check can miss genuine concurrent modification bugs in certain interleavings, so "my code didn't throw `CME` in testing" is never proof of thread-safety. The practical guidance: if you need to modify a collection during iteration, either use `Iterator.remove()` on a fail-fast collection, collect items to remove into a separate list and remove them after the loop, or reach for a genuinely concurrent collection (`ConcurrentHashMap.newKeySet()`, `CopyOnWriteArrayList`) if actual concurrent access is the real requirement.
+"Best-effort" is doing real work here — the `modCount` check can miss genuine concurrent modification bugs in certain interleavings, so "my code didn't throw `CME` in testing" is never proof of thread-safety. If you need to modify a collection during iteration: use `Iterator.remove()` on a fail-fast collection, collect items to remove into a separate list and remove them after the loop, or reach for a genuinely concurrent collection (`ConcurrentHashMap.newKeySet()`, `CopyOnWriteArrayList`) if actual concurrent access is the real requirement.
 
 **Example:**
 
@@ -856,11 +860,11 @@ for (String key : chm.keySet()) {
 
 **Core answer:**
 
-"Generic collections can't hold primitives directly — `List<int>` isn't legal, only `List<Integer>`. So every `int` you put into a `List<Integer>` gets autoboxed into an `Integer` object behind the scenes. That costs you in a few ways: a raw `int` is 4 bytes, but a boxed `Integer` costs a lot more once you account for the object header — you can easily be paying 4-5x the memory for the same data. It also means pointer indirection — a primitive array is contiguous in memory and cache-friendly; a `List<Integer>` is a list of *references* to separately-allocated objects scattered around the heap, so iterating it means chasing pointers and eating cache misses. And every one of those small boxed objects is something the garbage collector eventually has to deal with — a hot loop boxing and discarding millions of values creates real GC churn a primitive array would never generate."
+"Generic collections can't hold primitives directly — `List<int>` isn't legal, only `List<Integer>`. So every `int` you put into a `List<Integer>` gets autoboxed into an `Integer` object behind the scenes. That costs you in a few ways. A raw `int` is 4 bytes, but a boxed `Integer` costs a lot more once you account for the object header — you can easily pay 4-5x the memory for the same data. It also means pointer indirection: a primitive array is contiguous in memory and cache-friendly, while a `List<Integer>` is a list of *references* to separately-allocated objects scattered around the heap, so iterating it means chasing pointers and eating cache misses. And every one of those small boxed objects is something the garbage collector eventually has to deal with — a hot loop boxing and discarding millions of values creates real GC churn a primitive array would never generate."
 
 **Staff-level extension:**
 
-The JLS explicitly requires the `Integer` caching behavior for values `-128` to `127` (§5.1.7, Boxing Conversion), so it's not implementation-specific trivia, it's a language guarantee that engineers routinely get bitten by anyway because `==` *looks* like it should just work. The cache's upper bound can actually be raised via `-XX:AutoBoxCacheMax` (or the `java.lang.Integer.IntegerCache.high` system property) — a fun fact but also a trap, since code that "happens to work" with `==` because the cache was tuned larger in one environment can silently break in another. For genuinely hot paths — financial calculations, large in-memory datasets, tight loops — primitive-specialized collection libraries (Eclipse Collections, fastutil) or plain arrays are the real fix; for small collections or infrequent operations, none of this matters and optimizing for it prematurely isn't worth the complexity.
+The JLS explicitly requires the `Integer` caching behavior for values `-128` to `127` (§5.1.7, Boxing Conversion). It's not implementation-specific trivia — it's a language guarantee that engineers routinely get bitten by anyway, because `==` *looks* like it should just work. The cache's upper bound can actually be raised via `-XX:AutoBoxCacheMax` (or the `java.lang.Integer.IntegerCache.high` system property) — a fun fact but also a trap, since code that "happens to work" with `==` because the cache was tuned larger in one environment can silently break in another. For genuinely hot paths — financial calculations, large in-memory datasets, tight loops — primitive-specialized collection libraries (Eclipse Collections, fastutil) or plain arrays are the real fix. For small collections or infrequent operations, none of this matters, and optimizing for it prematurely isn't worth the complexity.
 
 **Example:**
 

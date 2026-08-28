@@ -2,7 +2,7 @@
 
 > **Target level:** Basic → Staff (graduated — see below) · **Baseline:** Java/JDK 21 (LTS); structured concurrency examples target JEP 505 (JDK 25, preview) and are explicitly flagged where later previews (JEP 525/533) change the API · **Last verified:** 2026-08-23 · **Prerequisites:** core Java syntax for the Basic section; [Java Collections](../Language/Java_Collections_Interview_Prep.md) helpful from the Intermediate section onward
 
-How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop** — because at this level the bar isn't reciting API names, it's explaining failure modes, trade-offs, and what you'd actually do at 3am when this breaks in production. Questions are grouped by level (Basic → Intermediate → Staff) so you can calibrate depth to the interview you're prepping for; the later sections assume the earlier ones as background and don't re-explain them.
+How to use this: each question has **the answer the way I'd actually say it out loud** in an interview, a **code snippet** you could sketch on a whiteboard or IDE to back it up, and **where the follow-up goes if you're in a Staff-level loop**. At this level the bar isn't reciting API names — it's explaining failure modes, trade-offs, and what you'd actually do at 3am when this breaks in production. Questions are grouped by level (Basic → Intermediate → Staff) so you can calibrate depth to the interview you're prepping for. Later sections assume the earlier ones as background and don't re-explain them.
 
 <!-- toc -->
 ## Table of Contents
@@ -55,9 +55,9 @@ How to use this: each question has **the answer the way I'd actually say it out 
 
 **Answer:**
 
-"A process is an independent, OS-managed unit of execution with its own isolated memory address space. A thread is a unit of execution *within* a process that shares that process's memory — heap, static fields — with every other thread in the same process, but has its own call stack, program counter, and local variables. Threads in the same process can therefore communicate through shared memory directly, which is fast but requires coordination to avoid corrupting shared state; separate processes need explicit IPC (sockets, pipes, shared memory segments) to talk to each other. One process crashing doesn't directly crash another process, but a fatal, uncaught error on one thread can bring down the whole JVM process, since every thread in it shares the same process.
+"A process is an independent, OS-managed unit of execution with its own isolated memory address space. A thread is a unit of execution *within* a process. It shares that process's memory — heap, static fields — with every other thread in the same process, but has its own call stack, program counter, and local variables. Threads in the same process can communicate through shared memory directly, which is fast but requires coordination to avoid corrupting shared state. Separate processes need explicit IPC (sockets, pipes, shared memory segments) to talk to each other. One process crashing doesn't directly crash another process, but a fatal, uncaught error on one thread can bring down the whole JVM process, since every thread in it shares the same process.
 
-A Java program starts as a single thread (`main`), and spawning more threads via `Thread` or `ExecutorService` creates additional concurrent units of execution within that same OS process."
+A Java program starts as a single thread (`main`). Spawning more threads via `Thread` or `ExecutorService` creates additional concurrent units of execution within that same OS process."
 
 **Code:**
 
@@ -69,7 +69,7 @@ System.out.println("Running on: " + Thread.currentThread().getName()); // main
 
 **Follow-up:**
 
-I'd mention that in modern Java (21+), a "thread" doesn't necessarily mean a 1:1 OS thread anymore — virtual threads are still `java.lang.Thread` instances from the API's perspective, but aren't mapped 1:1 to OS threads. That distinction is covered in depth later in this guide, in the platform-vs-virtual-threads question. At this basic level, the mental model that matters is: process = isolated memory, thread = shared memory plus its own stack.
+In modern Java (21+), a "thread" doesn't necessarily mean a 1:1 OS thread anymore. Virtual threads are still `java.lang.Thread` instances from the API's perspective, but they aren't mapped 1:1 to OS threads — that's covered in depth later, in the platform-vs-virtual-threads question. At this basic level, the mental model that matters is: process = isolated memory, thread = shared memory plus its own stack.
 
 **Source:** [Oracle Java Tutorials — Processes and Threads](https://docs.oracle.com/javase/tutorial/essential/concurrency/procthread.html)
 
@@ -79,9 +79,9 @@ I'd mention that in modern Java (21+), a "thread" doesn't necessarily mean a 1:1
 
 **Answer:**
 
-"Two classic ways: extend `Thread` and override `run()`, or implement `Runnable` and pass it to a `Thread` constructor. `Runnable` is preferred almost always — Java doesn't support multiple inheritance, so extending `Thread` uses up the class's one shot at extending anything, while implementing an interface leaves it free. It also separates 'the work to do' from 'the mechanism that runs it,' which matters once you move to `ExecutorService` (covered in the Intermediate section) and hand a `Runnable`/`Callable` to a thread pool rather than manage `Thread` objects directly.
+"Two classic ways: extend `Thread` and override `run()`, or implement `Runnable` and pass it to a `Thread` constructor. `Runnable` is preferred almost always. Java doesn't support multiple inheritance, so extending `Thread` uses up the class's one shot at extending anything, while implementing an interface leaves it free. It also separates "the work to do" from "the mechanism that runs it," which matters once you move to `ExecutorService` (covered in the Intermediate section) and hand a `Runnable`/`Callable` to a thread pool instead of managing `Thread` objects directly.
 
-Calling `start()` is what actually creates a new OS-backed thread and schedules `run()` to execute on it, asynchronously. Calling `run()` directly just executes the method body synchronously on the calling thread, like any normal method call — a very common beginner mistake is calling `.run()` instead of `.start()` and being confused that everything ran sequentially on the main thread."
+Calling `start()` is what actually creates a new OS-backed thread and schedules `run()` to run on it, asynchronously. Calling `run()` directly just executes the method body synchronously on the calling thread, like any normal method call. A very common beginner mistake is calling `.run()` instead of `.start()` and being confused that everything ran sequentially on the main thread."
 
 **Code:**
 
@@ -103,7 +103,7 @@ new Thread(task).start(); // RIGHT — actually schedules it on a new thread
 
 **Follow-up:**
 
-I'd mention that calling `start()` twice on the same `Thread` instance throws `IllegalThreadStateException` — a `Thread` object is single-use; it can't be restarted once it's completed or even just been started. That's one more reason production code almost always goes through `ExecutorService` rather than manually managing raw `Thread` objects: creation cost, lifecycle, and reuse are all handled for you by a pool.
+Calling `start()` twice on the same `Thread` instance throws `IllegalThreadStateException` — a `Thread` object is single-use, and it can't be restarted once it's completed or even just been started. That's one more reason production code almost always goes through `ExecutorService` instead of manually managing raw `Thread` objects: creation cost, lifecycle, and reuse are all handled for you by a pool.
 
 **Source:** [Oracle Java Tutorials — Defining and Starting a Thread](https://docs.oracle.com/javase/tutorial/essential/concurrency/runthread.html)
 
@@ -113,7 +113,7 @@ I'd mention that calling `start()` twice on the same `Thread` instance throws `I
 
 **Answer:**
 
-"`Thread.State` defines six states: `NEW` (created but `start()` not yet called), `RUNNABLE` (executing or eligible to be scheduled by the OS — Java doesn't distinguish 'running' from 'ready to run,' both are `RUNNABLE`), `BLOCKED` (waiting to acquire a monitor lock held by another thread, e.g., stuck entering a `synchronized` block), `WAITING` (waiting indefinitely for another thread to explicitly wake it up, via `Object.wait()` with no timeout, `Thread.join()` with no timeout, or `LockSupport.park()`), `TIMED_WAITING` (the same as `WAITING` but with a bounded wait — `Thread.sleep(ms)`, `Object.wait(ms)`, `Thread.join(ms)`), and `TERMINATED` (`run()` has completed, normally or via an uncaught exception).
+"`Thread.State` defines six states. `NEW`: created but `start()` not yet called. `RUNNABLE`: executing or eligible to be scheduled by the OS — Java doesn't distinguish "running" from "ready to run," both are `RUNNABLE`. `BLOCKED`: waiting to acquire a monitor lock held by another thread, like being stuck entering a `synchronized` block. `WAITING`: waiting indefinitely for another thread to explicitly wake it up, via `Object.wait()` with no timeout, `Thread.join()` with no timeout, or `LockSupport.park()`. `TIMED_WAITING`: the same as `WAITING` but with a bounded wait — `Thread.sleep(ms)`, `Object.wait(ms)`, `Thread.join(ms)`. `TERMINATED`: `run()` has completed, normally or via an uncaught exception.
 
 A thread transitions through these based on what it's currently doing. You can inspect the current state via `thread.getState()`, which is especially useful when reading a thread dump during a hang or deadlock investigation."
 
@@ -132,7 +132,7 @@ System.out.println(t.getState()); // TERMINATED
 
 **Follow-up:**
 
-I'd connect this directly to production debugging: a thread dump (`jstack`, or `Thread.getAllStackTraces()`) reports every live thread's state, and `BLOCKED` threads piling up on the same lock, or several threads sitting in `WAITING` on each other, is the first thing to look for when diagnosing a hang — exactly the raw material the deadlock-diagnosis question later in this guide walks through in more depth.
+This connects directly to production debugging. A thread dump (`jstack`, or `Thread.getAllStackTraces()`) reports every live thread's state. `BLOCKED` threads piling up on the same lock, or several threads sitting in `WAITING` on each other, is the first thing to look for when diagnosing a hang — that's the raw material the deadlock-diagnosis question later in this guide walks through in more depth.
 
 **Source:** [`Thread.State` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.State.html)
 
@@ -142,7 +142,7 @@ I'd connect this directly to production debugging: a thread dump (`jstack`, or `
 
 **Answer:**
 
-"A race condition happens when the correctness of a program depends on the relative timing or interleaving of multiple threads accessing shared, mutable state — if two threads can execute in an order that produces a wrong result, and a different order would have produced the right one, that's a race, whether or not it actually manifests on any given run. That's exactly what makes race conditions painful: the bug is real and present in the code, but might only show up occasionally, under load, under a specific timing window, or a JIT/GC pause that happens to land at the wrong moment.
+"A race condition happens when a program's correctness depends on the relative timing or interleaving of multiple threads accessing shared, mutable state. If two threads can execute in an order that produces a wrong result, and a different order would have produced the right one, that's a race — whether or not it actually shows up on any given run. That's what makes race conditions painful: the bug is real and present in the code, but it might only show up occasionally, under load, under a specific timing window, or a JIT/GC pause that happens to land at the wrong moment.
 
 The textbook example is two threads both doing `counter++` on a shared, non-atomic `int` field: `++` isn't one operation, it's read-modify-write, and if both threads read the same starting value before either writes back, one increment is silently lost."
 
@@ -160,7 +160,7 @@ class Counter {
 
 **Follow-up:**
 
-I'd distinguish this from a data race in the strict Java Memory Model sense — a *data race* specifically means unsynchronized concurrent access to the same variable where at least one access is a write, with no happens-before ordering between them (covered in the visibility/atomicity/ordering question later in this guide). A *race condition* is the broader, more intuitive term for a timing-dependent bug: every data race is a race condition, but not every race condition is technically a data race — a check-then-act race on an otherwise-synchronized `ConcurrentHashMap` (covered in the Collections guide) has no raw data race, but is still absolutely a race condition.
+I'd draw a line between this and a data race in the strict Java Memory Model sense. A *data race* specifically means unsynchronized concurrent access to the same variable where at least one access is a write, with no happens-before ordering between them (covered in the visibility/atomicity/ordering question later in this guide). A *race condition* is the broader, more intuitive term for a timing-dependent bug. Every data race is a race condition, but not every race condition is technically a data race — a check-then-act race on an otherwise-synchronized `ConcurrentHashMap` (covered in the Collections guide) has no raw data race, but it's still absolutely a race condition.
 
 **Source:** [JLS §17.4 — Memory Model](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.4)
 
@@ -170,9 +170,9 @@ I'd distinguish this from a data race in the strict Java Memory Model sense — 
 
 **Answer:**
 
-"`synchronized` gives a thread exclusive ownership of a monitor (intrinsic lock) tied to a specific object, for the duration of the synchronized code — only one thread can hold a given object's monitor at a time, so any other thread trying to enter code synchronized on the same object blocks until the first thread exits.
+"`synchronized` gives a thread exclusive ownership of a monitor (intrinsic lock) tied to a specific object, for the duration of the synchronized code. Only one thread can hold a given object's monitor at a time, so any other thread trying to enter code synchronized on the same object blocks until the first thread exits.
 
-A `synchronized` instance method locks on `this` — the object the method was called on. A `synchronized` static method locks on the `Class` object itself, shared across all instances. A `synchronized` block lets you lock on any specific object you choose, which is usually the better choice: it lets you scope the lock as narrowly as possible — only the actually-shared-mutable-state access, not the whole method body — and lock on a dedicated, private lock object rather than `this`. Locking on `this` risks an unrelated external caller also synchronizing on your object and creating contention, or even deadlock, you don't control."
+A `synchronized` instance method locks on `this` — the object the method was called on. A `synchronized` static method locks on the `Class` object itself, shared across all instances. A `synchronized` block lets you lock on any specific object you choose, which is usually the better option: it lets you scope the lock as narrowly as possible (just the shared-mutable-state access, not the whole method body) and lock on a dedicated, private lock object instead of `this`. Locking on `this` risks an unrelated external caller also synchronizing on your object and creating contention, or even deadlock, that you don't control."
 
 **Code:**
 
@@ -193,7 +193,7 @@ class Counter {
 
 **Follow-up:**
 
-I'd flag "lock on a private final object, not `this`" as the single most useful piece of practical advice here — it's the same reasoning `java.util.concurrent` collections apply internally, and it directly prevents a class of bugs where completely unrelated code synchronizes on your public object and either starves your own internal locking or deadlocks against it. This is also exactly the gap `ReentrantLock` fills — explicit, more flexible locking — covered in the Intermediate section and then compared against the other lock types at Staff level later in this guide.
+"Lock on a private final object, not `this`" is the single most useful piece of practical advice here. It's the same reasoning `java.util.concurrent` collections apply internally, and it directly prevents a class of bugs where completely unrelated code synchronizes on your public object and either starves your own internal locking or deadlocks against it. This is also exactly the gap `ReentrantLock` fills — explicit, more flexible locking — covered in the Intermediate section and then compared against the other lock types at Staff level later in this guide.
 
 **Source:** [JLS §17.1 — Synchronization](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.1)
 
@@ -205,7 +205,7 @@ I'd flag "lock on a private final object, not `this`" as the single most useful 
 
 "A deadlock is two or more threads each holding a lock the other one needs, with neither willing to give up what it's already holding — so both wait forever. The classic minimal example: Thread A locks Resource 1, then tries to lock Resource 2; Thread B locks Resource 2, then tries to lock Resource 1. If that interleaving happens, A is stuck waiting for B to release Resource 2, and B is stuck waiting for A to release Resource 1, and neither ever will.
 
-The simplest, most reliable fix is **lock ordering**: if every thread in the system always acquires multiple locks in the same global order — e.g., always lock the lower-numbered or lower-hashcode resource first — the circular-wait condition that causes deadlock can never form, since no thread can ever be holding the 'second' lock while waiting for the 'first.'"
+The simplest, most reliable fix is **lock ordering**. If every thread in the system always acquires multiple locks in the same global order — say, always lock the lower-numbered or lower-hashcode resource first — the circular-wait condition that causes deadlock can never form, since no thread can ever be holding the "second" lock while waiting for the "first.""
 
 **Code:**
 
@@ -233,9 +233,9 @@ This is deliberately the basic version of the topic — the Staff-level section 
 
 **Answer:**
 
-"`Thread.sleep(ms)` pauses the *current* thread for roughly the given duration and does **not** release any lock it's currently holding — if the sleeping thread holds a monitor, every other thread wanting that same monitor is blocked for the whole sleep, a common source of accidental contention.
+"`Thread.sleep(ms)` pauses the *current* thread for roughly the given duration and does **not** release any lock it's currently holding. If the sleeping thread holds a monitor, every other thread wanting that same monitor is blocked for the whole sleep — a common source of accidental contention.
 
-`Object.wait()` is fundamentally different: it must be called from inside a `synchronized` block on that object, and it **releases the object's monitor** while waiting, letting other threads acquire it and do work — typically including calling `notify()`/`notifyAll()` on the same object to wake the waiting thread back up. `wait()`/`notify()` is the classic low-level mechanism for one thread to signal another that some condition it's waiting on has changed, without the waiting thread burning CPU polling in a loop."
+`Object.wait()` works differently. It must be called from inside a `synchronized` block on that object, and it **releases the object's monitor** while waiting, letting other threads acquire it and do work — typically including calling `notify()`/`notifyAll()` on the same object to wake the waiting thread back up. `wait()`/`notify()` is the classic low-level mechanism for one thread to signal another that some condition it's waiting on has changed, without the waiting thread burning CPU polling in a loop."
 
 **Code:**
 
@@ -260,7 +260,7 @@ synchronized (lock) {
 
 **Follow-up:**
 
-I'd flag the classic gotcha directly: `wait()` must always be called in a loop re-checking the actual condition (`while`, not `if`), never assumed to mean "the condition I want is now true." A spurious wakeup — the JVM is explicitly allowed to wake a waiting thread without a corresponding `notify()` — or a `notifyAll()` intended for a different waiting condition can both wake the thread with the condition still false, and only re-checking the condition in a loop after waking protects against that. In modern code, this raw pattern is largely superseded by `java.util.concurrent`'s higher-level tools — `BlockingQueue`, `CountDownLatch`, `Condition` — covered in the Intermediate section, which handle exactly this correctly by construction.
+The classic gotcha: `wait()` must always be called in a loop re-checking the actual condition (`while`, not `if`), never assumed to mean "the condition I want is now true." A spurious wakeup — the JVM is explicitly allowed to wake a waiting thread without a corresponding `notify()` — or a `notifyAll()` intended for a different waiting condition can both wake the thread with the condition still false. Only re-checking the condition in a loop after waking protects against that. In modern code, this raw pattern is largely superseded by `java.util.concurrent`'s higher-level tools — `BlockingQueue`, `CountDownLatch`, `Condition` — covered in the Intermediate section, which handle this correctly by construction.
 
 **Source:** [`Object#wait()` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html#wait()), [Oracle Java Tutorials — Guarded Blocks](https://docs.oracle.com/javase/tutorial/essential/concurrency/guardmeth.html)
 
@@ -270,9 +270,9 @@ I'd flag the classic gotcha directly: `wait()` must always be called in a loop r
 
 **Answer:**
 
-"A daemon thread is a background thread the JVM doesn't wait for before exiting — the JVM shuts down once every *non-daemon* ('user') thread has finished, regardless of whether any daemon threads are still running, and any still-running daemon threads are simply terminated abruptly at that point, with no guarantee their code finishes or even that `finally` blocks run.
+"A daemon thread is a background thread the JVM doesn't wait for before exiting. The JVM shuts down once every *non-daemon* ("user") thread has finished, regardless of whether any daemon threads are still running, and any still-running daemon threads are simply terminated abruptly at that point — with no guarantee their code finishes or even that `finally` blocks run.
 
-Regular threads default to non-daemon; you mark one as a daemon via `setDaemon(true)` *before* calling `start()` — calling it after start throws `IllegalThreadStateException`. The typical use case is background housekeeping that should never be the reason the JVM stays alive — a periodic cache-cleanup thread, a metrics-reporting thread — where it would be actively wrong for that thread to block application shutdown."
+Regular threads default to non-daemon. You mark one as a daemon via `setDaemon(true)` *before* calling `start()` — calling it after start throws `IllegalThreadStateException`. The typical use case is background housekeeping that should never be the reason the JVM stays alive, like a periodic cache-cleanup thread or a metrics-reporting thread, where it would be actively wrong for that thread to block application shutdown."
 
 **Code:**
 
@@ -290,7 +290,7 @@ cleanup.start();
 
 **Follow-up:**
 
-I'd flag the practical risk directly: because a daemon thread can be killed mid-operation with no cleanup guarantee, it's the wrong choice for anything that needs to finish gracefully — flushing a write buffer, closing a network connection cleanly. That kind of work belongs on a non-daemon thread with an explicit, coordinated shutdown (a shutdown hook, or an `ExecutorService.shutdown()`/`awaitTermination()` sequence), not a daemon thread that just gets cut off.
+Because a daemon thread can be killed mid-operation with no cleanup guarantee, it's the wrong choice for anything that needs to finish gracefully — flushing a write buffer, closing a network connection cleanly. That kind of work belongs on a non-daemon thread with an explicit, coordinated shutdown (a shutdown hook, or an `ExecutorService.shutdown()`/`awaitTermination()` sequence), not a daemon thread that just gets cut off.
 
 **Source:** [`Thread#setDaemon(boolean)` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html#setDaemon(boolean))
 
@@ -302,9 +302,9 @@ I'd flag the practical risk directly: because a daemon thread can be killed mid-
 
 **Answer:**
 
-"`ExecutorService` is the `java.util.concurrent` abstraction that decouples 'submitting a task' from 'how and on what thread it actually runs' — you submit `Runnable`/`Callable` tasks, and a thread pool underneath handles thread creation, reuse, scheduling, and queuing, instead of your code manually calling `new Thread(...).start()` for every unit of work.
+"`ExecutorService` is the `java.util.concurrent` abstraction that decouples "submitting a task" from "how and on what thread it actually runs." You submit `Runnable`/`Callable` tasks, and a thread pool underneath handles thread creation, reuse, scheduling, and queuing, instead of your code manually calling `new Thread(...).start()` for every unit of work.
 
-This solves real problems raw threads have. Creating an OS thread is genuinely expensive — memory for the stack, kernel bookkeeping — so an unbounded 'one thread per task' approach can exhaust memory or file descriptors under load; a pool reuses a bounded number of threads across many tasks, amortizing that cost. `ExecutorService` also gives you a `Future` back from `submit()`, letting you retrieve a result, check completion, or cancel a task — none of which raw `Thread` gives you directly. `Executors` provides common factory presets (`newFixedThreadPool`, `newCachedThreadPool`, `newSingleThreadExecutor`, `newVirtualThreadPerTaskExecutor`), though the Staff-level section of this guide covers why hand-tuning a `ThreadPoolExecutor` directly, rather than reaching for an `Executors` factory blindly, is usually the more defensible production choice."
+This solves real problems raw threads have. Creating an OS thread is expensive — memory for the stack, kernel bookkeeping — so an unbounded "one thread per task" approach can exhaust memory or file descriptors under load. A pool reuses a bounded number of threads across many tasks, amortizing that cost. `ExecutorService` also gives you a `Future` back from `submit()`, letting you retrieve a result, check completion, or cancel a task — none of which raw `Thread` gives you directly. `Executors` provides common factory presets (`newFixedThreadPool`, `newCachedThreadPool`, `newSingleThreadExecutor`, `newVirtualThreadPerTaskExecutor`), though the Staff-level section covers why hand-tuning a `ThreadPoolExecutor` directly, rather than reaching for an `Executors` factory blindly, is usually the more defensible production choice."
 
 **Code:**
 
@@ -323,7 +323,7 @@ pool.shutdown(); // stop accepting new tasks, let queued/running ones finish
 
 **Follow-up:**
 
-I'd mention that `shutdown()` alone doesn't forcibly stop anything — it just stops accepting new submissions and lets already-submitted work finish. `shutdownNow()` attempts to interrupt actively-running tasks and returns the list of tasks that never started — the tool for "stop everything now," not `shutdown()`. Getting this distinction wrong (assuming `shutdown()` is immediate) is a common cause of an application that "hangs on exit" because it's actually just waiting, correctly, for a long-running queued task.
+`shutdown()` alone doesn't forcibly stop anything — it just stops accepting new submissions and lets already-submitted work finish. `shutdownNow()` attempts to interrupt actively-running tasks and returns the list of tasks that never started — that's the tool for "stop everything now," not `shutdown()`. Getting this distinction wrong (assuming `shutdown()` is immediate) is a common cause of an application that "hangs on exit" because it's actually just waiting, correctly, for a long-running queued task.
 
 **Source:** [`ExecutorService` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ExecutorService.html)
 
@@ -333,9 +333,9 @@ I'd mention that `shutdown()` alone doesn't forcibly stop anything — it just s
 
 **Answer:**
 
-"`Runnable.run()` takes no arguments, returns nothing (`void`), and can't throw a checked exception — it's the original, pre-Java-5 functional shape for 'a unit of work.' `Callable<V>.call()` was added specifically to fix both limitations: it returns a value of type `V`, and it's allowed to throw a checked `Exception`, making it the right choice whenever a task actually produces a result or can fail in a way you want to handle explicitly rather than being forced to swallow it inside `run()`.
+"`Runnable.run()` takes no arguments, returns nothing (`void`), and can't throw a checked exception — it's the original, pre-Java-5 functional shape for "a unit of work." `Callable<V>.call()` was added specifically to fix both limitations: it returns a value of type `V`, and it's allowed to throw a checked `Exception`. That makes it the right choice whenever a task actually produces a result or can fail in a way you want to handle explicitly, rather than being forced to swallow it inside `run()`.
 
-`Future<V>` is what you get back from submitting either kind of task to an `ExecutorService` — a `Runnable` submission gives you a `Future<?>` whose `get()` just returns `null` on success. It represents the *eventual result* of an asynchronous computation: `get()` blocks until the task completes and returns the result, or re-throws the task's exception wrapped in `ExecutionException`; `isDone()`/`isCancelled()` let you poll without blocking; and `cancel()` attempts to stop the task if it hasn't started, or interrupt it if it has — best-effort, not guaranteed."
+`Future<V>` is what you get back from submitting either kind of task to an `ExecutorService` — a `Runnable` submission gives you a `Future<?>` whose `get()` just returns `null` on success. It represents the *eventual result* of an asynchronous computation. `get()` blocks until the task completes and returns the result, or re-throws the task's exception wrapped in `ExecutionException`. `isDone()`/`isCancelled()` let you poll without blocking, and `cancel()` attempts to stop the task if it hasn't started, or interrupt it if it has — best-effort, not guaranteed."
 
 **Code:**
 
@@ -357,7 +357,7 @@ try {
 
 **Follow-up:**
 
-I'd bring up `CompletableFuture` as the natural next step once callback-style composition matters — chaining what happens after a `Future` completes (`thenApply`, `thenCompose`, combining multiple futures) is awkward with a plain `Future`, where `get()` is your only real option and it blocks. `CompletableFuture` lets you build a non-blocking pipeline of dependent async steps, which is what most real asynchronous service code actually needs, rather than a single call-and-block `Future`.
+`CompletableFuture` is the natural next step once callback-style composition matters. Chaining what happens after a `Future` completes (`thenApply`, `thenCompose`, combining multiple futures) is awkward with a plain `Future`, where `get()` is your only real option and it blocks. `CompletableFuture` lets you build a non-blocking pipeline of dependent async steps, which is what most real asynchronous service code actually needs, rather than a single call-and-block `Future`.
 
 **Source:** [`Callable` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Callable.html), [`Future` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Future.html)
 
@@ -369,7 +369,7 @@ I'd bring up `CompletableFuture` as the natural next step once callback-style co
 
 "All three are `java.util.concurrent` coordination primitives, but they solve different shapes of problem.
 
-`CountDownLatch` lets one or more threads wait until a fixed number of events have happened elsewhere — initialized with a count, other threads call `countDown()` as they finish their part, and any thread blocked on `await()` proceeds once the count hits zero. Critically, it's **one-shot**: once the count reaches zero it can never be reset or reused. `CyclicBarrier` is for making a fixed group of threads all wait for *each other* to reach the same point before any of them proceed — every thread calls `await()`, and none of them continue until all of them have called it. Unlike `CountDownLatch`, it's **reusable**, automatically resetting for the next round, and it optionally runs a single action once the barrier trips. `Semaphore` maintains a set of permits — `acquire()` blocks if none are available and takes one when it is, `release()` returns one — the right tool for limiting concurrent access to a resource with a fixed capacity (e.g., 'at most 10 concurrent connections to this downstream service'), not for one-time or round-based coordination at all."
+`CountDownLatch` lets one or more threads wait until a fixed number of events have happened elsewhere. It's initialized with a count, other threads call `countDown()` as they finish their part, and any thread blocked on `await()` proceeds once the count hits zero. It's **one-shot** — once the count reaches zero it can never be reset or reused. `CyclicBarrier` is for making a fixed group of threads all wait for *each other* to reach the same point before any of them proceed — every thread calls `await()`, and none of them continue until all of them have called it. Unlike `CountDownLatch`, it's **reusable**: it automatically resets for the next round, and it optionally runs a single action once the barrier trips. `Semaphore` maintains a set of permits — `acquire()` blocks if none are available and takes one when it is, `release()` returns one. It's the right tool for limiting concurrent access to a resource with a fixed capacity (say, "at most 10 concurrent connections to this downstream service"), not for one-time or round-based coordination."
 
 **Code:**
 
@@ -391,7 +391,7 @@ try { callDownstreamService(); } finally { permits.release(); }
 
 **Follow-up:**
 
-I'd give the quick decision rule: "wait for N one-time events" → `CountDownLatch`; "N threads must all reach a checkpoint together, possibly repeatedly" → `CyclicBarrier`; "cap concurrent access to a limited resource" → `Semaphore`. A common mistake is reaching for `CountDownLatch` when the real requirement is repeated rounds of synchronization — since it can't be reset, that forces awkward workarounds (creating a new latch every round) where `CyclicBarrier` was the actual right tool from the start.
+Here's the quick decision rule: "wait for N one-time events" → `CountDownLatch`; "N threads must all reach a checkpoint together, possibly repeatedly" → `CyclicBarrier`; "cap concurrent access to a limited resource" → `Semaphore`. A common mistake is reaching for `CountDownLatch` when the real requirement is repeated rounds of synchronization. Since it can't be reset, that forces awkward workarounds like creating a new latch every round, when `CyclicBarrier` was the right tool from the start.
 
 **Source:** [`CountDownLatch` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CountDownLatch.html), [`CyclicBarrier` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CyclicBarrier.html), [`Semaphore` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Semaphore.html)
 
@@ -401,9 +401,9 @@ I'd give the quick decision rule: "wait for N one-time events" → `CountDownLat
 
 **Answer:**
 
-"The producer-consumer pattern decouples work that generates tasks (producers) from work that processes them (consumers), connected through a shared queue — producers only need to know how to add items, consumers only need to know how to take them, and neither has to coordinate with the other directly.
+"The producer-consumer pattern decouples work that generates tasks (producers) from work that processes them (consumers), connected through a shared queue. Producers only need to know how to add items, consumers only need to know how to take them, and neither has to coordinate with the other directly.
 
-`BlockingQueue` is the standard-library tool built for exactly this: `put()` blocks the producer if the queue is full, rather than growing unboundedly and risking an OOM under sustained overload, and `take()` blocks the consumer if the queue is empty, rather than busy-polling and burning CPU. Both sides get correct backpressure and correct waiting behavior for free, without any manual `wait()`/`notify()` bookkeeping. `ArrayBlockingQueue` gives you a fixed-capacity, backpressure-enforcing bound; `LinkedBlockingQueue` can be bounded or effectively unbounded depending on the constructor used."
+`BlockingQueue` is the standard-library tool built for exactly this. `put()` blocks the producer if the queue is full, instead of growing unboundedly and risking an OOM under sustained overload. `take()` blocks the consumer if the queue is empty, instead of busy-polling and burning CPU. Both sides get correct backpressure and correct waiting behavior for free, with no manual `wait()`/`notify()` bookkeeping. `ArrayBlockingQueue` gives you a fixed-capacity, backpressure-enforcing bound; `LinkedBlockingQueue` can be bounded or effectively unbounded depending on the constructor used."
 
 **Code:**
 
@@ -429,7 +429,7 @@ Runnable consumer = () -> {
 
 **Follow-up:**
 
-I'd connect this directly back to the earlier `wait()`/`notify()` question — `BlockingQueue` implementations are doing exactly that kind of lock-and-signal coordination internally, just correctly, without you having to hand-write it and get the "always re-check in a loop" subtlety right yourself. I'd also flag the bounded-vs-unbounded choice as a real production decision, not a detail: an unbounded queue between a fast producer and a slow consumer just delays an eventual out-of-memory failure instead of preventing it — bounding the queue converts "silently grow until we crash" into "the producer blocks (or gets an explicit rejection, depending on the chosen `put`/`offer` variant) the moment we're actually behind," a far more diagnosable failure mode.
+This connects directly back to the earlier `wait()`/`notify()` question. `BlockingQueue` implementations are doing exactly that kind of lock-and-signal coordination internally, just correctly, without you having to hand-write it and get the "always re-check in a loop" subtlety right yourself. I'd also flag the bounded-vs-unbounded choice as a real production decision, not a detail. An unbounded queue between a fast producer and a slow consumer just delays an eventual out-of-memory failure instead of preventing it. Bounding the queue converts "silently grow until we crash" into "the producer blocks (or gets an explicit rejection, depending on the chosen `put`/`offer` variant) the moment we're actually behind" — a far more diagnosable failure mode.
 
 **Source:** [`BlockingQueue` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/BlockingQueue.html), [`ArrayBlockingQueue` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ArrayBlockingQueue.html)
 
@@ -439,9 +439,9 @@ I'd connect this directly back to the earlier `wait()`/`notify()` question — `
 
 **Answer:**
 
-"`synchronized` is built into the language, always released automatically — even if an exception is thrown, since it's tied to block/method scope — and needs no explicit unlock call. For straightforward mutual exclusion, it's simpler and harder to get wrong.
+"`synchronized` is built into the language, always released automatically (even if an exception is thrown, since it's tied to block/method scope), and needs no explicit unlock call. For straightforward mutual exclusion, it's simpler and harder to get wrong.
 
-`ReentrantLock` (from `java.util.concurrent.locks`) is an explicit, object-based lock that gives you capabilities `synchronized` simply doesn't have: `tryLock()` to attempt acquisition without blocking (or with a timeout), `lockInterruptibly()` to let a thread waiting for the lock be interrupted rather than stuck waiting forever, and a fairness option (`new ReentrantLock(true)`) to reduce the chance of an individual thread being perpetually starved by other threads jumping the queue. The real trade-off, and the reason `synchronized` should still be the default: `ReentrantLock` must be unlocked manually in a `finally` block — forget that, or throw an exception before the `try` even starts, and the lock is never released, which `synchronized` structurally can't get wrong."
+`ReentrantLock` (from `java.util.concurrent.locks`) is an explicit, object-based lock that gives you capabilities `synchronized` simply doesn't have: `tryLock()` to attempt acquisition without blocking (or with a timeout), `lockInterruptibly()` to let a thread waiting for the lock be interrupted rather than stuck waiting forever, and a fairness option (`new ReentrantLock(true)`) to reduce the chance of an individual thread being perpetually starved by other threads jumping the queue. The real trade-off, and the reason `synchronized` should still be the default: `ReentrantLock` must be unlocked manually in a `finally` block. Forget that, or throw an exception before the `try` even starts, and the lock is never released — something `synchronized` structurally can't get wrong."
 
 **Code:**
 
@@ -470,7 +470,7 @@ if (reentrantLock.tryLock(500, TimeUnit.MILLISECONDS)) {
 
 **Follow-up:**
 
-This is deliberately the basic version — the Staff-level section of this guide compares `synchronized`, `ReentrantLock`, `ReadWriteLock`, and `StampedLock` together, including where `StampedLock`'s optimistic-read mode gives a real throughput advantage `ReentrantLock` can't. The takeaway to carry forward from this basic comparison: default to `synchronized` unless you specifically need `tryLock`, interruptible waiting, or fairness — reaching for `ReentrantLock` "just because it's more powerful" adds real risk (the manual-unlock footgun) for no benefit if you never use the extra capabilities.
+This is deliberately the basic version. The Staff-level section compares `synchronized`, `ReentrantLock`, `ReadWriteLock`, and `StampedLock` together, including where `StampedLock`'s optimistic-read mode gives a real throughput advantage `ReentrantLock` can't. The takeaway to carry forward from here: default to `synchronized` unless you specifically need `tryLock`, interruptible waiting, or fairness. Reaching for `ReentrantLock` "just because it's more powerful" adds real risk — the manual-unlock footgun — for no benefit if you never use the extra capabilities.
 
 **Source:** [`ReentrantLock` Javadoc, JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/locks/ReentrantLock.html)
 
@@ -484,13 +484,13 @@ This is deliberately the basic version — the Staff-level section of this guide
 
 "These are three separate guarantees people often collapse into one, and conflating them is where most concurrency bugs come from.
 
-**Visibility** is about whether a write made by thread A is *ever* guaranteed to be seen by thread B. Without a proper synchronization mechanism, a thread can legally keep reading a stale, cached value of a variable forever — the JIT compiler and CPU are both allowed to cache the value in a register and never re-read main memory, because nothing told them another thread might change it.
+**Visibility** is about whether a write made by thread A is *ever* guaranteed to be seen by thread B. Without a proper synchronization mechanism, a thread can legally keep reading a stale, cached value of a variable forever. The JIT compiler and CPU are both allowed to cache the value in a register and never re-read main memory, because nothing told them another thread might change it.
 
-**Atomicity** is about whether an operation happens as one indivisible step or can be interleaved with other threads mid-way. `count++` looks like one operation but is actually read-modify-write — three separate steps — so two threads can both read the same value, both increment, both write back, and one increment is silently lost.
+**Atomicity** is about whether an operation happens as one indivisible step or can be interleaved with other threads mid-way. `count++` looks like one operation but is actually read-modify-write, three separate steps. Two threads can both read the same value, both increment, both write back, and one increment is silently lost.
 
-**Ordering** is about whether operations can be reordered relative to each other from another thread's point of view. The JVM and CPU are both allowed to reorder independent instructions for performance, as long as it doesn't change the *single-threaded* semantics of the thread doing the reordering — but another thread observing without synchronization can see effects out of the order they were written in source code.
+**Ordering** is about whether operations can be reordered relative to each other from another thread's point of view. The JVM and CPU are both allowed to reorder independent instructions for performance, as long as it doesn't change the *single-threaded* semantics of the thread doing the reordering. But another thread observing without synchronization can see effects out of the order they were written in source code.
 
-The **happens-before** relationship is the formal contract that ties all three together: if action X happens-before action Y, then X's effects (visibility, ordering) are guaranteed visible to Y. It's established by specific things — a monitor unlock happens-before the next lock on that same monitor, a volatile write happens-before a subsequent volatile read of the same field, a thread's `start()` happens-before anything in the thread it started, the last action in a thread happens-before another thread's successful `join()` on it. Without one of these specific relationships, the JMM makes *no* guarantee about visibility or ordering between those two actions — not 'probably fine,' genuinely not guaranteed. That's a narrower claim than saying the program's behavior is 'undefined' in the C/C++ sense, though: the JMM (JLS Chapter 17) still constrains what a racy program is allowed to do — for ordinary reads/writes it guarantees no 'out of thin air' values, and the language and JVM remain otherwise fully specified. What you lose is the *guarantee* of a particular visible order or a particular value being seen promptly, not all behavioral guarantees whatsoever."
+The **happens-before** relationship is the formal contract that ties all three together: if action X happens-before action Y, then X's effects (visibility, ordering) are guaranteed visible to Y. It's established by specific things — a monitor unlock happens-before the next lock on that same monitor, a volatile write happens-before a subsequent volatile read of the same field, a thread's `start()` happens-before anything in the thread it started, the last action in a thread happens-before another thread's successful `join()` on it. Without one of these specific relationships, the JMM makes *no* guarantee about visibility or ordering between those two actions. Not "probably fine" — genuinely not guaranteed. That said, this is a narrower claim than saying the program's behavior is "undefined" in the C/C++ sense. The JMM (JLS Chapter 17) still constrains what a racy program is allowed to do: for ordinary reads/writes it guarantees no "out of thin air" values, and the language and JVM remain otherwise fully specified. What you lose is the *guarantee* of a particular visible order or a particular value being seen promptly, not all behavioral guarantees."
 
 **Code:**
 
@@ -537,7 +537,7 @@ class WithVisibility {
 
 **Follow-up:**
 
-I'd bring up that this is exactly why the Java Memory Model (JMM) exists as a formal specification rather than "whatever the hardware happens to do" — different CPU architectures (x86 vs ARM) have different native memory ordering guarantees, and the JMM gives Java a single, portable contract so the same code behaves correctly regardless of the underlying hardware's memory model. I'd also flag the transitivity point explicitly, since it's the thing that makes the `WithVisibility` example correct despite `value` not being `volatile` itself — happens-before chains compose, which is the actual mechanism behind "publish an object safely by writing it to a volatile/final field, then everything set up before that publish is visible to any thread that reads the field."
+This is exactly why the Java Memory Model (JMM) exists as a formal specification rather than "whatever the hardware happens to do." Different CPU architectures (x86 vs ARM) have different native memory ordering guarantees, and the JMM gives Java a single, portable contract so the same code behaves correctly regardless of the underlying hardware's memory model. I'd also flag the transitivity point, since it's the thing that makes the `WithVisibility` example correct despite `value` not being `volatile` itself. Happens-before chains compose — that's the actual mechanism behind "publish an object safely by writing it to a volatile/final field, then everything set up before that publish is visible to any thread that reads the field."
 
 **Source:** [JLS §17.4, Memory Model](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.4)
 
@@ -547,7 +547,7 @@ I'd bring up that this is exactly why the Java Memory Model (JMM) exists as a fo
 
 **Answer:**
 
-"`volatile` guarantees visibility and ordering for that specific field — every write is immediately visible to subsequent reads by any thread, and the compiler/CPU can't reorder other reads/writes across a volatile read or write in ways that would break the happens-before chain. It's implemented, roughly, by inserting memory barriers around access to the field.
+"`volatile` guarantees visibility and ordering for that specific field. Every write is immediately visible to subsequent reads by any thread, and the compiler/CPU can't reorder other reads/writes across a volatile read or write in ways that would break the happens-before chain. It's implemented, roughly, by inserting memory barriers around access to the field.
 
 What it does **not** guarantee is atomicity for compound operations. `volatileCounter++` is still read-modify-write under the hood, and `volatile` does nothing to make that one atomic step — two threads can still race and lose an increment, exactly like a non-volatile field would. This is the single most common `volatile` misuse I see: people reach for `volatile` on a counter expecting thread-safety and get visibility without atomicity, which silently doesn't fix the actual bug."
 
@@ -574,7 +574,7 @@ class CorrectCounter {
 
 **Follow-up:**
 
-I'd give the rule of thumb explicitly: `volatile` is correct for a single field that's *independently* read/written — a flag, a reference being published, a "latest value wins" field — but the moment correctness depends on a *sequence* of operations on that field (increment, compare-then-set, read-modify-write), you need either an atomic class (`AtomicInteger`, `AtomicReference`) or a lock. I'd also mention the classic safe-publication idiom: a `volatile` reference to an immutable object is a cheap, lock-free way to publish a fully-constructed object across threads — every thread that reads the volatile reference sees a fully-initialized object, not a partially-constructed one, because of the happens-before edge on the volatile write that set the reference.
+Here's the rule of thumb: `volatile` is correct for a single field that's *independently* read/written — a flag, a reference being published, a "latest value wins" field. But the moment correctness depends on a *sequence* of operations on that field (increment, compare-then-set, read-modify-write), you need either an atomic class (`AtomicInteger`, `AtomicReference`) or a lock. I'd also mention the classic safe-publication idiom: a `volatile` reference to an immutable object is a cheap, lock-free way to publish a fully-constructed object across threads. Every thread that reads the volatile reference sees a fully-initialized object, not a partially-constructed one, because of the happens-before edge on the volatile write that set the reference.
 
 **Source:** [JLS §17.4.5, Happens-before Order (volatile rule)](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.4.5), [`AtomicInteger` Javadoc](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicInteger.html)
 
@@ -588,9 +588,9 @@ I'd give the rule of thumb explicitly: `volatile` is correct for a single field 
 
 `ReentrantLock` gives you all the flexibility `synchronized` lacks: `tryLock()` with a timeout, `lockInterruptibly()` so a blocked thread can actually be interrupted out of the wait, and multiple `Condition` objects per lock instead of just the one implicit wait-set `synchronized` gives you via `wait`/`notify`. The trade-off is you *must* remember to unlock in a `finally` block — nothing does it for you automatically.
 
-`ReadWriteLock` (`ReentrantReadWriteLock`) separates read and write access — multiple readers can hold the read lock concurrently, but a writer needs exclusive access with no readers or other writers present. This is the right tool when reads vastly outnumber writes and you want more parallelism than a single exclusive lock allows.
+`ReadWriteLock` (`ReentrantReadWriteLock`) separates read and write access. Multiple readers can hold the read lock concurrently, but a writer needs exclusive access with no readers or other writers present. This is the right tool when reads vastly outnumber writes and you want more parallelism than a single exclusive lock allows.
 
-`StampedLock` goes one step further with **optimistic reads** — a reader doesn't take a lock at all, just reads a stamp, does its work, then validates the stamp wasn't invalidated by a writer in the meantime. If validation fails, it falls back to a real read lock. For read-heavy workloads this can meaningfully outperform `ReadWriteLock` because the common case pays almost no locking cost at all — but it's not reentrant, and using it correctly is genuinely more error-prone."
+`StampedLock` goes one step further with **optimistic reads**. A reader doesn't take a lock at all — it just reads a stamp, does its work, then validates the stamp wasn't invalidated by a writer in the meantime. If validation fails, it falls back to a real read lock. For read-heavy workloads this can meaningfully outperform `ReadWriteLock`, since the common case pays almost no locking cost at all. But it's not reentrant, and using it correctly is more error-prone."
 
 **Code:**
 
@@ -632,7 +632,7 @@ double distanceFromOrigin() {
 
 **Follow-up:**
 
-I'd bring up the reentrancy trap with `StampedLock` explicitly — unlike `ReentrantLock` and intrinsic locks, `StampedLock` is *not* reentrant, so a thread that already holds the write lock and calls back into a method that tries to acquire it again will deadlock against itself, which is a subtle regression risk if someone migrates code from `ReentrantLock` without noticing this difference. I'd also mention that `synchronized` has closed most of its historical performance gap with `ReentrantLock` thanks to JIT improvements — so the decision is rarely "which is faster," it's "do I need `tryLock`, interruptibility, multiple conditions, or read/write separation," and if the answer is no, plain `synchronized` is simpler and harder to misuse (no risk of a forgotten `unlock()`).
+I'd flag the reentrancy trap with `StampedLock`: unlike `ReentrantLock` and intrinsic locks, `StampedLock` is *not* reentrant, so a thread that already holds the write lock and calls back into a method that tries to acquire it again will deadlock against itself. That's a subtle regression risk if someone migrates code from `ReentrantLock` without noticing the difference. I'd also mention that `synchronized` has closed most of its historical performance gap with `ReentrantLock` thanks to JIT improvements. The decision is rarely "which is faster" — it's "do I need `tryLock`, interruptibility, multiple conditions, or read/write separation." If the answer is no, plain `synchronized` is simpler and harder to misuse (no risk of a forgotten `unlock()`).
 
 **Source:** [`ReentrantLock` Javadoc](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/locks/ReentrantLock.html), [`StampedLock` Javadoc](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/locks/StampedLock.html)
 
@@ -642,13 +642,13 @@ I'd bring up the reentrancy trap with `StampedLock` explicitly — unlike `Reent
 
 **Answer:**
 
-"**Deadlock**: two or more threads each hold a resource the other needs, and each is blocked waiting for the other to release theirs — nobody makes progress, ever, and none of them are consuming CPU. Classic case: thread A locks `mutex1` then wants `mutex2`; thread B locks `mutex2` then wants `mutex1`.
+"**Deadlock**: two or more threads each hold a resource the other needs, and each is blocked waiting for the other to release theirs. Nobody makes progress, ever, and none of them are consuming CPU. Classic case: thread A locks `mutex1` then wants `mutex2`; thread B locks `mutex2` then wants `mutex1`.
 
-**Livelock**: threads are actively running — not blocked — but they keep responding to each other in a way that prevents any of them from making real progress. The textbook example is two people in a hallway, each stepping aside to let the other pass, and their steps happen to keep mirroring each other forever. In code, this shows up as overly-polite retry/backoff logic where two threads keep detecting contention and yielding to each other in lockstep.
+**Livelock**: threads are actively running, not blocked, but they keep responding to each other in a way that prevents any of them from making real progress. The textbook example is two people in a hallway, each stepping aside to let the other pass, and their steps happen to keep mirroring each other forever. In code, this shows up as overly-polite retry/backoff logic where two threads keep detecting contention and yielding to each other in lockstep.
 
-**Starvation**: a thread is technically able to make progress, but a scheduling or fairness issue means it practically never gets CPU time or lock access — e.g. a non-fair lock combined with a flood of higher-priority or more-frequent competitors means one thread's requests keep losing the race indefinitely.
+**Starvation**: a thread is technically able to make progress, but a scheduling or fairness issue means it practically never gets CPU time or lock access. For example, a non-fair lock combined with a flood of higher-priority or more-frequent competitors means one thread's requests keep losing the race indefinitely.
 
-**Priority inversion**: a higher-priority thread is blocked waiting on a lock held by a *lower*-priority thread, and — if the scheduler isn't priority-aware about this — a third, *medium*-priority thread that needs no lock at all can keep preempting the low-priority lock-holder, so the high-priority thread waits far longer than its priority would suggest. This is the actual root cause behind the famous 1997 Mars Pathfinder software reset — a low-priority task held a mutex a high-priority task needed, and medium-priority tasks kept starving the low-priority one out of running long enough to release it."
+**Priority inversion**: a higher-priority thread is blocked waiting on a lock held by a *lower*-priority thread. If the scheduler isn't priority-aware about this, a third, *medium*-priority thread that needs no lock at all can keep preempting the low-priority lock-holder, so the high-priority thread waits far longer than its priority would suggest. This is the actual root cause behind the famous 1997 Mars Pathfinder software reset — a low-priority task held a mutex a high-priority task needed, and medium-priority tasks kept starving the low-priority one out of running long enough to release it."
 
 **Code:**
 
@@ -674,7 +674,7 @@ synchronized (mutex2) {
 
 **Follow-up:**
 
-I'd talk about the general prevention strategy rather than just naming the failure modes: deadlock prevention is really about breaking one of the four Coffman conditions (mutual exclusion, hold-and-wait, no preemption, circular wait) — and in practice, enforcing a consistent global lock ordering (breaking circular wait) is the cheapest and most common fix. I'd also mention `Thread.getAllStackTraces()` or a thread dump (`jstack`) as the actual diagnostic tool — the JVM's own deadlock detector in `jstack` output will explicitly print `"Found one Java-level deadlock"` with the exact lock cycle, which is usually the fastest way to confirm a deadlock versus other stalls in production. For priority inversion specifically, I'd mention priority inheritance (temporarily boosting the lock-holder's priority to match the highest-priority waiter) as the real-time-systems fix — Java's default scheduler doesn't do this automatically, which is part of why Java is rarely chosen for hard real-time systems.
+I'd rather talk about the general prevention strategy than just name the failure modes. Deadlock prevention really comes down to breaking one of the four Coffman conditions (mutual exclusion, hold-and-wait, no preemption, circular wait), and in practice, enforcing a consistent global lock ordering (breaking circular wait) is the cheapest and most common fix. I'd also mention `Thread.getAllStackTraces()` or a thread dump (`jstack`) as the actual diagnostic tool — the JVM's own deadlock detector in `jstack` output will explicitly print `"Found one Java-level deadlock"` with the exact lock cycle, which is usually the fastest way to confirm a deadlock versus other stalls in production. For priority inversion, I'd mention priority inheritance (temporarily boosting the lock-holder's priority to match the highest-priority waiter) as the real-time-systems fix. Java's default scheduler doesn't do this automatically, which is part of why Java is rarely chosen for hard real-time systems.
 
 **Source:** [`jstack` documentation](https://docs.oracle.com/en/java/javase/21/docs/specs/man/jstack.html), [JLS §17, Threads and Locks](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html)
 
