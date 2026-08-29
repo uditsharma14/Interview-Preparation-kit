@@ -34,6 +34,7 @@ what hasn't been done yet.
 | Java Collections | Yes | Yes | Yes | 2026-08-23 |
 | Java Concurrency | Yes | Yes | Yes | 2026-08-25 |
 | Java JVM & GC | Yes | Yes | Yes | 2026-08-25 |
+| OOP Concepts | Yes | Yes | Yes | 2026-08-27 |
 | Spring Boot Internals | Yes | Yes | Yes | 2026-08-25 |
 | Spring Security & OAuth2 | Yes | Yes | Yes | 2026-08-25 |
 | JPA & Hibernate | Yes | Yes | Yes | 2026-08-25 |
@@ -53,6 +54,7 @@ what hasn't been done yet.
 | JavaScript | Yes | Yes | Yes | 2026-08-24 |
 | Angular | Yes | No | Yes | 2026-08-24 |
 | React | Yes | No | Yes | 2026-08-24 |
+| Next.js | Yes | No | Yes | 2026-08-29 |
 | Design Patterns | Yes | Yes | Yes | 2026-08-24 |
 
 `Forward-Deployed & Customer-Facing Engineering/README.md` is a
@@ -71,26 +73,24 @@ provenance could also not be cross-checked against a single authoritative
 source (both attempted verification pages also refused automated
 fetches) — see that file's own note on this.
 
-## Repository-wide counts (measured 2026-08-27)
+## Repository-wide counts (measured 2026-08-29)
 
-- 57 markdown files (24 Q&A guides, 1 glossary, 1 placeholder stub, 1
-  Further Reading list, 3 question banks, 22 dated files under `audits/`,
+- 62 markdown files (26 Q&A guides, 1 glossary, 1 placeholder stub, 1
+  Further Reading list, 3 question banks, 25 dated files under `audits/`,
   plus README/AUDIT/CONTRIBUTING/ROADMAP/LICENSE)
-- 666 numbered questions across 24 guides, plus a 222-term glossary, a
+- 695 numbered questions across 26 guides, plus a 222-term glossary, a
   100-problem pattern-organized DSA question bank, and a 75-problem
   Blind 75 question bank
 - 0 broken internal links, 0 duplicate headings, 0 missing code-fence
   language tags (`scripts/check_internal_links.py`,
   `scripts/check_duplicate_headings.py`, `scripts/check_code_fences.py`)
-- 3,221 external link occurrences checked repository-wide, 3,014 OK, 6
-  errors, 201 excluded (`lychee`, most recent full run 2026-08-27). All 6
-  errors are the same pre-existing citation
-  (`microservices.io/patterns/communication-style/idempotent-consumer.html`,
-  cited in Kafka, Transactions, and Cross-Stack Design Scenarios) —
-  confirmed via a direct `curl` that the site itself is currently
-  returning a live `503`, not a stale/dead link; unrelated to this
-  session's additions and left as-is pending the site's own recovery.
-- 24 of 24 Q&A guides have a table of contents
+- 3,317 external link occurrences checked repository-wide, 3,116 OK, 0
+  errors, 201 excluded (`lychee`, most recent full run 2026-08-29). The
+  previously-flagged `microservices.io/patterns/communication-style/
+  idempotent-consumer.html` citation (cited in Kafka, Transactions, and
+  Cross-Stack Design Scenarios) is back to resolving cleanly — the
+  site's earlier `503` was transient, as suspected.
+- 26 of 26 Q&A guides have a table of contents
 
 ## Open findings
 
@@ -133,10 +133,11 @@ fetches) — see that file's own note on this.
   Redis & Caching without a live Redis instance and Kubernetes/Docker
   without a live cluster, used compile-checks and schema/lint validators
   instead of full execution — documented per guide, not a gap unique to
-  this list). Angular and React's code blocks are TypeScript/JSX examples
-  that assume a full framework build (Angular CLI, or a bundler with a
-  JSX transform) — they were checked for correct API usage against
-  angular.dev/react.dev, not compiled or executed; see `ROADMAP.md`.
+  this list). Angular, React, and Next.js's code blocks are
+  TypeScript/JSX examples that assume a full framework build (Angular
+  CLI, or a bundler with a JSX transform) — they were checked for
+  correct API usage against angular.dev/react.dev/nextjs.org, not
+  compiled or executed; see `ROADMAP.md`.
 
 ## History
 
@@ -268,6 +269,27 @@ Detailed findings, one file per audit pass:
   checked against its primary paper before writing; found and fixed two
   real bugs introduced during writing (Python code mistagged as `text`,
   one with an actual syntax error caught by `ast.parse`).
+
+- `audits/2026-08-27-oop-concepts-creation.md` — added a new graduated
+  Basic → Staff guide, `Language/OOP_Concepts_Interview_Prep.md` (17
+  questions), covering the four pillars, interfaces vs. abstract
+  classes, composition over inheritance, the Liskov Substitution
+  Principle, and the diamond problem with default methods; all 16 Java
+  code blocks individually extracted and compiled/run with `javac`/
+  `java`, which caught and fixed one real bug (a package-private method
+  that couldn't satisfy an interface's implicitly-`public` contract).
+  This guide's README/AUDIT integration was not completed at the time
+  of creation; both were backfilled 2026-08-29 alongside the Next.js
+  guide's integration.
+
+- `audits/2026-08-29-nextjs-guide-creation.md` — added
+  `Frontend & Full-Stack/NextJS_Interview_Prep.md` (new, intermediate-
+  level, 12 questions), covering file-based routing, the App Router vs.
+  Pages Router, dynamic routes, layouts, SSR/SSG/ISR, Server vs. Client
+  Components, Route Handlers, data fetching/caching, Middleware, and
+  deployment options. Every claim checked against live nextjs.org docs
+  before writing, including the version-sensitive `params`/
+  `searchParams` Promise change introduced in Next.js 15.
 
 See `CONTRIBUTING.md` for the accuracy and citation policy new material
 is expected to meet, and `ROADMAP.md` for planned work.

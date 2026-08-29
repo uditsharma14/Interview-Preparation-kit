@@ -6,15 +6,15 @@
 <p align="center"><em>The deep-dive, mid-to-staff-level interview prep kit — written to be said out loud, not skimmed.</em></p>
 <p align="center">
   <a href="https://github.com/uditsharma14/InterviewSmith/actions/workflows/docs-check.yml"><img src="https://github.com/uditsharma14/InterviewSmith/actions/workflows/docs-check.yml/badge.svg" alt="Docs check"></a>
-  <img alt="Guides" src="https://img.shields.io/badge/guides-21-orange">
-  <img alt="Q&A entries" src="https://img.shields.io/badge/Q%26A%20entries-600%2B-orange">
-  <img alt="Glossary terms" src="https://img.shields.io/badge/glossary%20terms-200-orange">
+  <img alt="Guides" src="https://img.shields.io/badge/guides-26-orange">
+  <img alt="Q&A entries" src="https://img.shields.io/badge/Q%26A%20entries-690%2B-orange">
+  <img alt="Glossary terms" src="https://img.shields.io/badge/glossary%20terms-222-orange">
   <a href="LICENSE.md"><img alt="License" src="https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0%20(content)%20%2F%20MIT%20(scripts)-blue"></a>
 </p>
 
 Every push and PR runs markdown linting, internal-link/anchor validation, and external-citation link-checking automatically ([`.github/workflows/docs-check.yml`](.github/workflows/docs-check.yml)); a monthly scheduled run catches link rot that happens independent of any edit.
 
-You don't walk into a Staff-level loop and get asked to define a `HashMap`. You get asked why it breaks under concurrent writes, what happens when the load factor tips, and what you'd actually do about it at 2 a.m. InterviewSmith is built to survive that follow-up: **24 guides, 650+ interview questions, and a 222-term glossary** — each question answered the way you'd actually say it out loud, supported by code, configuration, SQL, pseudocode, or design examples as fits the question, and closed out with exactly where a Staff-level interviewer pushes next. Several guides are explicitly graduated Basic → Staff, so the same guide works whether you're building the fundamentals for the first time or forging the deep end the night before a loop.
+You don't walk into a Staff-level loop and get asked to define a `HashMap`. You get asked why it breaks under concurrent writes, what happens when the load factor tips, and what you'd actually do about it at 2 a.m. InterviewSmith is built to survive that follow-up: **26 guides, 690+ interview questions, and a 222-term glossary** — each question answered the way you'd actually say it out loud, supported by code, configuration, SQL, pseudocode, or design examples as fits the question, and closed out with exactly where a Staff-level interviewer pushes next. Several guides are explicitly graduated Basic → Staff, so the same guide works whether you're building the fundamentals for the first time or forging the deep end the night before a loop.
 
 InterviewSmith optimizes for **accuracy over question count**. Every guide has undergone at least one audit pass against primary sources — Oracle/OpenJDK specs, Spring/Hibernate/Kafka/Redis/Kubernetes documentation, IETF RFCs, OWASP. See [`AUDIT.md`](AUDIT.md) for the review status of each guide and every finding, fixed or still open, and [`CONTRIBUTING.md`](CONTRIBUTING.md) for the citation/accuracy policy new material has to meet. An audit pass reduces errors; it doesn't guarantee none remain — version-sensitive claims should still be checked against the linked documentation before you repeat them somewhere it counts, and if you find one that's wrong or stale, `AUDIT.md` and the contribution policy exist to fix it.
 
@@ -88,6 +88,7 @@ Enough time to go deep, guide by guide, in the order below — it minimizes back
 | [Java Collections](Language/Java_Collections_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. The Intermediate section onward assumes `equals()`/`hashCode()` basics; escalates to production leak diagnosis. |
 | [Java Concurrency](Language/Java_Concurrency_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. The Intermediate section onward assumes Collections. |
 | [Java JVM & GC](Language/Java_JVM_GC_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. The Staff-level section assumes Collections and Concurrency for some parts. |
+| [OOP Concepts](Language/OOP_Concepts_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. Core Java syntax is the only prerequisite for the Basic section; Design Patterns builds on top of this guide's vocabulary rather than re-explaining it. |
 | [Design Patterns](Design%20Patterns/Design_Patterns_Interview_Prep.md) | Basic → Staff | Organized by GoF category (Creational → Structural → Behavioral), not graduated by difficulty — core Java OOP is the only prerequisite. |
 | [Spring Boot Internals](Frameworks/Spring_Boot_Internals_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. The Intermediate section onward assumes the Basic section's `@Component`/`@Autowired` familiarity. |
 | [Spring Security & OAuth2](Frameworks/Spring_Security_OAuth2_Interview_Prep.md) | **Basic → Staff** | Explicitly graduated internally: Basic → Intermediate → Staff. Assumes Spring Boot Internals for the Basic section. |
@@ -105,6 +106,7 @@ Enough time to go deep, guide by guide, in the order below — it minimizes back
 | [AI Engineering](AI%20Engineering/AI_Engineering_Interview_Prep.md) | Staff | Assumes general backend engineering; fastest-moving guide in the repo — check its "last verified" date. |
 | [Vector Databases & RAG](AI%20Engineering/Vector_Databases_and_RAG_Interview_Prep.md) | Lead/Staff | Assumes LLM Fundamentals (embeddings, cosine similarity) and AI Engineering's RAG questions — goes one layer deeper into vector-database/embedding-model mechanics. |
 | [Tech Leadership](Tech%20Leadership/Engineering_Leadership_Interview_Prep.md) | Staff | Not technology-specific; no technical prerequisite, but most useful after the technical guides. |
+| [Next.js](Frontend%20%26%20Full-Stack/NextJS_Interview_Prep.md) | Intermediate | Deliberately lighter than this repo's usual Staff depth — assumes React (components, hooks, the virtual DOM) and focuses on what Next.js adds on top. |
 
 Most of InterviewSmith is genuinely Staff-scoped by design — see [Who this is for](#who-this-is-for) above for where the *entry points* (Computer Science Fundamentals in full; the Basic tiers of Java Collections, Java Concurrency, Java JVM & GC, Spring Boot Internals, Spring Security & OAuth2, JPA & Hibernate, and Software Testing; Kubernetes' Basic tier) are more accessible.
 
@@ -126,6 +128,7 @@ Pure Java runtime/language topics — no framework involved.
 - **[Java Collections Interview Prep](Language/Java_Collections_Interview_Prep.md)** — Graduated Basic → Staff: core interfaces, `equals()`/`hashCode()`, and `Comparable`/`Comparator` basics through `HashMap`/`TreeMap`/`LinkedHashMap` internals, concurrent collections, boxed-collection costs, and production leak diagnosis.
 - **[Java Concurrency Interview Prep](Language/Java_Concurrency_Interview_Prep.md)** — Graduated Basic → Staff: threads, `synchronized`, and deadlock basics through `ExecutorService`/coordination primitives to visibility/atomicity/ordering, lock comparisons, virtual threads, `ForkJoinPool`, the ABA problem, and structured concurrency.
 - **[Java JVM & GC Interview Prep](Language/Java_JVM_GC_Interview_Prep.md)** — Graduated Basic → Staff: JVM/JDK/JRE, stack vs. heap, GC basics, and generational-heap fundamentals through memory areas, JIT/escape analysis, reference types, G1/ZGC/Shenandoah, container OOM-kills, and native memory.
+- **[OOP Concepts Interview Prep](Language/OOP_Concepts_Interview_Prep.md)** — Graduated Basic → Staff: the four pillars (encapsulation, inheritance, polymorphism, abstraction) through interfaces vs. abstract classes, composition over inheritance, and immutability, to the Liskov Substitution Principle, the diamond problem, and OOP anti-patterns at Staff scale.
 
 ### Design Patterns
 
@@ -181,11 +184,12 @@ Lead/Staff-level judgment, influence, and organizational impact — not technolo
 
 ### Frontend & Full-Stack
 
-Client-side fundamentals — the JavaScript language and runtime, plus the two frameworks most commonly asked about in Full Stack loops.
+Client-side fundamentals — the JavaScript language and runtime, plus the frameworks most commonly asked about in Full Stack loops.
 
 - **[JavaScript Interview Prep](Frontend%20%26%20Full-Stack/JavaScript_Interview_Prep.md)** — `var`/`let`/`const` and hoisting, closures, the event loop and microtask/macrotask queues, Promises and `async`/`await`, prototypal inheritance, memory leaks, debounce vs. throttle, the V8 garbage collector, and XSS defense.
 - **[Angular Interview Prep](Frontend%20%26%20Full-Stack/Angular_Interview_Prep.md)** — Components and data binding, standalone components vs. NgModules, Signals, change detection and zoneless Angular, dependency injection, forms, RxJS interop, SSR/hydration, and state-management trade-offs.
 - **[React Interview Prep](Frontend%20%26%20Full-Stack/React_Interview_Prep.md)** — JSX and the virtual DOM, Hooks, reconciliation and Fiber, concurrent rendering, the React Compiler, Server Components, Actions, and state-management and testing trade-offs.
+- **[Next.js Interview Prep](Frontend%20%26%20Full-Stack/NextJS_Interview_Prep.md)** — Intermediate level. File-based routing in the App Router, the App Router vs. the Pages Router, dynamic routes, layouts, SSR vs. SSG vs. ISR, Server Components vs. Client Components, Route Handlers, data fetching/caching, Middleware, and deployment options.
 
 ### Data Structures & Algorithms
 
