@@ -224,14 +224,22 @@ I'd bring up that the fastest way to actually distinguish "N+1 regression" from 
 
 "Growing lag with low CPU and low database load is a strong signal that the consumer isn't *compute-bound* or *database-bound*. It's most likely **blocked/waiting** on something, or structurally under-provisioned in a way that has nothing to do with raw processing capacity. I'd test hypotheses in order of likelihood.
 
-First: **consumer count versus partition count**. If there are fewer active consumer instances than partitions, some partitions simply have no consumer assigned and their lag grows by definition, regardless of how idle the ones that *are* consuming are — this is a trivially checkable, very common root cause. Second: **an external, non-database dependency call inside the message-processing loop** that's slow or occasionally hanging (a downstream HTTP call, an external API). This would show low CPU (the consumer thread is blocked waiting, not computing) and low database load (the bottleneck isn't the database at all), exactly matching the symptom. Third: **frequent, unnecessary rebalances** (Kafka category). If consumers are being kicked out of the group and rejoining repeatedly (a `max.poll.interval.ms` violation from occasionally-slow processing, or unstable consumer health), the group spends meaningful time paused during each rebalance, accumulating lag even though no single message is actually slow to process. Fourth: **a single poison message or a few disproportionately expensive messages** stalling one partition's consumer specifically, while the metrics I'm looking at are aggregated across all partitions and hiding a per-partition problem."
+First: **consumer count versus partition count** — with a correction to how this is often stated. Kafka's group protocol assigns *every* partition to some live consumer as long as at least one member is in the group; having fewer consumer instances than partitions doesn't leave partitions "unassigned." What actually happens is each consumer just gets handed multiple partitions and works through them in the same poll loop. If a consumer is assigned, say, four partitions and the four combined exceed what one instance can process, lag grows across all four — not because they're orphaned, but because one instance is now serially carrying 4x the throughput it was sized for. This is still a trivially checkable, very common root cause (partitions-per-consumer ratio, and whether any single consumer's assigned-partition count jumped after a recent scale-down); it's just under-provisioned parallelism, not a gap in assignment. The genuine 'no consumer for this partition' case — a live gap, not a throughput problem — is a full outage of the group (zero members left) or an instance crash-looping in and out fast enough that rebalances never stabilize; both show up directly as `CONSUMER-ID: -` in the group description. Second: **an external, non-database dependency call inside the message-processing loop** that's slow or occasionally hanging (a downstream HTTP call, an external API). This would show low CPU (the consumer thread is blocked waiting, not computing) and low database load (the bottleneck isn't the database at all), exactly matching the symptom. Third: **frequent, unnecessary rebalances** (Kafka category). If consumers are being kicked out of the group and rejoining repeatedly (a `max.poll.interval.ms` violation from occasionally-slow processing, or unstable consumer health), the group spends meaningful time paused during each rebalance, accumulating lag even though no single message is actually slow to process. Fourth: **a single poison message or a few disproportionately expensive messages** stalling one partition's consumer specifically, while the metrics I'm looking at are aggregated across all partitions and hiding a per-partition problem."
 
 **Code:**
 
 ```text
 Hypothesis-testing checklist, in order:
 
-  1. Consumer instance count vs partition count — any UNASSIGNED partitions?
+  1. Consumer instance count vs partition count — check ASSIGNMENT SKEW, not
+     "unassigned" partitions (every partition IS assigned as long as >=1
+     consumer is alive in the group). Look for:
+       - a consumer instance now OWNING MULTIPLE partitions whose combined
+         lag is growing (under-provisioned instance count for the current
+         partition count, not a broken assignment)
+       - CONSUMER-ID showing "-" for a partition — the genuine gap: fewer
+         live members than expected (crashed instance, group mid-rebalance
+         and not stabilizing)
      (kafka-consumer-groups.sh --describe)
   2. Thread dump / profiling on a consumer instance DURING the lag window —
      is the processing thread BLOCKED (on I/O, a lock, an external call)
