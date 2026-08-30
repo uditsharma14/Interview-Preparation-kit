@@ -356,6 +356,7 @@ I'd bring up that fixing this requires more than just moving the publish call. I
 
 ---
 
+
 ## 9. Green Application Instances Must Serve HTTP Traffic but Cannot Consume Kafka Messages. Design the Deployment.
 
 **Answer:**
