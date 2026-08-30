@@ -266,31 +266,47 @@ I'd bring up that "low CPU, low DB usage, growing lag" is almost a textbook sign
 
 "This is precisely the failure mode from the Redis file's question 30 incident, and the prevention has to be designed and tested **before** it happens, not improvised during the outage. The core risk: if every request that would normally hit the cache instead falls through to the database simultaneously (the graceful-degradation fallback from Redis file question 28, applied at full traffic volume), the database can be hit with far more load than it was ever sized or tested for, since it had been architecturally relying on the cache absorbing the bulk of read traffic.
 
-My prevention approach is layered. First, **load-shed at the application layer** rather than letting every request fall through unconditionally: a circuit breaker around the cache-fallback path that, once database latency/error rate crosses a threshold, starts rejecting a portion of requests fast (REST API Design file, question 21) rather than letting all of them queue up against an increasingly overwhelmed database. Second, **request coalescing** for the fallback path specifically (Redis file question 6's stampede-prevention pattern, applied here to 'the entire cache is gone' rather than just one hot key expiring). If many concurrent requests for the same data all miss the cache simultaneously during the outage, coalesce them into one database query rather than each hitting the database independently. Third, and most important as a *preventive* rather than reactive measure: **actually load-test the 'cache is completely gone' scenario ahead of time** (a deliberate game-day exercise) to know, in advance, whether the database can survive full fallback traffic at all. If it can't, the real fix is either provisioning additional database read capacity specifically sized for this scenario, or accepting and designing for a deliberate, controlled degraded-service mode (serving stale/cached-at-the-edge data, or shedding non-critical read traffic) rather than discovering the database's actual limit during a real incident."
+My prevention approach is layered. First, **load-shed at the application layer** rather than letting every request fall through unconditionally: a circuit breaker specifically wrapping the *database call itself* — not the cache-lookup-plus-fallback method as one block — that, once database latency/error rate crosses a threshold, starts rejecting a portion of requests fast (REST API Design file, question 21) rather than letting all of them queue up against an increasingly overwhelmed database. That guarded database call has to live in a separate bean from the cache-lookup code, since Spring's circuit-breaker AOP proxy only intercepts calls that cross through the managed bean externally — calling it from within the same class as a plain method call silently bypasses the breaker entirely, the identical self-invocation trap the Transactions file's question 8 describes for `@Transactional`. Second, **request coalescing** for the fallback path specifically (Redis file question 6's stampede-prevention pattern, applied here to 'the entire cache is gone' rather than just one hot key expiring). If many concurrent requests for the same data all miss the cache simultaneously during the outage, coalesce them into one database query rather than each hitting the database independently. Third, and most important as a *preventive* rather than reactive measure: **actually load-test the 'cache is completely gone' scenario ahead of time** (a deliberate game-day exercise) to know, in advance, whether the database can survive full fallback traffic at all. If it can't, the real fix is either provisioning additional database read capacity specifically sized for this scenario, or accepting and designing for a deliberate, controlled degraded-service mode (serving stale/cached-at-the-edge data, or shedding non-critical read traffic) rather than discovering the database's actual limit during a real incident."
 
 **Code:**
 
 ```java
-@CircuitBreaker(name = "database-fallback", fallbackMethod = "serveDegraded")
-Product getProduct(String id) {
-    try {
-        return cache.get(id); // normal path
-    } catch (RedisConnectionFailureException e) {
-        return productRepository.findById(id).orElseThrow(); // fallback —
-    }                                                            // but PROTECTED
-}                                                                    // by the circuit
-                                                                       // breaker wrapping
-                                                                        // this whole method,
-                                                                         // not unconditional
+// A SEPARATE bean from the cache-lookup code. Spring's circuit-breaker AOP
+// proxy only sees calls that cross into this bean from OUTSIDE it — the
+// same self-invocation rule @Transactional follows (Transactions file,
+// question 8). Put the guarded call in the same class as the cache lookup
+// and the breaker below silently never engages, no matter how it looks.
+@Component
+class ProductDatabaseGateway {
 
-Product serveDegraded(String id, Exception ex) {
-    return staleLocalFallbackCache.getIfPresent(id); // once the circuit OPENS
-}                                                        // (database itself now
-                                                           // struggling), serve
-                                                            // whatever LAST-KNOWN-GOOD
-                                                             // data is available locally,
-                                                              // rather than adding to
-                                                               // database load further
+    @CircuitBreaker(name = "database-fallback", fallbackMethod = "serveDegraded")
+    Product loadFromDatabase(String id) {
+        return productRepository.findById(id).orElseThrow(); // must be free to
+    }                                                            // THROW or run slow
+                                                                   // here — that's what
+                                                                   // lets the breaker see
+                                                                   // real DB health
+
+    Product serveDegraded(String id, Exception ex) {
+        return staleLocalFallbackCache.getIfPresent(id); // circuit OPEN: DB itself
+    }                                                        // is struggling — serve
+}                                                              // last-known-good data
+                                                                 // instead of adding load
+
+@Component
+class ProductCacheService {
+    private final ProductDatabaseGateway dbGateway; // calls into it cross the
+                                                        // proxy boundary above,
+                                                        // so the breaker is live
+    Product getProduct(String id) {
+        try {
+            return cache.get(id); // normal path
+        } catch (RedisConnectionFailureException e) {
+            return dbGateway.loadFromDatabase(id); // fallback — genuinely
+        }                                              // protected by DB-health-
+    }                                                    // aware circuit breaking,
+}                                                          // not a try/catch that
+                                                             // hides DB state from it
 ```
 
 **Follow-up:**
